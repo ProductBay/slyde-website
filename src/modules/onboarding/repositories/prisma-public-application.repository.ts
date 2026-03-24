@@ -9,6 +9,11 @@ import type {
   SlyderApplicationVehicle,
 } from "@/types/backend/onboarding";
 
+type PrismaTransactionClient = Omit<
+  typeof prisma,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
+
 function toPrismaDocumentType(type: DocumentType) {
   return type;
 }
@@ -36,7 +41,7 @@ export async function createPublicApplicationInPrisma(
   vehicle: SlyderApplicationVehicle | undefined,
   documents: SlyderApplicationDocument[],
 ) {
-  return prisma.$transaction(async (tx: PrismaClient.Prisma.TransactionClient) => {
+  return prisma.$transaction(async (tx: PrismaTransactionClient) => {
     await tx.slyderApplication.create({
       data: {
         id: application.id,
