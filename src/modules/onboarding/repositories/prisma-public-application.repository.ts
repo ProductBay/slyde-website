@@ -36,7 +36,7 @@ export async function createPublicApplicationInPrisma(
   vehicle: SlyderApplicationVehicle | undefined,
   documents: SlyderApplicationDocument[],
 ) {
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: PrismaClient.Prisma.TransactionClient) => {
     await tx.slyderApplication.create({
       data: {
         id: application.id,
