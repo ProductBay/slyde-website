@@ -1,0 +1,11 @@
+
+> slyde-website@0.1.0 start
+> next start
+
+   ▲ Next.js 15.2.1
+   - Local:        http://localhost:61114
+   - Network:      http://10.235.144.245:61114
+
+ ✓ Starting...
+ ✓ Ready in 2.3s
+[SLYDE notification stub] {"id":"98b70f6e-ebe3-4139-ba93-41f4e1a6ad1b","createdAt":"2026-03-20T01:19:49.118Z","applicationId":"ffb88012-df99-46d7-889d-158a34cdc8f9","channel":"email","template":"slyder_application_submitted","payload":{"email":"ashandiepowell86@gmail.com"}}

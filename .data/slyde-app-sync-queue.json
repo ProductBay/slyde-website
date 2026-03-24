@@ -1,0 +1,769 @@
+[
+  {
+    "id": "da014098-1bb0-4876-bd74-3fe8d6265ef8",
+    "applicationId": "aa118948-a3e7-4480-ab45-814913770045",
+    "payload": {
+      "fullName": "Ashandie C.M. Powell",
+      "email": "ashandie86@gmail.com",
+      "phone": "18765947320",
+      "dateOfBirth": "1994-06-22",
+      "parish": "Nain",
+      "address": "Nian District",
+      "trn": "45896685",
+      "emergencyContactName": "8761234567",
+      "emergencyContactPhone": "18765947320",
+      "courierType": "van",
+      "vehicle": {
+        "make": "BMW",
+        "model": "X5",
+        "year": "2025",
+        "color": "brown",
+        "plateNumber": "6754ZQ",
+        "registrationExpiry": "2026-12-09",
+        "insuranceExpiry": "2026-10-14",
+        "fitnessExpiry": "2026-11-17"
+      },
+      "workTypePreference": "part-time",
+      "availability": "Weekends",
+      "preferredZones": [
+        "Montego Bay"
+      ],
+      "deliveryTypePreferences": [
+        "food",
+        "retail",
+        "documents",
+        "pharmacy",
+        "errands",
+        "bulk"
+      ],
+      "maxTravelComfort": "25",
+      "peakHours": "8",
+      "smartphoneType": "iphone",
+      "whatsappNumber": "18768799874",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": true,
+        "helmetReady": true,
+        "readinessNotes": ""
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [
+          {
+            "name": "A'Dash Newest Logo.png",
+            "size": 720804,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-22/63e370d2-af19-4752-ae4b-8a352a7ddd7f-a-dash-newest-logo.png",
+            "storageKey": "slyder-intake/2026-03-22/63e370d2-af19-4752-ae4b-8a352a7ddd7f-a-dash-newest-logo.png"
+          }
+        ],
+        "driversLicense": [
+          {
+            "name": "A'Dash Newest Logo.png",
+            "size": 720804,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-22/bab1aaa7-ecf8-40ae-a500-f00ac8a521dc-a-dash-newest-logo.png",
+            "storageKey": "slyder-intake/2026-03-22/bab1aaa7-ecf8-40ae-a500-f00ac8a521dc-a-dash-newest-logo.png"
+          }
+        ],
+        "vehicleRegistration": [
+          {
+            "name": "A'Dash Newest Logo.png",
+            "size": 720804,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-22/5cc104ad-c938-494a-bddf-0e334969da30-a-dash-newest-logo.png",
+            "storageKey": "slyder-intake/2026-03-22/5cc104ad-c938-494a-bddf-0e334969da30-a-dash-newest-logo.png"
+          }
+        ],
+        "insurance": [
+          {
+            "name": "A'Dash Newest Logo.png",
+            "size": 720804,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-22/78f2713a-5e9e-4092-9e48-1bb207168ff0-a-dash-newest-logo.png",
+            "storageKey": "slyder-intake/2026-03-22/78f2713a-5e9e-4092-9e48-1bb207168ff0-a-dash-newest-logo.png"
+          }
+        ],
+        "fitness": [
+          {
+            "name": "A'Dash Newest Logo.png",
+            "size": 720804,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-22/df9b5cc0-1a98-4d27-b082-cf9f5dd0bce2-a-dash-newest-logo.png",
+            "storageKey": "slyder-intake/2026-03-22/df9b5cc0-1a98-4d27-b082-cf9f5dd0bce2-a-dash-newest-logo.png"
+          }
+        ],
+        "profilePhoto": [
+          {
+            "name": "ChatGPT Image Mar 19, 2026, 06_09_04 AM.png",
+            "size": 3083162,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-22/75f7308c-0a3e-4c59-a1f2-1b02194e2014-chatgpt-image-mar-19-2026-06-09-04-am.png",
+            "storageKey": "slyder-intake/2026-03-22/75f7308c-0a3e-4c59-a1f2-1b02194e2014-chatgpt-image-mar-19-2026-06-09-04-am.png"
+          }
+        ],
+        "supporting": []
+      }
+    },
+    "status": "synced",
+    "retryCount": 0,
+    "nextAttemptAt": "2026-03-22T05:29:07.441Z",
+    "createdAt": "2026-03-22T05:29:07.441Z",
+    "updatedAt": "2026-03-22T05:29:14.385Z",
+    "lastAttemptAt": "2026-03-22T05:29:07.465Z",
+    "syncedAt": "2026-03-22T05:29:14.385Z",
+    "syncResult": {
+      "userId": "5181693f-a32c-4d77-a473-b0d05d9bf913",
+      "slyderId": "914b718f-5c83-4778-88e9-9d1ccd0e78cc",
+      "status": "pending",
+      "syncedAt": "2026-03-22T05:29:14.362Z"
+    }
+  },
+  {
+    "id": "1234a601-875b-47e9-8d12-9aad442a368e",
+    "applicationId": "2a65f0ce-1ca7-47a4-a01b-91cca48232a4",
+    "payload": {
+      "fullName": "Jordan Powell",
+      "email": "akedopowell2001@gmail.com",
+      "phone": "7187565352",
+      "dateOfBirth": "1997-07-31",
+      "parish": "Brooklyn",
+      "address": "933 Rutland Rd\nApartment 1",
+      "trn": "098756544",
+      "emergencyContactName": "87655555555",
+      "emergencyContactPhone": "7187565352",
+      "courierType": "bicycle",
+      "vehicle": {
+        "make": "",
+        "model": "",
+        "year": "",
+        "color": "",
+        "plateNumber": "",
+        "registrationExpiry": "",
+        "insuranceExpiry": "",
+        "fitnessExpiry": ""
+      },
+      "workTypePreference": "full-time",
+      "availability": "Everyday",
+      "preferredZones": [
+        "Montego Bay"
+      ],
+      "deliveryTypePreferences": [
+        "errands",
+        "food",
+        "retail",
+        "documents",
+        "pharmacy"
+      ],
+      "maxTravelComfort": "25",
+      "peakHours": "8",
+      "smartphoneType": "iphone",
+      "whatsappNumber": "18765947320",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": true,
+        "helmetReady": true,
+        "readinessNotes": ""
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [
+          {
+            "name": "A'Dash Newest Logo.png",
+            "size": 720804,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-22/e339c040-8b2b-44fc-bbcd-74db5b929b2a-a-dash-newest-logo.png",
+            "storageKey": "slyder-intake/2026-03-22/e339c040-8b2b-44fc-bbcd-74db5b929b2a-a-dash-newest-logo.png"
+          }
+        ],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [
+          {
+            "name": "A'Dash Newest Logo.png",
+            "size": 720804,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-22/e8e97346-627e-49c3-a448-5916fb4e7ebd-a-dash-newest-logo.png",
+            "storageKey": "slyder-intake/2026-03-22/e8e97346-627e-49c3-a448-5916fb4e7ebd-a-dash-newest-logo.png"
+          }
+        ],
+        "supporting": []
+      }
+    },
+    "status": "synced",
+    "retryCount": 0,
+    "nextAttemptAt": "2026-03-22T18:03:42.199Z",
+    "createdAt": "2026-03-22T18:03:42.199Z",
+    "updatedAt": "2026-03-22T18:03:46.146Z",
+    "lastAttemptAt": "2026-03-22T18:03:42.210Z",
+    "syncedAt": "2026-03-22T18:03:46.146Z",
+    "syncResult": {
+      "userId": "e115ca23-14e5-4780-816f-8db1f1561730",
+      "slyderId": "80b8b9ce-beba-41cf-89d4-7d4fc01e6e4a",
+      "status": "pending",
+      "syncedAt": "2026-03-22T18:03:46.097Z"
+    }
+  },
+  {
+    "id": "ec69d83d-eedd-4728-a31a-05fd61b8cbe8",
+    "applicationId": "0f0d0ca9-3d0c-49b4-894f-8ef5cb959e80",
+    "payload": {
+      "fullName": "Smoke Slyder 1774316964329",
+      "email": "smoke-approved-1774316964329@example.com",
+      "phone": "8765551001",
+      "dateOfBirth": "1997-04-12",
+      "parish": "Kingston",
+      "address": "12 Smoke Test Avenue, Kingston",
+      "trn": "123456789",
+      "emergencyContactName": "Smoke Contact",
+      "emergencyContactPhone": "8765551001",
+      "courierType": "walker",
+      "vehicle": {
+        "make": "",
+        "model": "",
+        "year": "",
+        "color": "",
+        "plateNumber": "",
+        "registrationExpiry": "",
+        "insuranceExpiry": "",
+        "fitnessExpiry": ""
+      },
+      "workTypePreference": "part-time",
+      "availability": "Weekdays and evenings",
+      "preferredZones": [
+        "Kingston"
+      ],
+      "deliveryTypePreferences": [
+        "food",
+        "documents"
+      ],
+      "maxTravelComfort": "8 km",
+      "peakHours": "Lunch and evening",
+      "smartphoneType": "Android",
+      "whatsappNumber": "8765551001",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": true,
+        "helmetReady": false,
+        "readinessNotes": "Smoke test intake"
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [
+          {
+            "name": "national-id-1774316964329.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/3d402ef5-0ad9-4c28-935a-5def57e8495e-national-id-1774316964329.png",
+            "storageKey": "slyder-intake/2026-03-24/3d402ef5-0ad9-4c28-935a-5def57e8495e-national-id-1774316964329.png"
+          }
+        ],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [
+          {
+            "name": "profile-photo-1774316964329.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/b298e1b2-10dc-4ace-992b-766e0497968d-profile-photo-1774316964329.png",
+            "storageKey": "slyder-intake/2026-03-24/b298e1b2-10dc-4ace-992b-766e0497968d-profile-photo-1774316964329.png"
+          }
+        ],
+        "supporting": []
+      }
+    },
+    "status": "synced",
+    "retryCount": 0,
+    "nextAttemptAt": "2026-03-24T01:49:26.142Z",
+    "createdAt": "2026-03-24T01:49:26.142Z",
+    "updatedAt": "2026-03-24T01:49:27.833Z",
+    "lastAttemptAt": "2026-03-24T01:49:26.152Z",
+    "syncedAt": "2026-03-24T01:49:27.833Z",
+    "syncResult": {
+      "userId": "1275b6ff-5958-42ff-917b-4837166831c6",
+      "slyderId": "a82b7df7-13d7-434b-a962-0a96ee35b615",
+      "status": "pending",
+      "syncedAt": "2026-03-24T01:49:26.636Z"
+    }
+  },
+  {
+    "id": "2022de63-a6a3-4e77-818e-9017fa95577f",
+    "applicationId": "fce05da1-345f-402e-b229-c8c95e8f4d08",
+    "payload": {
+      "fullName": "Smoke Slyder 1774316964329r",
+      "email": "smoke-rejected-1774316964329@example.com",
+      "phone": "8765551002",
+      "dateOfBirth": "1997-04-12",
+      "parish": "Kingston",
+      "address": "12 Smoke Test Avenue, Kingston",
+      "trn": "12345678r",
+      "emergencyContactName": "Smoke Contact",
+      "emergencyContactPhone": "8765551002",
+      "courierType": "walker",
+      "vehicle": {
+        "make": "",
+        "model": "",
+        "year": "",
+        "color": "",
+        "plateNumber": "",
+        "registrationExpiry": "",
+        "insuranceExpiry": "",
+        "fitnessExpiry": ""
+      },
+      "workTypePreference": "part-time",
+      "availability": "Weekdays and evenings",
+      "preferredZones": [
+        "Kingston"
+      ],
+      "deliveryTypePreferences": [
+        "food",
+        "documents"
+      ],
+      "maxTravelComfort": "8 km",
+      "peakHours": "Lunch and evening",
+      "smartphoneType": "Android",
+      "whatsappNumber": "8765551002",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": true,
+        "helmetReady": false,
+        "readinessNotes": "Smoke test intake"
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [
+          {
+            "name": "national-id-1774316964329r.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/25fdf0a1-2ae8-4c35-a0c3-e0bff6103b77-national-id-1774316964329r.png",
+            "storageKey": "slyder-intake/2026-03-24/25fdf0a1-2ae8-4c35-a0c3-e0bff6103b77-national-id-1774316964329r.png"
+          }
+        ],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [
+          {
+            "name": "profile-photo-1774316964329r.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/ca25c76e-3184-4567-b680-fd2f0a7f8e80-profile-photo-1774316964329r.png",
+            "storageKey": "slyder-intake/2026-03-24/ca25c76e-3184-4567-b680-fd2f0a7f8e80-profile-photo-1774316964329r.png"
+          }
+        ],
+        "supporting": []
+      }
+    },
+    "status": "synced",
+    "retryCount": 0,
+    "nextAttemptAt": "2026-03-24T01:49:26.423Z",
+    "createdAt": "2026-03-24T01:49:26.423Z",
+    "updatedAt": "2026-03-24T01:50:39.742Z",
+    "lastAttemptAt": "2026-03-24T01:50:38.606Z",
+    "syncedAt": "2026-03-24T01:50:39.742Z",
+    "syncResult": {
+      "userId": "b8c10c63-d5ae-4def-b8dc-8e249308536e",
+      "slyderId": "ffbc53f9-d09a-4c53-b4da-66744ea163a4",
+      "status": "pending",
+      "syncedAt": "2026-03-24T01:50:38.854Z"
+    }
+  },
+  {
+    "id": "eb8c398e-35f2-436a-8cc6-434da6c75954",
+    "applicationId": "42c6f12e-ae2a-4959-aec6-78f067b5cfe1",
+    "payload": {
+      "fullName": "Smoke Slyder 1774317037123",
+      "email": "smoke-approved-1774317037123@example.com",
+      "phone": "8765551001",
+      "dateOfBirth": "1997-04-12",
+      "parish": "Kingston",
+      "address": "12 Smoke Test Avenue, Kingston",
+      "trn": "123456783",
+      "emergencyContactName": "Smoke Contact",
+      "emergencyContactPhone": "8765551001",
+      "courierType": "walker",
+      "vehicle": {
+        "make": "",
+        "model": "",
+        "year": "",
+        "color": "",
+        "plateNumber": "",
+        "registrationExpiry": "",
+        "insuranceExpiry": "",
+        "fitnessExpiry": ""
+      },
+      "workTypePreference": "part-time",
+      "availability": "Weekdays and evenings",
+      "preferredZones": [
+        "Kingston"
+      ],
+      "deliveryTypePreferences": [
+        "food",
+        "documents"
+      ],
+      "maxTravelComfort": "8 km",
+      "peakHours": "Lunch and evening",
+      "smartphoneType": "Android",
+      "whatsappNumber": "8765551001",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": true,
+        "helmetReady": false,
+        "readinessNotes": "Smoke test intake"
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [
+          {
+            "name": "national-id-1774317037123.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/566ec5a8-8d42-4291-9af3-f692caab5499-national-id-1774317037123.png",
+            "storageKey": "slyder-intake/2026-03-24/566ec5a8-8d42-4291-9af3-f692caab5499-national-id-1774317037123.png"
+          }
+        ],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [
+          {
+            "name": "profile-photo-1774317037123.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/a36e37c7-2a80-489f-bcb2-ab80014eac9f-profile-photo-1774317037123.png",
+            "storageKey": "slyder-intake/2026-03-24/a36e37c7-2a80-489f-bcb2-ab80014eac9f-profile-photo-1774317037123.png"
+          }
+        ],
+        "supporting": []
+      }
+    },
+    "status": "synced",
+    "retryCount": 0,
+    "nextAttemptAt": "2026-03-24T01:50:38.589Z",
+    "createdAt": "2026-03-24T01:50:38.589Z",
+    "updatedAt": "2026-03-24T01:50:40.253Z",
+    "lastAttemptAt": "2026-03-24T01:50:39.770Z",
+    "syncedAt": "2026-03-24T01:50:40.253Z",
+    "syncResult": {
+      "userId": "1275b6ff-5958-42ff-917b-4837166831c6",
+      "slyderId": "a82b7df7-13d7-434b-a962-0a96ee35b615",
+      "status": "approved",
+      "syncedAt": "2026-03-24T01:50:40.096Z"
+    }
+  },
+  {
+    "id": "0f5bf0d3-d036-49e6-a2dc-6f0e2b9411fa",
+    "applicationId": "71b10141-c747-4031-924a-4f11a8ed9265",
+    "payload": {
+      "fullName": "Smoke Slyder 1774317037123r",
+      "email": "smoke-rejected-1774317037123@example.com",
+      "phone": "8765551002",
+      "dateOfBirth": "1997-04-12",
+      "parish": "Kingston",
+      "address": "12 Smoke Test Avenue, Kingston",
+      "trn": "12345678r",
+      "emergencyContactName": "Smoke Contact",
+      "emergencyContactPhone": "8765551002",
+      "courierType": "walker",
+      "vehicle": {
+        "make": "",
+        "model": "",
+        "year": "",
+        "color": "",
+        "plateNumber": "",
+        "registrationExpiry": "",
+        "insuranceExpiry": "",
+        "fitnessExpiry": ""
+      },
+      "workTypePreference": "part-time",
+      "availability": "Weekdays and evenings",
+      "preferredZones": [
+        "Kingston"
+      ],
+      "deliveryTypePreferences": [
+        "food",
+        "documents"
+      ],
+      "maxTravelComfort": "8 km",
+      "peakHours": "Lunch and evening",
+      "smartphoneType": "Android",
+      "whatsappNumber": "8765551002",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": true,
+        "helmetReady": false,
+        "readinessNotes": "Smoke test intake"
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [
+          {
+            "name": "national-id-1774317037123r.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/286046eb-bc18-4fff-8b93-6ce3856d31c3-national-id-1774317037123r.png",
+            "storageKey": "slyder-intake/2026-03-24/286046eb-bc18-4fff-8b93-6ce3856d31c3-national-id-1774317037123r.png"
+          }
+        ],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [
+          {
+            "name": "profile-photo-1774317037123r.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/134d6c64-4546-4000-ba8f-65747e462be9-profile-photo-1774317037123r.png",
+            "storageKey": "slyder-intake/2026-03-24/134d6c64-4546-4000-ba8f-65747e462be9-profile-photo-1774317037123r.png"
+          }
+        ],
+        "supporting": []
+      }
+    },
+    "status": "synced",
+    "retryCount": 0,
+    "nextAttemptAt": "2026-03-24T01:50:38.830Z",
+    "createdAt": "2026-03-24T01:50:38.830Z",
+    "updatedAt": "2026-03-24T01:52:04.301Z",
+    "lastAttemptAt": "2026-03-24T01:52:04.035Z",
+    "syncedAt": "2026-03-24T01:52:04.301Z",
+    "syncResult": {
+      "userId": "b8c10c63-d5ae-4def-b8dc-8e249308536e",
+      "slyderId": "ffbc53f9-d09a-4c53-b4da-66744ea163a4",
+      "status": "pending",
+      "syncedAt": "2026-03-24T01:52:04.143Z"
+    }
+  },
+  {
+    "id": "1c29d9e4-e186-41b3-870a-1ead5a3e1d4a",
+    "applicationId": "32b4f9f8-ad0a-4336-a4df-4fd6465bd9eb",
+    "payload": {
+      "fullName": "Smoke Slyder 1774317122725",
+      "email": "smoke-approved-1774317122725@example.com",
+      "phone": "8767122725",
+      "dateOfBirth": "1997-04-12",
+      "parish": "Kingston",
+      "address": "12 Smoke Test Avenue, Kingston",
+      "trn": "123456785",
+      "emergencyContactName": "Smoke Contact",
+      "emergencyContactPhone": "8767122725",
+      "courierType": "walker",
+      "vehicle": {
+        "make": "",
+        "model": "",
+        "year": "",
+        "color": "",
+        "plateNumber": "",
+        "registrationExpiry": "",
+        "insuranceExpiry": "",
+        "fitnessExpiry": ""
+      },
+      "workTypePreference": "part-time",
+      "availability": "Weekdays and evenings",
+      "preferredZones": [
+        "Kingston"
+      ],
+      "deliveryTypePreferences": [
+        "food",
+        "documents"
+      ],
+      "maxTravelComfort": "8 km",
+      "peakHours": "Lunch and evening",
+      "smartphoneType": "Android",
+      "whatsappNumber": "8767122725",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": true,
+        "helmetReady": false,
+        "readinessNotes": "Smoke test intake"
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [
+          {
+            "name": "national-id-1774317122725.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/8d7e7f50-c004-46c3-a2d2-89370d98b5a6-national-id-1774317122725.png",
+            "storageKey": "slyder-intake/2026-03-24/8d7e7f50-c004-46c3-a2d2-89370d98b5a6-national-id-1774317122725.png"
+          }
+        ],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [
+          {
+            "name": "profile-photo-1774317122725.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/01248383-07e2-44dc-aaf5-476589e40432-profile-photo-1774317122725.png",
+            "storageKey": "slyder-intake/2026-03-24/01248383-07e2-44dc-aaf5-476589e40432-profile-photo-1774317122725.png"
+          }
+        ],
+        "supporting": []
+      }
+    },
+    "status": "synced",
+    "retryCount": 0,
+    "nextAttemptAt": "2026-03-24T01:52:04.024Z",
+    "createdAt": "2026-03-24T01:52:04.024Z",
+    "updatedAt": "2026-03-24T01:52:05.617Z",
+    "lastAttemptAt": "2026-03-24T01:52:04.312Z",
+    "syncedAt": "2026-03-24T01:52:05.617Z",
+    "syncResult": {
+      "userId": "04463d42-ac5c-4f9b-9ba4-636ec81f7f15",
+      "slyderId": "b1b6bd51-777e-4081-b71b-ca8bd8ce251c",
+      "status": "pending",
+      "syncedAt": "2026-03-24T01:52:04.428Z"
+    }
+  },
+  {
+    "id": "270d521a-c04c-41ba-8056-6176c96a59c0",
+    "applicationId": "630ddb2e-536e-4e41-bc89-fcb56f9bb2f3",
+    "payload": {
+      "fullName": "Smoke Slyder 1774317122725r",
+      "email": "smoke-rejected-1774317122725@example.com",
+      "phone": "8767122726",
+      "dateOfBirth": "1997-04-12",
+      "parish": "Kingston",
+      "address": "12 Smoke Test Avenue, Kingston",
+      "trn": "12345678r",
+      "emergencyContactName": "Smoke Contact",
+      "emergencyContactPhone": "8767122726",
+      "courierType": "walker",
+      "vehicle": {
+        "make": "",
+        "model": "",
+        "year": "",
+        "color": "",
+        "plateNumber": "",
+        "registrationExpiry": "",
+        "insuranceExpiry": "",
+        "fitnessExpiry": ""
+      },
+      "workTypePreference": "part-time",
+      "availability": "Weekdays and evenings",
+      "preferredZones": [
+        "Kingston"
+      ],
+      "deliveryTypePreferences": [
+        "food",
+        "documents"
+      ],
+      "maxTravelComfort": "8 km",
+      "peakHours": "Lunch and evening",
+      "smartphoneType": "Android",
+      "whatsappNumber": "8767122726",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": true,
+        "helmetReady": false,
+        "readinessNotes": "Smoke test intake"
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [
+          {
+            "name": "national-id-1774317122725r.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/57bfb450-76dc-4e11-becb-5467c119b210-national-id-1774317122725r.png",
+            "storageKey": "slyder-intake/2026-03-24/57bfb450-76dc-4e11-becb-5467c119b210-national-id-1774317122725r.png"
+          }
+        ],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [
+          {
+            "name": "profile-photo-1774317122725r.png",
+            "size": 66,
+            "type": "image/png",
+            "fileUrl": "/uploads/slyder-intake/2026-03-24/d465a331-8da6-44f4-8ed7-13e9ee2206dd-profile-photo-1774317122725r.png",
+            "storageKey": "slyder-intake/2026-03-24/d465a331-8da6-44f4-8ed7-13e9ee2206dd-profile-photo-1774317122725r.png"
+          }
+        ],
+        "supporting": []
+      }
+    },
+    "status": "queued",
+    "retryCount": 0,
+    "nextAttemptAt": "2026-03-24T01:52:04.286Z",
+    "createdAt": "2026-03-24T01:52:04.286Z",
+    "updatedAt": "2026-03-24T01:52:04.286Z"
+  }
+]

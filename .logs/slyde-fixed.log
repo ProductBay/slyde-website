@@ -1,0 +1,12 @@
+
+> slyde-website@0.1.0 start:fixed
+> next start -p 4007
+
+   ▲ Next.js 15.2.1
+   - Local:        http://localhost:4007
+   - Network:      http://10.235.144.245:4007
+
+ ✓ Starting...
+ ✓ Ready in 4.5s
+[SLYDE email stub] {"channel":"email","recipient":"website.queue.sync+1774034445@example.com","subject":"SLYDE application received: SLY-2026-BE52341D","body":"Hi Website Queue Sync,\n\nThanks for applying to become a Slyder. We have received your application for Kingston Core and assigned reference SLY-2026-BE52341D.\n\nSLYDE is launching region by region across Jamaica. Your application will be reviewed alongside document completeness, area readiness, and operational requirements.\n\nWhat happens next:\n\n- You will receive WhatsApp and email confirmation that your submission is in review.\n\n- The SLYDE team may contact you if we need more information or documents.\n\n- If approved, you will receive activation guidance for the SLYDE app and setup steps.\n\nSupport: info@slyde.app | 876-594-7320"}
+[SLYDE WhatsApp stub] {"channel":"whatsapp","recipient":"876-555-9021","body":"Hi Website, SLYDE has received your application (SLY-2026-BE52341D).\n\nWe are building the network region by region across Jamaica, and your application is now in structured review for Kingston Core.\n\nYou will receive updates by WhatsApp and email if we need more information or when your application moves forward.\n\nSupport: 876-594-7320"}

@@ -1,0 +1,655 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ApplicationStatus {
+  submitted
+  under_review
+  documents_pending
+  interview_pending
+  approved
+  rejected
+}
+
+enum AccountStatus {
+  not_created
+  invited
+  activation_pending
+  active
+  suspended
+  disabled
+}
+
+enum OperationalStatus {
+  inactive
+  eligible
+  waiting_for_zone
+  live_enabled
+  suspended
+  setup_incomplete
+  readiness_pending
+  training_pending
+  eligible_offline
+  eligible_online
+  blocked
+}
+
+enum ReadinessStatus {
+  not_started
+  pending
+  failed
+  passed
+}
+
+enum OnboardingStatus {
+  application_received
+  invited
+  activation_pending
+  contract_pending
+  setup_incomplete
+  readiness_pending
+  setup_completed
+  eligible_offline
+  eligible_online
+  blocked
+  ready_for_dispatch
+}
+
+enum DocumentVerificationStatus {
+  uploaded
+  pending
+  approved
+  rejected
+  reupload_requested
+}
+
+enum DocumentType {
+  national_id
+  drivers_license
+  registration
+  insurance
+  fitness
+  profile_photo
+  other
+}
+
+enum CourierType {
+  bicycle
+  motorcycle
+  car
+  van
+  walker
+  other
+}
+
+enum NotificationStatus {
+  pending
+  queued
+  sent
+  delivered
+  failed
+  skipped
+  confirmed
+  canceled
+}
+
+enum NotificationActorType {
+  slyder_applicant
+  slyder_user
+  merchant_interest
+  merchant_user
+  admin_user
+  system_internal
+}
+
+enum NotificationChannel {
+  whatsapp
+  email
+  sms
+  internal
+}
+
+enum NotificationTriggerStatus {
+  received
+  processed
+  partially_processed
+  failed
+}
+
+enum LaunchStatus {
+  not_ready
+  building
+  near_ready
+  ready
+  live
+  paused
+}
+
+enum LegalDocumentType {
+  slyder_privacy_notice
+  slyder_onboarding_terms
+  slyder_activation_terms
+  slyder_independent_contractor_terms
+  merchant_privacy_notice
+  merchant_interest_terms
+  merchant_platform_terms
+  merchant_operations_terms
+  website_privacy_policy
+  website_terms_of_use
+  cookie_notice
+  other
+}
+
+enum LegalDocumentCategoryKey {
+  slyder
+  merchant
+  global
+}
+
+enum LegalActorType {
+  slyder_applicant
+  slyder_user
+  merchant_interest
+  merchant_user
+  public_user
+  admin_user
+}
+
+enum AcceptanceSource {
+  website_form
+  onboarding_portal
+  activation_flow
+  admin_created
+  api
+}
+
+enum LegalDocumentStatus {
+  draft
+  published
+  archived
+}
+
+enum LegalPublishAction {
+  created
+  updated
+  published
+  unpublished
+  archived
+  activated
+  deactivated
+}
+
+enum UserRoleCode {
+  platform_admin
+  operations_admin
+  slyder
+}
+
+enum UserType {
+  platform
+  slyder
+}
+
+enum EntityType {
+  application
+  user
+  slyder_profile
+}
+
+enum DeliveryChannel {
+  email
+  sms
+  whatsapp
+}
+
+enum ActivationTokenStatus {
+  issued
+  used
+  expired
+  revoked
+}
+
+enum RelatedEntityType {
+  slyder_application
+  merchant_interest
+  coverage_zone
+  slyder_profile
+  merchant_account
+}
+
+enum MerchantAvailability {
+  closed
+  waitlist
+  open
+}
+
+enum MerchantLifecycleStatus {
+  submitted
+  waitlisted
+  reviewing
+  invited_to_onboarding
+  activated
+  declined
+}
+
+model User {
+  id                 String            @id @db.Uuid
+  email              String            @unique
+  phone              String            @unique
+  fullName           String
+  passwordHash       String?
+  roles              UserRoleCode[]
+  userType           UserType
+  accountStatus      AccountStatus
+  isEnabled          Boolean
+  activationIssuedAt DateTime?         @db.Timestamptz(6)
+  lastLoginAt        DateTime?         @db.Timestamptz(6)
+  createdAt          DateTime          @db.Timestamptz(6)
+  updatedAt          DateTime          @db.Timestamptz(6)
+
+  slyderProfile              SlyderProfile?
+  approvedApplications       SlyderProfile[]        @relation("SlyderProfileApprovedBy")
+  reviewedApplications       SlyderApplication[]    @relation("SlyderApplicationReviewedBy")
+  triggeredNotifications     NotificationRecord[]   @relation("NotificationTriggeredBy")
+  sessions                   SessionRecord[]
+  activationTokens           ActivationToken[]
+  otpChallenges              OtpChallenge[]
+}
+
+model SlyderApplication {
+  id                     String                      @id @db.Uuid
+  applicationCode        String                      @unique
+  fullName               String
+  email                  String
+  phone                  String
+  dateOfBirth            DateTime                    @db.Date
+  parish                 String
+  address                String
+  trn                    String
+  emergencyContactName   String
+  emergencyContactPhone  String
+  courierType            CourierType
+  workTypePreference     String
+  availability           String
+  preferredZones         String[]
+  deliveryTypePreferences String[]
+  maxTravelComfort       String
+  peakHours              String
+  smartphoneType         String
+  whatsappNumber         String
+  gpsConfirmed           Boolean
+  internetConfirmed      Boolean
+  readinessAnswers       Json
+  agreementsAccepted     Json
+  applicationStatus      ApplicationStatus
+  accountStatus          AccountStatus
+  operationalStatus      OperationalStatus
+  readinessStatus        ReadinessStatus
+  reviewNotes            String?
+  rejectionReason        String?
+  requestedDocumentNotes String?
+  requestedDocumentTypes DocumentType[]
+  submittedAt            DateTime                    @db.Timestamptz(6)
+  reviewedAt             DateTime?                   @db.Timestamptz(6)
+  reviewedBy             String?                     @db.Uuid
+  linkedUserId           String?                     @db.Uuid
+  linkedSlyderProfileId  String?                     @db.Uuid
+  createdAt              DateTime                    @db.Timestamptz(6)
+  updatedAt              DateTime                    @db.Timestamptz(6)
+
+  reviewer        User?                    @relation("SlyderApplicationReviewedBy", fields: [reviewedBy], references: [id])
+  vehicle         SlyderApplicationVehicle?
+  documents       SlyderApplicationDocument[]
+  slyderProfile   SlyderProfile?
+
+  @@index([applicationStatus, createdAt(sort: Desc)])
+  @@index([linkedUserId])
+  @@index([linkedSlyderProfileId])
+}
+
+model SlyderApplicationVehicle {
+  id                 String            @id @db.Uuid
+  applicationId      String            @unique @db.Uuid
+  make               String?
+  model              String?
+  year               String?
+  color              String?
+  plateNumber        String?
+  registrationExpiry DateTime?         @db.Date
+  insuranceExpiry    DateTime?         @db.Date
+  fitnessExpiry      DateTime?         @db.Date
+  createdAt          DateTime          @db.Timestamptz(6)
+  updatedAt          DateTime          @db.Timestamptz(6)
+
+  application SlyderApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model SlyderApplicationDocument {
+  id                 String                     @id @db.Uuid
+  applicationId      String                     @db.Uuid
+  type               DocumentType
+  fileUrl            String
+  storageKey         String
+  fileName           String
+  mimeType           String
+  verificationStatus DocumentVerificationStatus
+  rejectionReason    String?
+  uploadedAt         DateTime                   @db.Timestamptz(6)
+  reviewedAt         DateTime?                  @db.Timestamptz(6)
+  reviewedBy         String?                    @db.Uuid
+
+  application SlyderApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, type])
+  @@index([verificationStatus, type])
+}
+
+model SlyderProfile {
+  id                            String            @id @db.Uuid
+  userId                        String            @unique @db.Uuid
+  applicationId                 String            @unique @db.Uuid
+  coverageZoneId                String?           @db.Uuid
+  displayName                   String
+  phone                         String
+  email                         String
+  courierType                   CourierType
+  onboardingStatus              OnboardingStatus
+  readinessStatus               ReadinessStatus
+  operationalStatus             OperationalStatus
+  accountStatus                 AccountStatus
+  contractAccepted              Boolean
+  contractAcceptedAt            DateTime?         @db.Timestamptz(6)
+  vehicleVerified               Boolean
+  payoutSetupComplete           Boolean
+  profileComplete               Boolean
+  trainingComplete              Boolean
+  permissionsComplete           Boolean
+  requiredAgreementsAccepted    Boolean
+  setupCompletedAt              DateTime?         @db.Timestamptz(6)
+  trainingAcknowledgedAt        DateTime?         @db.Timestamptz(6)
+  activatedAt                   DateTime?         @db.Timestamptz(6)
+  canGoOnline                   Boolean
+  canReceiveOrders              Boolean
+  profileConfirmed              Boolean
+  vehicleConfirmed              Boolean
+  payoutConfigured              Boolean
+  legalAccepted                 Boolean
+  locationPermissionConfirmed   Boolean
+  notificationPermissionConfirmed Boolean
+  equipmentConfirmed            Boolean
+  trainingAcknowledged          Boolean
+  emergencyContactConfirmed     Boolean
+  readinessChecklistStatus      ReadinessStatus
+  readinessChecklistCreatedAt   DateTime?         @db.Timestamptz(6)
+  readinessChecklistUpdatedAt   DateTime?         @db.Timestamptz(6)
+  approvedAt                    DateTime          @db.Timestamptz(6)
+  approvedBy                    String            @db.Uuid
+  createdAt                     DateTime          @db.Timestamptz(6)
+  updatedAt                     DateTime          @db.Timestamptz(6)
+
+  user         User              @relation(fields: [userId], references: [id])
+  application  SlyderApplication @relation(fields: [applicationId], references: [id])
+  coverageZone CoverageZone?     @relation(fields: [coverageZoneId], references: [id])
+  approver     User              @relation("SlyderProfileApprovedBy", fields: [approvedBy], references: [id])
+  notifications NotificationRecord[]
+
+  @@index([coverageZoneId])
+  @@index([operationalStatus, readinessStatus])
+}
+
+model StatusHistory {
+  id          String     @id @db.Uuid
+  entityType  EntityType
+  entityId    String     @db.Uuid
+  eventType   String
+  actorUserId String?    @db.Uuid
+  actorLabel  String?
+  metadata    Json?
+  createdAt   DateTime   @db.Timestamptz(6)
+
+  @@index([entityType, entityId, createdAt(sort: Desc)])
+}
+
+model ActivationToken {
+  id              String                @id @db.Uuid
+  userId          String                @db.Uuid
+  tokenHash       String                @unique
+  deliveryChannel DeliveryChannel
+  status          ActivationTokenStatus
+  issuedAt        DateTime?             @db.Timestamptz(6)
+  expiresAt       DateTime              @db.Timestamptz(6)
+  consumedAt      DateTime?             @db.Timestamptz(6)
+  createdAt       DateTime              @db.Timestamptz(6)
+  updatedAt       DateTime?             @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model OtpChallenge {
+  id         String   @id @db.Uuid
+  userId     String   @db.Uuid
+  codeHash   String
+  expiresAt  DateTime @db.Timestamptz(6)
+  consumedAt DateTime? @db.Timestamptz(6)
+  createdAt  DateTime @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model SessionRecord {
+  id        String         @id @db.Uuid
+  userId    String         @db.Uuid
+  roles     UserRoleCode[]
+  createdAt DateTime       @db.Timestamptz(6)
+  expiresAt DateTime       @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model NotificationTemplate {
+  id                String                @id @db.Uuid
+  key               String
+  name              String
+  actorType         NotificationActorType
+  eventType         String
+  channel           NotificationChannel
+  subject           String?
+  bodyTemplate      String
+  plainTextTemplate String?
+  isActive          Boolean
+  version           String
+  locale            String?
+  description       String?
+  createdAt         DateTime              @db.Timestamptz(6)
+  updatedAt         DateTime              @db.Timestamptz(6)
+
+  notifications NotificationRecord[]
+
+  @@unique([key, version, channel])
+  @@index([actorType, eventType, channel, isActive])
+}
+
+model NotificationTriggerEvent {
+  id                String                    @id @db.Uuid
+  eventKey          String                    @unique
+  relatedEntityType RelatedEntityType?
+  relatedEntityId   String?                   @db.Uuid
+  actorType         NotificationActorType?
+  actorId           String?                   @db.Uuid
+  payload           Json?
+  status            NotificationTriggerStatus
+  errorMessage      String?
+  createdAt         DateTime                  @db.Timestamptz(6)
+  updatedAt         DateTime                  @db.Timestamptz(6)
+
+  notifications NotificationRecord[]
+
+  @@index([status, createdAt])
+}
+
+model NotificationRecord {
+  id                 String                 @id @db.Uuid
+  templateId         String?                @db.Uuid
+  templateKey        String?
+  triggerEventId     String?                @db.Uuid
+  triggerEventKey    String?
+  dedupeKey          String?
+  actorType          NotificationActorType?
+  actorId            String?                @db.Uuid
+  relatedEntityType  RelatedEntityType?
+  relatedEntityId    String?                @db.Uuid
+  userId             String?                @db.Uuid
+  applicationId      String?                @db.Uuid
+  slyderProfileId    String?                @db.Uuid
+  channel            NotificationChannel
+  template           String
+  recipient          String?
+  recipientName      String?
+  status             NotificationStatus?
+  providerName       String?
+  providerMessageId  String?
+  subjectSnapshot    String?
+  bodySnapshot       String?
+  variablesSnapshot  Json?
+  failureReason      String?
+  resentFromId       String?                @db.Uuid
+  retryCount         Int?
+  lastAttemptAt      DateTime?              @db.Timestamptz(6)
+  sentAt             DateTime?              @db.Timestamptz(6)
+  deliveredAt        DateTime?              @db.Timestamptz(6)
+  createdBySystem    Boolean?
+  triggeredByUserId  String?                @db.Uuid
+  metadata           Json?
+  payload            Json
+  createdAt          DateTime               @db.Timestamptz(6)
+  updatedAt          DateTime?              @db.Timestamptz(6)
+
+  templateRef      NotificationTemplate?    @relation(fields: [templateId], references: [id])
+  triggerEvent     NotificationTriggerEvent? @relation(fields: [triggerEventId], references: [id])
+  resentFrom       NotificationRecord?      @relation("NotificationResendChain", fields: [resentFromId], references: [id])
+  resentChildren   NotificationRecord[]     @relation("NotificationResendChain")
+  triggeredByUser  User?                    @relation("NotificationTriggeredBy", fields: [triggeredByUserId], references: [id])
+  slyderProfile    SlyderProfile?           @relation(fields: [slyderProfileId], references: [id])
+
+  @@index([actorType, actorId, createdAt(sort: Desc)])
+  @@index([applicationId, createdAt(sort: Desc)])
+  @@index([slyderProfileId, createdAt(sort: Desc)])
+  @@unique([dedupeKey])
+}
+
+model CoverageZone {
+  id                  String               @id @db.Uuid
+  name                String
+  parish              String
+  requiredReadySlyders Int
+  merchantAvailability MerchantAvailability
+  estimatedLaunchLabel String
+  isLive              Boolean
+  isPaused            Boolean
+  notes               String?
+  createdAt           DateTime             @db.Timestamptz(6)
+  updatedAt           DateTime             @db.Timestamptz(6)
+
+  slyderProfiles SlyderProfile[]
+
+  @@unique([name, parish])
+}
+
+model MerchantInterest {
+  id                  String                  @id @db.Uuid
+  companyName         String
+  contactName         String
+  email               String
+  phone               String
+  whatsappNumber      String?
+  businessType        String
+  deliveryVolume      String
+  coverageNeeds       String
+  goals               String
+  parish              String?
+  town                String?
+  zoneId              String?                 @db.Uuid
+  zoneName            String?
+  operationalNotes    String?
+  lifecycleStatus     MerchantLifecycleStatus
+  linkedMerchantUserId String?                @db.Uuid
+  createdAt           DateTime                @db.Timestamptz(6)
+  updatedAt           DateTime                @db.Timestamptz(6)
+
+  @@index([lifecycleStatus, createdAt(sort: Desc)])
+}
+
+model LegalDocument {
+  id                 String                   @id @db.Uuid
+  documentType       LegalDocumentType
+  categoryKey        LegalDocumentCategoryKey
+  actorScopes        LegalActorType[]
+  requiresAcceptance Boolean
+  version            String
+  title              String
+  slug               String                   @unique
+  contentMarkdown    String
+  summary            String?
+  excerpt            String?
+  status             LegalDocumentStatus
+  isActive           Boolean
+  effectiveFrom      DateTime?                @db.Timestamptz(6)
+  publishedAt        DateTime?                @db.Timestamptz(6)
+  archivedAt         DateTime?                @db.Timestamptz(6)
+  createdBy          String?                  @db.Uuid
+  updatedBy          String?                  @db.Uuid
+  createdAt          DateTime                 @db.Timestamptz(6)
+  updatedAt          DateTime                 @db.Timestamptz(6)
+
+  acceptances    LegalAcceptance[]
+  publishHistory LegalDocumentPublishHistory[]
+
+  @@unique([documentType, version])
+  @@index([documentType, isActive])
+}
+
+model LegalAcceptance {
+  id                    String            @id @db.Uuid
+  actorType             LegalActorType
+  actorId               String            @db.Uuid
+  documentId            String            @db.Uuid
+  documentType          LegalDocumentType
+  documentTitleSnapshot String
+  documentVersion       String
+  acceptedAt            DateTime          @db.Timestamptz(6)
+  ipAddress             String?
+  userAgent             String?
+  acceptanceSource      AcceptanceSource
+  checkboxLabelSnapshot String?
+  metadata              Json?
+  createdAt             DateTime          @db.Timestamptz(6)
+  updatedAt             DateTime          @db.Timestamptz(6)
+
+  document LegalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([actorType, actorId, acceptedAt(sort: Desc)])
+  @@index([documentId, acceptedAt(sort: Desc)])
+}
+
+model LegalDocumentPublishHistory {
+  id              String            @id @db.Uuid
+  legalDocumentId String            @db.Uuid
+  action          LegalPublishAction
+  note            String?
+  actedBy         String?           @db.Uuid
+  createdAt       DateTime          @db.Timestamptz(6)
+
+  legalDocument LegalDocument @relation(fields: [legalDocumentId], references: [id], onDelete: Cascade)
+
+  @@index([legalDocumentId, createdAt(sort: Desc)])
+}

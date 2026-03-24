@@ -1,0 +1,10 @@
+
+> slyde-website@0.1.0 dev:fixed
+> next dev -p 4007
+
+Error: spawn EPERM
+    at new Promise (<anonymous>) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'spawn'
+}

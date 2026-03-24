@@ -1,0 +1,565 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "dynamicRoutes": [
+    {
+      "page": "/admin/coverage-zones/[id]",
+      "regex": "^/admin/coverage\\-zones/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/admin/coverage\\-zones/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/admin/legal-documents/[id]",
+      "regex": "^/admin/legal\\-documents/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/admin/legal\\-documents/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/admin/legal-documents/[id]/history",
+      "regex": "^/admin/legal\\-documents/([^/]+?)/history(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/admin/legal\\-documents/(?<nxtPid>[^/]+?)/history(?:/)?$"
+    },
+    {
+      "page": "/admin/notifications/logs/[id]",
+      "regex": "^/admin/notifications/logs/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/admin/notifications/logs/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/admin/notifications/templates/[id]",
+      "regex": "^/admin/notifications/templates/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/admin/notifications/templates/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/admin/slyder-applications/[id]",
+      "regex": "^/admin/slyder\\-applications/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/admin/slyder\\-applications/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/admin/coverage-zones/[id]",
+      "regex": "^/api/admin/coverage\\-zones/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/coverage\\-zones/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/admin/coverage-zones/[id]/launch-status",
+      "regex": "^/api/admin/coverage\\-zones/([^/]+?)/launch\\-status(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/coverage\\-zones/(?<nxtPid>[^/]+?)/launch\\-status(?:/)?$"
+    },
+    {
+      "page": "/api/admin/legal-documents/[id]",
+      "regex": "^/api/admin/legal\\-documents/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/legal\\-documents/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/admin/legal-documents/[id]/activate",
+      "regex": "^/api/admin/legal\\-documents/([^/]+?)/activate(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/legal\\-documents/(?<nxtPid>[^/]+?)/activate(?:/)?$"
+    },
+    {
+      "page": "/api/admin/legal-documents/[id]/archive",
+      "regex": "^/api/admin/legal\\-documents/([^/]+?)/archive(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/legal\\-documents/(?<nxtPid>[^/]+?)/archive(?:/)?$"
+    },
+    {
+      "page": "/api/admin/legal-documents/[id]/history",
+      "regex": "^/api/admin/legal\\-documents/([^/]+?)/history(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/legal\\-documents/(?<nxtPid>[^/]+?)/history(?:/)?$"
+    },
+    {
+      "page": "/api/admin/legal-documents/[id]/publish",
+      "regex": "^/api/admin/legal\\-documents/([^/]+?)/publish(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/legal\\-documents/(?<nxtPid>[^/]+?)/publish(?:/)?$"
+    },
+    {
+      "page": "/api/admin/notifications/templates/[id]",
+      "regex": "^/api/admin/notifications/templates/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/notifications/templates/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/admin/notifications/[id]/resend",
+      "regex": "^/api/admin/notifications/([^/]+?)/resend(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/notifications/(?<nxtPid>[^/]+?)/resend(?:/)?$"
+    },
+    {
+      "page": "/api/admin/notifications/[id]/retry",
+      "regex": "^/api/admin/notifications/([^/]+?)/retry(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/notifications/(?<nxtPid>[^/]+?)/retry(?:/)?$"
+    },
+    {
+      "page": "/api/admin/slyder-applications/[id]",
+      "regex": "^/api/admin/slyder\\-applications/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/slyder\\-applications/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/admin/slyder-applications/[id]/approve",
+      "regex": "^/api/admin/slyder\\-applications/([^/]+?)/approve(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/slyder\\-applications/(?<nxtPid>[^/]+?)/approve(?:/)?$"
+    },
+    {
+      "page": "/api/admin/slyder-applications/[id]/documents/[documentId]",
+      "regex": "^/api/admin/slyder\\-applications/([^/]+?)/documents/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid",
+        "nxtPdocumentId": "nxtPdocumentId"
+      },
+      "namedRegex": "^/api/admin/slyder\\-applications/(?<nxtPid>[^/]+?)/documents/(?<nxtPdocumentId>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/admin/slyder-applications/[id]/reject",
+      "regex": "^/api/admin/slyder\\-applications/([^/]+?)/reject(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/slyder\\-applications/(?<nxtPid>[^/]+?)/reject(?:/)?$"
+    },
+    {
+      "page": "/api/admin/slyder-applications/[id]/request-documents",
+      "regex": "^/api/admin/slyder\\-applications/([^/]+?)/request\\-documents(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/slyder\\-applications/(?<nxtPid>[^/]+?)/request\\-documents(?:/)?$"
+    },
+    {
+      "page": "/api/admin/slyder-applications/[id]/status",
+      "regex": "^/api/admin/slyder\\-applications/([^/]+?)/status(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/slyder\\-applications/(?<nxtPid>[^/]+?)/status(?:/)?$"
+    },
+    {
+      "page": "/employee/portal/guides/[slug]",
+      "regex": "^/employee/portal/guides/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/employee/portal/guides/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/legal/[slug]",
+      "regex": "^/legal/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/legal/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/slyder/activate/[token]",
+      "regex": "^/slyder/activate/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPtoken": "nxtPtoken"
+      },
+      "namedRegex": "^/slyder/activate/(?<nxtPtoken>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/uploads/[...path]",
+      "regex": "^/uploads/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPpath": "nxtPpath"
+      },
+      "namedRegex": "^/uploads/(?<nxtPpath>.+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/about",
+      "regex": "^/about(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/about(?:/)?$"
+    },
+    {
+      "page": "/admin",
+      "regex": "^/admin(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin(?:/)?$"
+    },
+    {
+      "page": "/admin/coverage-zones",
+      "regex": "^/admin/coverage\\-zones(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/coverage\\-zones(?:/)?$"
+    },
+    {
+      "page": "/admin/launch-control",
+      "regex": "^/admin/launch\\-control(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/launch\\-control(?:/)?$"
+    },
+    {
+      "page": "/admin/legal-acceptances",
+      "regex": "^/admin/legal\\-acceptances(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/legal\\-acceptances(?:/)?$"
+    },
+    {
+      "page": "/admin/legal-documents",
+      "regex": "^/admin/legal\\-documents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/legal\\-documents(?:/)?$"
+    },
+    {
+      "page": "/admin/legal-documents/new",
+      "regex": "^/admin/legal\\-documents/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/legal\\-documents/new(?:/)?$"
+    },
+    {
+      "page": "/admin/network-readiness",
+      "regex": "^/admin/network\\-readiness(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/network\\-readiness(?:/)?$"
+    },
+    {
+      "page": "/admin/notifications",
+      "regex": "^/admin/notifications(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/notifications(?:/)?$"
+    },
+    {
+      "page": "/admin/notifications/health",
+      "regex": "^/admin/notifications/health(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/notifications/health(?:/)?$"
+    },
+    {
+      "page": "/admin/notifications/templates",
+      "regex": "^/admin/notifications/templates(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/notifications/templates(?:/)?$"
+    },
+    {
+      "page": "/admin/slyder-applications",
+      "regex": "^/admin/slyder\\-applications(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/slyder\\-applications(?:/)?$"
+    },
+    {
+      "page": "/admin/slyders",
+      "regex": "^/admin/slyders(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/slyders(?:/)?$"
+    },
+    {
+      "page": "/admin/system-health",
+      "regex": "^/admin/system\\-health(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/system\\-health(?:/)?$"
+    },
+    {
+      "page": "/api-integrations",
+      "regex": "^/api\\-integrations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api\\-integrations(?:/)?$"
+    },
+    {
+      "page": "/become-a-slyder",
+      "regex": "^/become\\-a\\-slyder(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/become\\-a\\-slyder(?:/)?$"
+    },
+    {
+      "page": "/become-a-slyder/apply",
+      "regex": "^/become\\-a\\-slyder/apply(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/become\\-a\\-slyder/apply(?:/)?$"
+    },
+    {
+      "page": "/careers/apply",
+      "regex": "^/careers/apply(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/careers/apply(?:/)?$"
+    },
+    {
+      "page": "/contact",
+      "regex": "^/contact(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/contact(?:/)?$"
+    },
+    {
+      "page": "/coverage",
+      "regex": "^/coverage(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/coverage(?:/)?$"
+    },
+    {
+      "page": "/employee",
+      "regex": "^/employee(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee(?:/)?$"
+    },
+    {
+      "page": "/employee/login",
+      "regex": "^/employee/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee/login(?:/)?$"
+    },
+    {
+      "page": "/employee/onboarding",
+      "regex": "^/employee/onboarding(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee/onboarding(?:/)?$"
+    },
+    {
+      "page": "/employee/portal",
+      "regex": "^/employee/portal(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee/portal(?:/)?$"
+    },
+    {
+      "page": "/employee/portal/announcements",
+      "regex": "^/employee/portal/announcements(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee/portal/announcements(?:/)?$"
+    },
+    {
+      "page": "/employee/portal/guides",
+      "regex": "^/employee/portal/guides(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee/portal/guides(?:/)?$"
+    },
+    {
+      "page": "/employee/portal/pay",
+      "regex": "^/employee/portal/pay(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee/portal/pay(?:/)?$"
+    },
+    {
+      "page": "/employee/portal/profile",
+      "regex": "^/employee/portal/profile(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee/portal/profile(?:/)?$"
+    },
+    {
+      "page": "/employee-hub",
+      "regex": "^/employee\\-hub(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee\\-hub(?:/)?$"
+    },
+    {
+      "page": "/employee-hub/handbook",
+      "regex": "^/employee\\-hub/handbook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/employee\\-hub/handbook(?:/)?$"
+    },
+    {
+      "page": "/faq",
+      "regex": "^/faq(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/faq(?:/)?$"
+    },
+    {
+      "page": "/for-businesses",
+      "regex": "^/for\\-businesses(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/for\\-businesses(?:/)?$"
+    },
+    {
+      "page": "/grow-your-area",
+      "regex": "^/grow\\-your\\-area(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/grow\\-your\\-area(?:/)?$"
+    },
+    {
+      "page": "/icon.svg",
+      "regex": "^/icon\\.svg(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/icon\\.svg(?:/)?$"
+    },
+    {
+      "page": "/legal",
+      "regex": "^/legal(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/legal(?:/)?$"
+    },
+    {
+      "page": "/privacy",
+      "regex": "^/privacy(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/privacy(?:/)?$"
+    },
+    {
+      "page": "/safety",
+      "regex": "^/safety(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/safety(?:/)?$"
+    },
+    {
+      "page": "/slyder/activate",
+      "regex": "^/slyder/activate(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder/activate(?:/)?$"
+    },
+    {
+      "page": "/slyder/login",
+      "regex": "^/slyder/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder/login(?:/)?$"
+    },
+    {
+      "page": "/slyder/onboarding",
+      "regex": "^/slyder/onboarding(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder/onboarding(?:/)?$"
+    },
+    {
+      "page": "/slyder/onboarding/complete",
+      "regex": "^/slyder/onboarding/complete(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder/onboarding/complete(?:/)?$"
+    },
+    {
+      "page": "/slyder/onboarding/legal",
+      "regex": "^/slyder/onboarding/legal(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder/onboarding/legal(?:/)?$"
+    },
+    {
+      "page": "/slyder/onboarding/readiness",
+      "regex": "^/slyder/onboarding/readiness(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder/onboarding/readiness(?:/)?$"
+    },
+    {
+      "page": "/slyder/onboarding/setup",
+      "regex": "^/slyder/onboarding/setup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder/onboarding/setup(?:/)?$"
+    },
+    {
+      "page": "/slyder/onboarding/welcome",
+      "regex": "^/slyder/onboarding/welcome(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder/onboarding/welcome(?:/)?$"
+    },
+    {
+      "page": "/slyder-payouts",
+      "regex": "^/slyder\\-payouts(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/slyder\\-payouts(?:/)?$"
+    },
+    {
+      "page": "/success/api-request",
+      "regex": "^/success/api\\-request(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/success/api\\-request(?:/)?$"
+    },
+    {
+      "page": "/success/business-inquiry",
+      "regex": "^/success/business\\-inquiry(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/success/business\\-inquiry(?:/)?$"
+    },
+    {
+      "page": "/success/contact",
+      "regex": "^/success/contact(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/success/contact(?:/)?$"
+    },
+    {
+      "page": "/success/slyder-application",
+      "regex": "^/success/slyder\\-application(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/success/slyder\\-application(?:/)?$"
+    },
+    {
+      "page": "/terms",
+      "regex": "^/terms(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/terms(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "RSC",
+    "varyHeader": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+    "prefetchHeader": "Next-Router-Prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "Next-Router-Segment-Prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  },
+  "rewrites": []
+}

@@ -1,0 +1,30 @@
+# ENV FILES (NEVER COMMIT)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# DEPENDENCIES (CRITICAL)
+node_modules/
+
+# NEXT.JS BUILD FILES
+.next/
+out/
+
+# PRISMA
+.prisma
+
+# BACKUPS
+backups/
+
+# LOG FILES
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SYSTEM FILES
+.DS_Store
+
+# OPTIONAL (SAFE)
+.vscode/

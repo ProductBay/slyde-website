@@ -1,0 +1,8 @@
+{
+    "port":  4007,
+    "wrapperPid":  31672,
+    "pid":  10760,
+    "startedAt":  "2026-03-20T14:20:05.6038426-05:00",
+    "mode":  "start:fixed",
+    "log":  "C:\\Users\\ashan\\SLYDE Website\\.logs\\slyde-fixed.log"
+}

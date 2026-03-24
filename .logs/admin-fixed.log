@@ -1,0 +1,22 @@
+
+> slyde-website@0.1.0 start
+> next start
+
+   ▲ Next.js 15.2.1
+   - Local:        http://localhost:64610
+   - Network:      http://10.235.144.245:64610
+
+ ✓ Starting...
+ ✓ Ready in 1470ms
+ ⨯ TypeError: Cannot read properties of undefined (reading 'map')
+    at p (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:13619)
+    at <unknown> (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:13560)
+    at t (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:3050) {
+  digest: '3085427946'
+}
+ ⨯ TypeError: Cannot read properties of undefined (reading 'map')
+    at p (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:13619)
+    at <unknown> (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:13560)
+    at t (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:3050) {
+  digest: '3085427946'
+}

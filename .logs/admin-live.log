@@ -1,0 +1,60 @@
+
+> slyde-website@0.1.0 start
+> next start
+
+   ▲ Next.js 15.2.1
+   - Local:        http://localhost:57320
+   - Network:      http://10.235.144.245:57320
+
+ ✓ Starting...
+ ✓ Ready in 1730ms
+ ⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at y (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:2864)
+    at async s (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:24945)
+    at async n (C:\Users\ashan\SLYDE Website\.next\server\chunks\9743.js:1:2609)
+    at async h (C:\Users\ashan\SLYDE Website\.next\server\app\admin\slyder-applications\[id]\page.js:1:7066) {
+  digest: '3005553928'
+}
+ ⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at y (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:2864)
+    at async n (C:\Users\ashan\SLYDE Website\.next\server\chunks\9743.js:1:2807)
+    at async m (C:\Users\ashan\SLYDE Website\.next\server\app\admin\slyder-applications\page.js:1:9262) {
+  digest: '447400322'
+}
+ ⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at y (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:2864)
+    at async n (C:\Users\ashan\SLYDE Website\.next\server\chunks\9743.js:1:2807)
+    at async o (C:\Users\ashan\SLYDE Website\.next\server\app\admin\network-readiness\page.js:1:780) {
+  digest: '1861482562'
+}
+ ⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at y (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:2864)
+    at async n (C:\Users\ashan\SLYDE Website\.next\server\chunks\9743.js:1:2807)
+    at async d (C:\Users\ashan\SLYDE Website\.next\server\app\admin\launch-control\page.js:1:2490) {
+  digest: '65229037'
+}
+ ⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at y (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:2864)
+    at async n (C:\Users\ashan\SLYDE Website\.next\server\chunks\9743.js:1:2807)
+    at async p (C:\Users\ashan\SLYDE Website\.next\server\app\admin\notifications\page.js:1:2967) {
+  digest: '4188461557'
+}
+ ⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at y (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:2864)
+    at async n (C:\Users\ashan\SLYDE Website\.next\server\chunks\9743.js:1:2807)
+    at async p (C:\Users\ashan\SLYDE Website\.next\server\app\admin\notifications\page.js:1:2967) {
+  digest: '4188461557'
+}
+ ⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at y (C:\Users\ashan\SLYDE Website\.next\server\chunks\1967.js:1:2864)
+    at async n (C:\Users\ashan\SLYDE Website\.next\server\chunks\9743.js:1:2807)
+    at async h (C:\Users\ashan\SLYDE Website\.next\server\app\admin\slyder-applications\[id]\page.js:1:7066) {
+  digest: '2679791736'
+}
