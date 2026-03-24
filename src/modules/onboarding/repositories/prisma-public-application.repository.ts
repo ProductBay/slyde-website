@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import * as PrismaClient from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { normalizeEmail, normalizePhone } from "@/modules/onboarding/services/onboarding-rules.service";
 import type {
@@ -61,8 +61,8 @@ export async function createPublicApplicationInPrisma(
         whatsappNumber: application.whatsappNumber,
         gpsConfirmed: application.gpsConfirmed,
         internetConfirmed: application.internetConfirmed,
-        readinessAnswers: application.readinessAnswers as Prisma.InputJsonValue,
-        agreementsAccepted: application.agreementsAccepted as Prisma.InputJsonValue,
+        readinessAnswers: application.readinessAnswers as PrismaClient.Prisma.InputJsonValue,
+        agreementsAccepted: application.agreementsAccepted as PrismaClient.Prisma.InputJsonValue,
         applicationStatus: application.applicationStatus,
         accountStatus: application.accountStatus,
         operationalStatus: application.operationalStatus,
