@@ -8,7 +8,7 @@ export const metadata: Metadata = buildMetadata(
   "Coverage",
   "Explore current SLYDE service focus areas, rollout zones, and the Jamaica-first expansion model.",
   "/coverage",
-);pl
+);
 
 export default function CoveragePage() {
   return (
