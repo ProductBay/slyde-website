@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getSessionContext, hasRole } from "@/server/auth/session";
 import { readPersistenceStore } from "@/server/persistence";
 
@@ -23,5 +24,5 @@ export async function getAdminPageContext() {
     }
   }
 
-  throw new Error("Admin access requires an authenticated admin user.");
+  redirect("/employee/login");
 }
