@@ -24,5 +24,5 @@ export async function getAdminPageContext() {
     }
   }
 
-  redirect("/employee/login");
+  redirect("/admin/login");
 }
