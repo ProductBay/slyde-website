@@ -62,11 +62,10 @@ async function ensureCoverageZones(store?: OnboardingStore) {
       return store;
     }
 
-    return withStoreTransaction(async (transactionStore) => {
-      await syncApplicationsFromPrisma(transactionStore);
-      hydrateZones(transactionStore);
-      return transactionStore;
-    });
+    const snapshotStore = await readStore();
+    await syncApplicationsFromPrisma(snapshotStore);
+    hydrateZones(snapshotStore);
+    return snapshotStore;
   }
 
   if (store) {
@@ -74,10 +73,9 @@ async function ensureCoverageZones(store?: OnboardingStore) {
     return store;
   }
 
-  return withStoreTransaction(async (transactionStore) => {
-    hydrateZones(transactionStore);
-    return transactionStore;
-  });
+  const snapshotStore = await readStore();
+  hydrateZones(snapshotStore);
+  return snapshotStore;
 }
 
 async function syncApplicationsFromPrisma(store: OnboardingStore) {
