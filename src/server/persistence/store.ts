@@ -14,8 +14,9 @@ import type {
   StoredUser,
 } from "@/types/backend/onboarding";
 import { hashPassword } from "@/server/auth/passwords";
+import { getDataDirectory } from "@/server/storage-paths";
 
-const DATA_DIRECTORY = path.join(process.cwd(), ".data");
+const DATA_DIRECTORY = getDataDirectory();
 const DATA_FILE = path.join(DATA_DIRECTORY, "slyde-onboarding-store.json");
 const DATA_BACKUP_FILE = path.join(DATA_DIRECTORY, "slyde-onboarding-store.backup.json");
 

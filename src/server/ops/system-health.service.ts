@@ -1,10 +1,10 @@
 import { access, mkdir } from "node:fs/promises";
-import path from "node:path";
 import { prisma } from "@/server/db/prisma";
 import { isEmailConfigured, isSmsConfigured, isWhatsappConfigured } from "@/server/notifications/providers";
 import { getPersistenceDriver } from "@/server/persistence/repository";
 import { readStore } from "@/server/persistence/store";
 import { getTurnstileConfig } from "@/server/security/turnstile";
+import { getDataDirectory, getUploadsDirectory } from "@/server/storage-paths";
 
 function isLocalLikeUrl(value: string | undefined) {
   if (!value) return true;
@@ -13,8 +13,8 @@ function isLocalLikeUrl(value: string | undefined) {
 
 export async function getSystemHealthSummary() {
   const persistenceDriver = getPersistenceDriver();
-  const dataDirectory = path.join(process.cwd(), ".data");
-  const uploadsDirectory = path.join(dataDirectory, "uploads");
+  const dataDirectory = getDataDirectory();
+  const uploadsDirectory = getUploadsDirectory();
   const turnstile = getTurnstileConfig();
   const websiteBaseUrl = process.env.SLYDE_WEBSITE_BASE_URL;
   const slydeAppSyncBaseUrl = process.env.SLYDE_APP_SYNC_BASE_URL;

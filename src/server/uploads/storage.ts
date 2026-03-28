@@ -1,8 +1,9 @@
 import { access } from "node:fs/promises";
 import path from "node:path";
 import { constants as fsConstants } from "node:fs";
+import { getUploadsDirectory } from "@/server/storage-paths";
 
-const uploadsRoot = path.join(process.cwd(), ".data", "uploads");
+const uploadsRoot = getUploadsDirectory();
 
 export function getUploadsRoot() {
   return uploadsRoot;

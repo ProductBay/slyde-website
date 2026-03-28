@@ -3,6 +3,7 @@ import path from "node:path";
 import type { PublicSlyderApplicationInput } from "@/modules/onboarding/schemas/onboarding.schemas";
 import { syncPublicSlyderApplicationToSlydeApp, type SyncedSlydeAppApplication } from "@/modules/onboarding/services/slyde-app-sync.service";
 import { linkPublicSlyderApplicationToSyncedApp } from "@/modules/onboarding/services/onboarding.service";
+import { getDataDirectory } from "@/server/storage-paths";
 
 type AppSyncQueueStatus = "queued" | "processing" | "synced" | "retrying" | "failed";
 
@@ -21,7 +22,7 @@ type AppSyncQueueItem = {
   updatedAt: string;
 };
 
-const QUEUE_DIRECTORY = path.join(process.cwd(), ".data");
+const QUEUE_DIRECTORY = getDataDirectory();
 const QUEUE_FILE = path.join(QUEUE_DIRECTORY, "slyde-app-sync-queue.json");
 const MAX_RETRIES = 8;
 
