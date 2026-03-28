@@ -351,6 +351,7 @@ export function getNotificationHistoryForEntityInStore(store: OnboardingStore, e
       if (item.relatedEntityType === entityType && item.relatedEntityId === entityId) return true;
       if (entityType === "slyder_application" && item.applicationId === entityId) return true;
       if (entityType === "slyder_profile" && item.slyderProfileId === entityId) return true;
+      if (entityType === "employee_application" && item.relatedEntityId === entityId) return true;
       return false;
     })
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
@@ -599,6 +600,35 @@ export async function resendNotification(store: OnboardingStore, notificationId:
     };
   }
 
+  if (templateKey === "employee_activation_ready_email") {
+    const activationToken = typeof existing.payload?.activationToken === "string" ? existing.payload.activationToken : undefined;
+
+    if (!activationToken) {
+      throw new Error("Employee activation resend is missing the stored token.");
+    }
+
+    const websiteBaseUrl = getWebsiteBaseUrl();
+    const activationUrl = `${websiteBaseUrl}/employee/activate/${activationToken}`;
+    const loginUrl = `${websiteBaseUrl}/employee/login`;
+    const onboardingUrl = `${websiteBaseUrl}/employee/onboarding`;
+
+    variables = {
+      ...(existing.variablesSnapshot ?? {}),
+      activationToken,
+      activationUrl,
+      loginUrl,
+      onboardingUrl,
+    };
+
+    payload = {
+      ...(existing.payload ?? {}),
+      activationToken,
+      activationUrl,
+      loginUrl,
+      onboardingUrl,
+    };
+  }
+
   return sendTemplateNotificationInStore(store, {
     templateKey,
     actorType: existing.actorType || "system_internal",
@@ -662,6 +692,218 @@ function getApplicationFirstName(store: OnboardingStore, applicationId: string) 
 function getMerchantFirstName(store: OnboardingStore, merchantInterestId: string) {
   const merchant = store.merchantInterests.find((item) => item.id === merchantInterestId);
   return merchant?.contactName.split(" ")[0] || "there";
+}
+
+function getEmployeeApplicationFirstName(store: OnboardingStore, applicationId: string) {
+  const application = store.employeeApplications.find((item) => item.id === applicationId);
+  return application?.fullName.split(" ")[0] || "there";
+}
+
+export async function sendEmployeeApplicationSubmittedNotifications(store: OnboardingStore, applicationId: string) {
+  const application = store.employeeApplications.find((item) => item.id === applicationId);
+  if (!application) throw new Error("Employee application not found");
+
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `employee_application_submitted:${application.id}`,
+    relatedEntityType: "employee_application",
+    relatedEntityId: application.id,
+    actorType: "employee_applicant",
+    actorId: application.id,
+    payload: { roleInterest: application.roleInterest },
+  });
+  if (isDuplicate) return [];
+
+  const websiteBaseUrl = getWebsiteBaseUrl();
+  const reviewUrl = `${websiteBaseUrl}/admin/employee-applications/${application.id}`;
+  const applicantVariables = {
+    firstName: getEmployeeApplicationFirstName(store, application.id),
+    fullName: application.fullName,
+    roleInterest: application.roleInterest,
+    departmentInterest: application.departmentInterest,
+    supportEmail: "info@slyde.app",
+    supportPhone: "876-594-7320",
+  };
+
+  const results = [
+    await sendTemplateNotificationInStore(store, {
+      templateKey: "employee_application_received_email",
+      actorType: "employee_applicant",
+      actorId: application.id,
+      recipient: application.email,
+      recipientName: application.fullName,
+      relatedEntityType: "employee_application",
+      relatedEntityId: application.id,
+      variables: applicantVariables,
+      payload: { roleInterest: application.roleInterest, departmentInterest: application.departmentInterest },
+      triggerEventId: event.id,
+      triggerEventKey: event.eventKey,
+      dedupeKey: `employee_application_received:email:${application.id}`,
+    }),
+  ];
+
+  const adminUsers = store.users.filter((user) => user.roles.includes("platform_admin") || user.roles.includes("operations_admin"));
+  for (const admin of adminUsers) {
+    results.push(
+      await sendTemplateNotificationInStore(store, {
+        templateKey: "admin_employee_application_submitted_email",
+        actorType: "admin_user",
+        actorId: admin.id,
+        recipient: admin.email,
+        recipientName: admin.fullName,
+        relatedEntityType: "employee_application",
+        relatedEntityId: application.id,
+        variables: {
+          fullName: application.fullName,
+          roleInterest: application.roleInterest,
+          departmentInterest: application.departmentInterest,
+          location: application.location,
+          reviewUrl,
+        },
+        payload: { applicationId: application.id, reviewUrl },
+        triggerEventId: event.id,
+        triggerEventKey: event.eventKey,
+        dedupeKey: `admin_employee_application_submitted:email:${application.id}:${admin.id}`,
+      }),
+    );
+  }
+
+  updateTriggerStatus(store, event.id, results.some((item) => item.status === "failed") ? "partially_processed" : "processed");
+  return results;
+}
+
+export async function sendEmployeeActivationNotification(
+  store: OnboardingStore,
+  userId: string,
+  applicationId: string,
+  activationToken: string,
+) {
+  const application = store.employeeApplications.find((item) => item.id === applicationId);
+  const user = store.users.find((item) => item.id === userId);
+  if (!application || !user) throw new Error("Linked employee activation records not found");
+
+  const websiteBaseUrl = getWebsiteBaseUrl();
+  const activationUrl = `${websiteBaseUrl}/employee/activate/${activationToken}`;
+  const loginUrl = `${websiteBaseUrl}/employee/login`;
+  const onboardingUrl = `${websiteBaseUrl}/employee/onboarding`;
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `employee_activation_ready:${userId}:${applicationId}`,
+    relatedEntityType: "employee_application",
+    relatedEntityId: applicationId,
+    actorType: "employee_user",
+    actorId: userId,
+    payload: { activationUrl, loginUrl, onboardingUrl },
+  });
+  if (isDuplicate) return [];
+
+  const result = await sendTemplateNotificationInStore(store, {
+    templateKey: "employee_activation_ready_email",
+    actorType: "employee_user",
+    actorId: userId,
+    recipient: user.email,
+    recipientName: user.fullName,
+    relatedEntityType: "employee_application",
+    relatedEntityId: applicationId,
+    userId,
+    variables: {
+      fullName: application.fullName,
+      roleInterest: application.roleInterest,
+      departmentInterest: application.departmentInterest,
+      activationToken,
+      activationUrl,
+      loginUrl,
+      onboardingUrl,
+    },
+    payload: { activationToken, activationUrl, loginUrl, onboardingUrl },
+    triggerEventId: event.id,
+    triggerEventKey: event.eventKey,
+    dedupeKey: `employee_activation_ready:email:${userId}:${applicationId}`,
+  });
+
+  updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
+  return [result];
+}
+
+export async function sendEmployeeActivationCompletedNotification(
+  store: OnboardingStore,
+  userId: string,
+  applicationId: string,
+) {
+  const application = store.employeeApplications.find((item) => item.id === applicationId);
+  const user = store.users.find((item) => item.id === userId);
+  if (!application || !user) throw new Error("Linked employee activation completion records not found");
+
+  const websiteBaseUrl = getWebsiteBaseUrl();
+  const loginUrl = `${websiteBaseUrl}/employee/login`;
+  const onboardingUrl = `${websiteBaseUrl}/employee/onboarding`;
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `employee_activation_completed:${userId}:${applicationId}`,
+    relatedEntityType: "employee_application",
+    relatedEntityId: applicationId,
+    actorType: "employee_user",
+    actorId: userId,
+    payload: { loginUrl, onboardingUrl },
+  });
+  if (isDuplicate) return [];
+
+  const result = await sendTemplateNotificationInStore(store, {
+    templateKey: "employee_activation_completed_email",
+    actorType: "employee_user",
+    actorId: userId,
+    recipient: user.email,
+    recipientName: user.fullName,
+    relatedEntityType: "employee_application",
+    relatedEntityId: applicationId,
+    userId,
+    variables: {
+      fullName: application.fullName,
+      loginUrl,
+      onboardingUrl,
+    },
+    payload: { loginUrl, onboardingUrl },
+    triggerEventId: event.id,
+    triggerEventKey: event.eventKey,
+    dedupeKey: `employee_activation_completed:email:${userId}:${applicationId}`,
+  });
+
+  updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
+  return [result];
+}
+
+export async function sendEmployeeRejectedNotification(store: OnboardingStore, applicationId: string, reason: string) {
+  const application = store.employeeApplications.find((item) => item.id === applicationId);
+  if (!application) throw new Error("Employee application not found");
+
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `employee_application_rejected:${application.id}:${reason}`,
+    relatedEntityType: "employee_application",
+    relatedEntityId: application.id,
+    actorType: "employee_applicant",
+    actorId: application.id,
+    payload: { reason },
+  });
+  if (isDuplicate) return [];
+
+  const result = await sendTemplateNotificationInStore(store, {
+    templateKey: "employee_application_rejected_email",
+    actorType: "employee_applicant",
+    actorId: application.id,
+    recipient: application.email,
+    recipientName: application.fullName,
+    relatedEntityType: "employee_application",
+    relatedEntityId: application.id,
+    variables: {
+      fullName: application.fullName,
+      roleInterest: application.roleInterest,
+      reviewReason: reason,
+    },
+    payload: { reason },
+    triggerEventId: event.id,
+    triggerEventKey: event.eventKey,
+    dedupeKey: `employee_application_rejected:email:${application.id}`,
+  });
+
+  updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
+  return [result];
 }
 
 function classifySlyderPostReviewState(status: SetupStatusResponse) {

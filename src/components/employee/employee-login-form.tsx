@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, startTransition } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -54,6 +55,14 @@ export function EmployeeLoginForm() {
         <Button type="button" onClick={submit} disabled={pending} className="w-full">
           {pending ? "Signing in..." : "Sign in to employee portal"}
         </Button>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <Link href="/careers/apply" className="font-semibold text-sky-700">
+            Need to apply first?
+          </Link>
+          <Link href="/employee/activate" className="font-semibold text-slate-700">
+            Already invited? Open activation help
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 rounded-[1.5rem] border border-cyan-100 bg-cyan-50/70 p-4 text-sm leading-7 text-cyan-900">

@@ -43,7 +43,7 @@ export function EmployeeApplicationForm() {
       }
 
       setPending(false);
-      setMessage("Application submitted. SLYDE can now review you for internal employee onboarding.");
+      setMessage("Application submitted. SLYDE can now review your employee application and send an activation invite if you are selected to move forward.");
     });
   }
 

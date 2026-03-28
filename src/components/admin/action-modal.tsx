@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 
-type ModalKind = "approve" | "reject" | "request-documents" | "zone" | "resend";
+type ModalKind = "approve" | "reject" | "request-documents" | "zone" | "resend" | "employee-invite";
 
 export function ActionModal({
   triggerLabel,
@@ -40,6 +40,8 @@ export function ActionModal({
   const finalPayload =
     kind === "approve"
       ? { ...payload, reviewNotes: note || undefined }
+      : kind === "employee-invite"
+        ? { ...payload, reviewNotes: note || undefined }
       : kind === "reject"
         ? { ...payload, reason: reason || "Rejected by admin review" }
         : kind === "request-documents"
@@ -53,6 +55,8 @@ export function ActionModal({
   const successMessage =
     kind === "approve"
       ? "The application was approved and the Slyder activation flow has been started."
+      : kind === "employee-invite"
+        ? "The employee invite was sent and activation has been started."
       : kind === "reject"
         ? "The application was rejected successfully."
         : kind === "request-documents"
@@ -71,9 +75,9 @@ export function ActionModal({
           <div className="surface-panel w-full max-w-lg p-6">
             <h2 className="text-2xl font-semibold text-slate-950">{title}</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
-            {kind === "approve" || kind === "request-documents" ? (
+            {kind === "approve" || kind === "employee-invite" || kind === "request-documents" ? (
               <label className="field-shell mt-5 block">
-                <span className="field-label">{kind === "approve" ? "Internal review note" : "Message or note"}</span>
+                <span className="field-label">{kind === "request-documents" ? "Message or note" : "Internal review note"}</span>
                 <textarea className="field-input min-h-28" value={note} onChange={(event) => setNote(event.target.value)} />
               </label>
             ) : null}

@@ -83,6 +83,8 @@ export const notificationStatuses = [
 export const notificationActorTypes = [
   "slyder_applicant",
   "slyder_user",
+  "employee_applicant",
+  "employee_user",
   "merchant_interest",
   "merchant_user",
   "admin_user",
@@ -417,7 +419,14 @@ export type NotificationRecord = {
   dedupeKey?: string;
   actorType?: NotificationActorType;
   actorId?: string;
-  relatedEntityType?: "slyder_application" | "merchant_interest" | "coverage_zone" | "slyder_profile" | "merchant_account";
+  relatedEntityType?:
+    | "slyder_application"
+    | "merchant_interest"
+    | "coverage_zone"
+    | "slyder_profile"
+    | "merchant_account"
+    | "employee_application"
+    | "employee_profile";
   relatedEntityId?: string;
   userId?: string;
   applicationId?: string;
@@ -449,7 +458,14 @@ export type NotificationRecord = {
 export type NotificationTriggerEvent = {
   id: string;
   eventKey: string;
-  relatedEntityType?: "slyder_application" | "merchant_interest" | "coverage_zone" | "slyder_profile" | "merchant_account";
+  relatedEntityType?:
+    | "slyder_application"
+    | "merchant_interest"
+    | "coverage_zone"
+    | "slyder_profile"
+    | "merchant_account"
+    | "employee_application"
+    | "employee_profile";
   relatedEntityId?: string;
   actorType?: NotificationActorType;
   actorId?: string;

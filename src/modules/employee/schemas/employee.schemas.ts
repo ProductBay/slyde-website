@@ -28,6 +28,22 @@ export const employeeApplicationSchema = z.object({
   managerTrackInterest: z.boolean().optional(),
 });
 
+export const employeeApplicationInviteSchema = z.object({
+  reviewNotes: z.string().trim().optional(),
+});
+
+export const employeeApplicationRejectSchema = z.object({
+  reason: nonEmpty("Rejection reason is required"),
+});
+
+export const employeeSetPasswordSchema = z.object({
+  token: nonEmpty("Activation token is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
 export type EmployeeLoginInput = z.infer<typeof employeeLoginSchema>;
 export type EmployeeOnboardingInput = z.infer<typeof employeeOnboardingSchema>;
 export type EmployeeApplicationInput = z.infer<typeof employeeApplicationSchema>;
+export type EmployeeApplicationInviteInput = z.infer<typeof employeeApplicationInviteSchema>;
+export type EmployeeApplicationRejectInput = z.infer<typeof employeeApplicationRejectSchema>;
+export type EmployeeSetPasswordInput = z.infer<typeof employeeSetPasswordSchema>;

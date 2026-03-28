@@ -2,6 +2,9 @@ import type {
   AccountStatus,
   ApplicationStatus,
   CourierType,
+  EmployeeApplicationStatus,
+  EmployeeDepartmentCode,
+  EmployeeEmploymentType,
   DocumentType,
   DocumentVerificationStatus,
   LaunchStatus,
@@ -234,6 +237,7 @@ export type AdminDashboardData = {
   kpis: DashboardKpi[];
   topZones: AdminZoneView[];
   pendingApplications: AdminApplicationRow[];
+  pendingEmployeeApplications: AdminEmployeeApplicationRow[];
   notificationSummary: {
     whatsappSent: number;
     emailSent: number;
@@ -241,4 +245,46 @@ export type AdminDashboardData = {
     recentFailures: AdminNotificationView[];
   };
   launchGroups: Record<LaunchStatus, AdminZoneView[]>;
+};
+
+export type AdminEmployeeApplicationRow = {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  roleInterest: string;
+  departmentInterest: EmployeeDepartmentCode;
+  employmentType: EmployeeEmploymentType;
+  location: string;
+  submittedAt: string;
+  status: EmployeeApplicationStatus;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  linkedUserId?: string;
+  linkedEmployeeProfileId?: string;
+  inviteEmailStatus: NotificationStatus | "not_sent";
+};
+
+export type AdminEmployeeApplicationDetail = {
+  application: AdminEmployeeApplicationRow & {
+    experienceSummary: string;
+    managerTrackInterest?: boolean;
+    notes?: string;
+  };
+  linkedUser: {
+    id: string;
+    fullName: string;
+    email: string;
+    accountStatus: AccountStatus;
+    isEnabled: boolean;
+  } | null;
+  linkedEmployeeProfile: {
+    id: string;
+    employeeCode: string;
+    title: string;
+    department: EmployeeDepartmentCode;
+    isOnboarded: boolean;
+    onboardingCompletedAt?: string;
+  } | null;
+  notificationHistory: AdminNotificationView[];
 };

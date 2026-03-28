@@ -122,6 +122,60 @@ export default async function AdminDashboardPage() {
           <LaunchStatusBoard groups={dashboard.launchGroups} />
         </div>
       </section>
+
+      <section className="mt-8">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">Employee Queue</p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950">Internal applicants awaiting onboarding invites</h2>
+          </div>
+          <Link href="/admin/employee-applications" className="text-sm font-semibold text-sky-700">
+            Open employee queue
+          </Link>
+        </div>
+
+        {dashboard.pendingEmployeeApplications.length ? (
+          <DataTable>
+            <table className="min-w-[62rem] divide-y divide-slate-200">
+              <thead className="bg-slate-50/90">
+                <tr>
+                  <TableHeaderCell>Applicant</TableHeaderCell>
+                  <TableHeaderCell>Role / Department</TableHeaderCell>
+                  <TableHeaderCell>Location</TableHeaderCell>
+                  <TableHeaderCell>Submitted</TableHeaderCell>
+                  <TableHeaderCell>Application</TableHeaderCell>
+                  <TableHeaderCell>Invite Email</TableHeaderCell>
+                  <TableHeaderCell>Quick Action</TableHeaderCell>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {dashboard.pendingEmployeeApplications.map((item) => (
+                  <tr key={item.id}>
+                    <TableCell>
+                      <p className="font-semibold text-slate-950">{item.fullName}</p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">{item.email}</p>
+                    </TableCell>
+                    <TableCell>{item.roleInterest} / {item.departmentInterest}</TableCell>
+                    <TableCell>{item.location}</TableCell>
+                    <TableCell>{new Date(item.submittedAt).toLocaleDateString("en-JM")}</TableCell>
+                    <TableCell><StatusBadge status={item.status} /></TableCell>
+                    <TableCell><StatusBadge status={item.inviteEmailStatus} /></TableCell>
+                    <TableCell>
+                      <Link href={`/admin/employee-applications/${item.id}`} className="text-sm font-semibold text-sky-700">
+                        Review
+                      </Link>
+                    </TableCell>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DataTable>
+        ) : (
+          <div className="surface-panel p-6 text-sm leading-7 text-slate-600">
+            No employee applicants are waiting for review right now.
+          </div>
+        )}
+      </section>
     </AdminShell>
   );
 }

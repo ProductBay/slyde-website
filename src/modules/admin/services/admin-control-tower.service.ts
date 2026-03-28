@@ -10,7 +10,16 @@ import {
   retryFailedNotification,
 } from "@/server/notifications/notification.service";
 import { uploadExistsForUrl } from "@/server/uploads/storage";
-import type { AdminApplicationDetail, AdminApplicationRow, AdminDashboardData, AdminNotificationView, AdminSlyderRow, AdminZoneView } from "@/types/admin";
+import type {
+  AdminApplicationDetail,
+  AdminApplicationRow,
+  AdminDashboardData,
+  AdminEmployeeApplicationDetail,
+  AdminEmployeeApplicationRow,
+  AdminNotificationView,
+  AdminSlyderRow,
+  AdminZoneView,
+} from "@/types/admin";
 import type { CoverageZone, LaunchStatus, NotificationRecord, NotificationStatus, OnboardingStore } from "@/types/backend/onboarding";
 import { zoneStatusMessages } from "@/content/site";
 import { listPublicApplicationsFromPrisma } from "@/modules/onboarding/repositories/prisma-public-application.repository";
@@ -226,9 +235,13 @@ function buildNotificationView(store: OnboardingStore, notification: Notificatio
   const merchant = notification.relatedEntityType === "merchant_interest"
     ? store.merchantInterests.find((item) => item.id === notification.relatedEntityId)
     : null;
+  const employeeApplication = notification.relatedEntityType === "employee_application"
+    ? store.employeeApplications.find((item) => item.id === notification.relatedEntityId)
+    : null;
   const applicantName =
     application?.fullName ||
     profile?.displayName ||
+    employeeApplication?.fullName ||
     merchant?.contactName ||
     (notification.userId ? store.users.find((user) => user.id === notification.userId)?.fullName : null) ||
     "Unknown contact";
@@ -239,7 +252,7 @@ function buildNotificationView(store: OnboardingStore, notification: Notificatio
     slyderProfileId: notification.slyderProfileId,
     applicantName,
     channel: notification.channel,
-    recipient: notification.recipient || application?.email || profile?.email || merchant?.email || "Unknown recipient",
+    recipient: notification.recipient || application?.email || profile?.email || employeeApplication?.email || merchant?.email || "Unknown recipient",
     template: notification.templateKey || notification.template,
     actorType: notification.actorType,
     relatedEntityType: notification.relatedEntityType,
@@ -257,6 +270,31 @@ function buildNotificationView(store: OnboardingStore, notification: Notificatio
     sentAt: notification.sentAt,
     deliveredAt: notification.deliveredAt,
     resentFromId: notification.resentFromId,
+  };
+}
+
+function buildEmployeeApplicationRow(store: OnboardingStore, application: OnboardingStore["employeeApplications"][number]): AdminEmployeeApplicationRow {
+  const notificationHistory = getNotificationHistoryForEntityInStore(store, "employee_application", application.id);
+  const inviteEmail = [...notificationHistory]
+    .filter((item) => (item.templateKey || item.template) === "employee_activation_ready_email")
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+
+  return {
+    id: application.id,
+    fullName: application.fullName,
+    email: application.email,
+    phone: application.phone,
+    roleInterest: application.roleInterest,
+    departmentInterest: application.departmentInterest,
+    employmentType: application.employmentType,
+    location: application.location,
+    submittedAt: application.submittedAt,
+    status: application.status,
+    reviewedAt: application.reviewedAt,
+    reviewedBy: application.reviewedBy,
+    linkedUserId: application.linkedUserId,
+    linkedEmployeeProfileId: application.linkedEmployeeProfileId,
+    inviteEmailStatus: inviteEmail ? normalizeNotificationStatus(inviteEmail.status) : "not_sent",
   };
 }
 
@@ -289,6 +327,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   const store = await ensureCoverageZones();
   const zoneViews = store.coverageZones.map((zone) => buildZoneView(store, zone)).sort((left, right) => right.metrics.readinessPercentage - left.metrics.readinessPercentage);
   const applications = store.applications.map((item) => buildApplicationRow(store, item));
+  const employeeApplications = store.employeeApplications.map((item) => buildEmployeeApplicationRow(store, item));
   const notifications = store.notifications.map((item) => buildNotificationView(store, item));
   const health = await getNotificationHealthSummary();
 
@@ -301,11 +340,16 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       { label: "Near-Ready Zones", value: zoneViews.filter((item) => item.launchStatus === "near_ready" || item.launchStatus === "ready").length, subtext: "Approaching launch threshold" },
       { label: "Live Zones", value: zoneViews.filter((item) => item.launchStatus === "live").length, subtext: "Operationally active" },
       { label: "Pending Applications", value: applications.filter((item) => ["submitted", "under_review", "documents_pending"].includes(item.applicationStatus)).length, subtext: "Need review attention" },
+      { label: "Pending Employees", value: employeeApplications.filter((item) => ["submitted", "under_review", "interview"].includes(item.status)).length, subtext: "Awaiting invite decision" },
       { label: "Failed Notifications", value: notifications.filter((item) => item.status === "failed").length, subtext: "Retry available" },
     ],
     topZones: zoneViews.slice(0, 5),
     pendingApplications: applications
       .filter((item) => ["submitted", "under_review", "documents_pending"].includes(item.applicationStatus))
+      .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt))
+      .slice(0, 6),
+    pendingEmployeeApplications: employeeApplications
+      .filter((item) => ["submitted", "under_review", "interview"].includes(item.status))
       .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt))
       .slice(0, 6),
     notificationSummary: {
@@ -475,6 +519,91 @@ export async function getAdminApplicationDetail(applicationId: string): Promise<
       projectedPercentage,
       message: `Approving this applicant would move ${zone.name} from ${zone.metrics.readinessPercentage}% to ${projectedPercentage}% readiness.`,
     },
+  };
+}
+
+export async function listAdminEmployeeApplications(filters: {
+  search?: string;
+  status?: string;
+  department?: string;
+  sort?: "newest" | "oldest";
+}) {
+  const store = await ensureCoverageZones();
+  let items = store.employeeApplications.map((item) => buildEmployeeApplicationRow(store, item));
+
+  if (filters.search) {
+    const query = filters.search.toLowerCase();
+    items = items.filter((item) =>
+      [item.fullName, item.email, item.phone, item.roleInterest, item.location].some((value) => value.toLowerCase().includes(query)),
+    );
+  }
+
+  if (filters.status) items = items.filter((item) => item.status === filters.status);
+  if (filters.department) items = items.filter((item) => item.departmentInterest === filters.department);
+
+  const sort = filters.sort || "newest";
+  items.sort((left, right) =>
+    sort === "oldest"
+      ? left.submittedAt.localeCompare(right.submittedAt)
+      : right.submittedAt.localeCompare(left.submittedAt),
+  );
+
+  return {
+    items,
+    departments: Array.from(new Set(store.employeeApplications.map((item) => item.departmentInterest))).sort(),
+  };
+}
+
+export async function getAdminEmployeeApplicationDetail(applicationId: string): Promise<AdminEmployeeApplicationDetail> {
+  const store = await ensureCoverageZones();
+  const application = store.employeeApplications.find((item) => item.id === applicationId);
+  if (!application) throw new Error("Employee application not found");
+
+  const notificationHistory = getNotificationHistoryForEntityInStore(store, "employee_application", application.id)
+    .map((item) => buildNotificationView(store, item))
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+
+  const linkedUser = application.linkedUserId
+    ? (() => {
+        const user = store.users.find((item) => item.id === application.linkedUserId);
+        return user
+          ? {
+              id: user.id,
+              fullName: user.fullName,
+              email: user.email,
+              accountStatus: user.accountStatus,
+              isEnabled: user.isEnabled,
+            }
+          : null;
+      })()
+    : null;
+
+  const linkedEmployeeProfile = application.linkedEmployeeProfileId
+    ? (() => {
+        const profile = store.employeeProfiles.find((item) => item.id === application.linkedEmployeeProfileId);
+        return profile
+          ? {
+              id: profile.id,
+              employeeCode: profile.employeeCode,
+              title: profile.title,
+              department: profile.department,
+              isOnboarded: profile.isOnboarded,
+              onboardingCompletedAt: profile.onboardingCompletedAt,
+            }
+          : null;
+      })()
+    : null;
+
+  return {
+    application: {
+      ...buildEmployeeApplicationRow(store, application),
+      experienceSummary: application.experienceSummary,
+      managerTrackInterest: application.managerTrackInterest,
+      notes: application.notes,
+    },
+    linkedUser,
+    linkedEmployeeProfile,
+    notificationHistory,
   };
 }
 
