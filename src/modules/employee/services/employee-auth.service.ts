@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { findEmployeeProfileByUserId, findUserByEmailOrPhone, upsertEmployeeProfile } from "@/modules/onboarding/repositories/onboarding.repository";
 import type { EmployeeOnboardingInput } from "@/modules/employee/schemas/employee.schemas";
+import { ensureEmployeeProfileInStore } from "@/modules/employee/services/employee-portal.service";
 import { normalizeEmail, normalizePhone } from "@/modules/onboarding/services/onboarding-rules.service";
 import { verifyPassword } from "@/server/auth/passwords";
 import { SESSION_COOKIE } from "@/server/auth/session";
@@ -60,10 +61,7 @@ export async function loginEmployee(identifier: string, password: string) {
 
 export async function completeEmployeeOnboarding(userId: string, payload: EmployeeOnboardingInput) {
   return withPersistenceTransaction(async (store) => {
-    const profile = findEmployeeProfileByUserId(store, userId);
-    if (!profile) {
-      throw new Error("Employee profile not found");
-    }
+    const profile = findEmployeeProfileByUserId(store, userId) ?? ensureEmployeeProfileInStore(store, userId);
 
     profile.emergencyContactName = payload.emergencyContactName;
     profile.emergencyContactPhone = payload.emergencyContactPhone;
