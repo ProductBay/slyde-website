@@ -1,6 +1,6 @@
 import { prisma } from "@/server/db/prisma";
 import type { PersistenceRepository } from "@/server/persistence/repository";
-import { readStore, writeStore } from "@/server/persistence/store";
+import { createSeedStore } from "@/server/persistence/store";
 import type {
   ActivationToken,
   EmployeeAnnouncement,
@@ -1828,7 +1828,7 @@ export class PrismaRepository implements PersistenceRepository {
   readonly driver = "prisma" as const;
 
   async readSnapshot(): Promise<OnboardingStore> {
-    const store = await readStore();
+    const store = await createSeedStore();
     return overlaySupportedPrismaSlices(store);
   }
 
@@ -1840,7 +1840,6 @@ export class PrismaRepository implements PersistenceRepository {
       await persistSupportedPrismaSlices(tx as PrismaTransactionClient, store);
     });
 
-    await writeStore(store);
     return result;
   }
 }

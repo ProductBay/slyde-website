@@ -276,7 +276,7 @@ function seedEmployeePayoutRecords(timestamp: string, profiles: EmployeeProfile[
   ];
 }
 
-async function createSeedStore(): Promise<OnboardingStore> {
+export async function createSeedStore(): Promise<OnboardingStore> {
   const timestamp = nowIso();
   const adminUser: StoredUser = {
     id: crypto.randomUUID(),
