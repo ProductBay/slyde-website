@@ -1,5 +1,4 @@
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
-import { getPersistenceDriver } from "@/server/persistence/repository";
 import {
   getNotificationHealthSummary,
   getNotificationHistoryForEntityInStore,
@@ -22,7 +21,6 @@ import type {
 } from "@/types/admin";
 import type { CoverageZone, LaunchStatus, NotificationRecord, NotificationStatus, OnboardingStore } from "@/types/backend/onboarding";
 import { zoneStatusMessages } from "@/content/site";
-import { listPublicApplicationsFromPrisma } from "@/modules/onboarding/repositories/prisma-public-application.repository";
 
 const DEFAULT_ZONE_TARGET = 24;
 
@@ -64,19 +62,6 @@ function deriveZoneId(application: OnboardingStore["applications"][number]) {
 }
 
 async function ensureCoverageZones(store?: OnboardingStore) {
-  if (getPersistenceDriver() === "prisma") {
-    if (store) {
-      await syncApplicationsFromPrisma(store);
-      hydrateZones(store);
-      return store;
-    }
-
-    const snapshotStore = await readPersistenceStore();
-    await syncApplicationsFromPrisma(snapshotStore);
-    hydrateZones(snapshotStore);
-    return snapshotStore;
-  }
-
   if (store) {
     hydrateZones(store);
     return store;
@@ -85,37 +70,6 @@ async function ensureCoverageZones(store?: OnboardingStore) {
   const snapshotStore = await readPersistenceStore();
   hydrateZones(snapshotStore);
   return snapshotStore;
-}
-
-async function syncApplicationsFromPrisma(store: OnboardingStore) {
-  const prismaApplications = await listPublicApplicationsFromPrisma();
-
-  for (const item of prismaApplications) {
-    const applicationIndex = store.applications.findIndex((entry) => entry.id === item.application.id);
-    if (applicationIndex >= 0) {
-      store.applications[applicationIndex] = item.application;
-    } else {
-      store.applications.push(item.application);
-    }
-
-    if (item.vehicle) {
-      const vehicleIndex = store.vehicles.findIndex((entry) => entry.id === item.vehicle?.id);
-      if (vehicleIndex >= 0) {
-        store.vehicles[vehicleIndex] = item.vehicle;
-      } else {
-        store.vehicles.push(item.vehicle);
-      }
-    }
-
-    for (const document of item.documents) {
-      const documentIndex = store.documents.findIndex((entry) => entry.id === document.id);
-      if (documentIndex >= 0) {
-        store.documents[documentIndex] = document;
-      } else {
-        store.documents.push(document);
-      }
-    }
-  }
 }
 
 function hydrateZones(store: OnboardingStore) {

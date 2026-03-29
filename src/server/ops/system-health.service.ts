@@ -1,8 +1,8 @@
 import { access, mkdir } from "node:fs/promises";
 import { prisma } from "@/server/db/prisma";
 import { isEmailConfigured, isSmsConfigured, isWhatsappConfigured } from "@/server/notifications/providers";
+import { readPersistenceStore } from "@/server/persistence";
 import { getPersistenceDriver } from "@/server/persistence/repository";
-import { readStore } from "@/server/persistence/store";
 import { getTurnstileConfig } from "@/server/security/turnstile";
 import { getDataDirectory, getUploadsDirectory } from "@/server/storage-paths";
 
@@ -27,7 +27,7 @@ export async function getSystemHealthSummary() {
     if (persistenceDriver === "prisma") {
       await prisma.$queryRaw`SELECT 1`;
     } else {
-      await readStore();
+      await readPersistenceStore();
     }
   } catch (error) {
     persistenceStatus = "unhealthy";

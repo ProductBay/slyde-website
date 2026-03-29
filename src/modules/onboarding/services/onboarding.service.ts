@@ -31,7 +31,7 @@ import {
   sendSlyderDocumentsRequestedNotification,
   sendSlyderRejectedNotification,
 } from "@/server/notifications/notification.service";
-import { withStoreTransaction, readStore } from "@/server/persistence/store";
+import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { hashToken, generateOpaqueToken } from "@/server/auth/tokens";
 import type {
   ApproveApplicationInput,
@@ -50,13 +50,6 @@ import {
 } from "@/modules/onboarding/services/onboarding-rules.service";
 import { recordMultipleLegalAcceptancesInStore } from "@/modules/legal/services/legal-document.service";
 import type { SyncedSlydeAppApplication } from "@/modules/onboarding/services/slyde-app-sync.service";
-import { getPersistenceDriver } from "@/server/persistence/repository";
-import {
-  createPublicApplicationInPrisma,
-  findRecentPublicApplicationInPrisma,
-  updateApplicationDocumentInPrisma,
-  updatePublicApplicationLinksInPrisma,
-} from "@/modules/onboarding/repositories/prisma-public-application.repository";
 
 function nowIso() {
   return new Date().toISOString();
@@ -119,12 +112,9 @@ export async function createPublicSlyderApplication(
   metadata?: { ipAddress?: string; userAgent?: string },
   syncResult?: SyncedSlydeAppApplication,
 ) {
-  return withStoreTransaction(async (store) => {
-    const persistenceDriver = getPersistenceDriver();
+  return withPersistenceTransaction(async (store) => {
     const normalizedEmail = normalizeEmail(input.email);
     const normalizedPhone = normalizePhone(input.phone);
-    const existingPrisma =
-      persistenceDriver === "prisma" ? await findRecentPublicApplicationInPrisma(input.email, input.phone) : null;
 
     const existingRecent = store.applications.find(
       (item) =>
@@ -138,13 +128,6 @@ export async function createPublicSlyderApplication(
         existingRecent.linkedUserId = syncResult.userId;
         existingRecent.linkedSlyderProfileId = syncResult.slyderId;
         existingRecent.updatedAt = nowIso();
-
-        if (persistenceDriver === "prisma") {
-          await updatePublicApplicationLinksInPrisma(existingRecent.id, {
-            linkedUserId: syncResult.userId,
-            linkedSlyderProfileId: syncResult.slyderId,
-          });
-        }
       }
 
       return {
@@ -154,24 +137,6 @@ export async function createPublicSlyderApplication(
         submittedAt: existingRecent.submittedAt,
         linkedUserId: existingRecent.linkedUserId,
         linkedSlyderProfileId: existingRecent.linkedSlyderProfileId,
-      };
-    }
-
-    if (existingPrisma) {
-      if (syncResult) {
-        await updatePublicApplicationLinksInPrisma(existingPrisma.id, {
-          linkedUserId: syncResult.userId,
-          linkedSlyderProfileId: syncResult.slyderId,
-        });
-      }
-
-      return {
-        applicationId: existingPrisma.id,
-        applicationCode: existingPrisma.applicationCode,
-        applicationStatus: existingPrisma.applicationStatus,
-        submittedAt: existingPrisma.submittedAt.toISOString(),
-        linkedUserId: syncResult?.userId ?? existingPrisma.linkedUserId ?? undefined,
-        linkedSlyderProfileId: syncResult?.slyderId ?? existingPrisma.linkedSlyderProfileId ?? undefined,
       };
     }
 
@@ -222,10 +187,6 @@ export async function createPublicSlyderApplication(
     const vehicle = buildVehicle(applicationId, input);
     const documents = buildDocuments(applicationId, input);
 
-    if (persistenceDriver === "prisma") {
-      await createPublicApplicationInPrisma(application, vehicle, documents);
-    }
-
     attachApplication(store, application, vehicle, documents);
     appendAuditEvent(store, {
       entityType: "application",
@@ -261,7 +222,7 @@ export async function linkPublicSlyderApplicationToSyncedApp(
   applicationId: string,
   syncResult: SyncedSlydeAppApplication,
 ) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) {
       throw new Error("Application not found for sync linking.");
@@ -270,13 +231,6 @@ export async function linkPublicSlyderApplicationToSyncedApp(
     application.linkedUserId = syncResult.userId;
     application.linkedSlyderProfileId = syncResult.slyderId;
     application.updatedAt = nowIso();
-
-    if (getPersistenceDriver() === "prisma") {
-      await updatePublicApplicationLinksInPrisma(applicationId, {
-        linkedUserId: syncResult.userId,
-        linkedSlyderProfileId: syncResult.slyderId,
-      });
-    }
 
     appendAuditEvent(store, {
       entityType: "application",
@@ -306,7 +260,7 @@ export async function listSlyderApplications(input: {
   page: number;
   pageSize: number;
 }) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   let items = [...store.applications];
 
   if (input.status) {
@@ -351,7 +305,7 @@ export async function listSlyderApplications(input: {
 }
 
 export async function getSlyderApplicationDetail(applicationId: string) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   const application = findApplication(store, applicationId);
   if (!application) {
     throw new Error("Application not found");
@@ -375,7 +329,7 @@ export async function updateApplicationStatus(
   reviewNotes: string | undefined,
   actor: AdminActor,
 ) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) {
       throw new Error("Application not found");
@@ -405,7 +359,7 @@ export async function requestApplicationDocuments(
   payload: RequestDocumentsInput,
   actor: AdminActor,
 ) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) throw new Error("Application not found");
 
@@ -437,7 +391,7 @@ export async function requestApplicationDocuments(
 }
 
 export async function rejectApplication(applicationId: string, reason: string, actor: AdminActor) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) throw new Error("Application not found");
 
@@ -610,7 +564,7 @@ export async function approveApplication(
   payload: ApproveApplicationInput,
   actor: AdminActor,
 ) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) throw new Error("Application not found");
 
@@ -711,7 +665,7 @@ export async function updateDocumentVerification(
   actor: { id: string; fullName: string },
   rejectionReason?: string,
 ) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) throw new Error("Application not found");
 
@@ -774,7 +728,7 @@ export async function replaceApplicationDocument(
   },
   actor: { id: string; fullName: string },
 ) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) throw new Error("Application not found");
 
@@ -791,17 +745,6 @@ export async function replaceApplicationDocument(
     document.rejectionReason = undefined;
     document.reviewedAt = undefined;
     document.reviewedBy = undefined;
-
-    if (getPersistenceDriver() === "prisma") {
-      await updateApplicationDocumentInPrisma(document.id, {
-        fileUrl: document.fileUrl,
-        storageKey: document.storageKey,
-        fileName: document.fileName,
-        mimeType: document.mimeType,
-        uploadedAt,
-        verificationStatus: "pending",
-      });
-    }
 
     appendAuditEvent(store, {
       entityType: "application",

@@ -19,6 +19,13 @@ import type {
   NotificationTemplate,
   NotificationTriggerEvent,
   OnboardingStore,
+  OtpChallenge,
+  SessionRecord,
+  SlyderApplication,
+  SlyderApplicationDocument,
+  SlyderApplicationVehicle,
+  SlyderProfile,
+  SlyderStatusHistory,
   StoredUser,
 } from "@/types/backend/onboarding";
 
@@ -37,6 +44,10 @@ function toDate(value: string | undefined | null) {
 
 function toDateOnly(value: string | undefined | null) {
   return value ? new Date(`${value}T00:00:00.000Z`) : null;
+}
+
+function isUuid(value: string | null | undefined) {
+  return Boolean(value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value));
 }
 
 function mapUser(record: Awaited<ReturnType<typeof prisma.user.findFirst>>): StoredUser | null {
@@ -73,6 +84,189 @@ function mapActivationToken(record: Awaited<ReturnType<typeof prisma.activationT
     consumedAt: toIso(record.consumedAt),
     createdAt: record.createdAt.toISOString(),
     updatedAt: toIso(record.updatedAt),
+  };
+}
+
+function mapOtpChallenge(record: Awaited<ReturnType<typeof prisma.otpChallenge.findFirst>>): OtpChallenge | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    userId: record.userId,
+    codeHash: record.codeHash,
+    expiresAt: record.expiresAt.toISOString(),
+    consumedAt: toIso(record.consumedAt),
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapSessionRecord(record: Awaited<ReturnType<typeof prisma.sessionRecord.findFirst>>): SessionRecord | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    userId: record.userId,
+    roles: record.roles,
+    createdAt: record.createdAt.toISOString(),
+    expiresAt: record.expiresAt.toISOString(),
+  };
+}
+
+function mapSlyderApplication(record: Awaited<ReturnType<typeof prisma.slyderApplication.findFirst>>): SlyderApplication | null {
+  if (!record) return null;
+
+  const readinessAnswers = (record.readinessAnswers as Record<string, unknown> | null) ?? {};
+  const referralAttribution =
+    (readinessAnswers as { referralAttribution?: SlyderApplication["referralAttribution"] }).referralAttribution;
+
+  return {
+    id: record.id,
+    applicationCode: record.applicationCode,
+    fullName: record.fullName,
+    email: record.email,
+    phone: record.phone,
+    dateOfBirth: record.dateOfBirth.toISOString().slice(0, 10),
+    parish: record.parish,
+    address: record.address,
+    trn: record.trn,
+    emergencyContactName: record.emergencyContactName,
+    emergencyContactPhone: record.emergencyContactPhone,
+    courierType: record.courierType,
+    workTypePreference: record.workTypePreference,
+    availability: record.availability,
+    preferredZones: record.preferredZones,
+    deliveryTypePreferences: record.deliveryTypePreferences,
+    maxTravelComfort: record.maxTravelComfort,
+    peakHours: record.peakHours,
+    smartphoneType: record.smartphoneType,
+    whatsappNumber: record.whatsappNumber,
+    gpsConfirmed: record.gpsConfirmed,
+    internetConfirmed: record.internetConfirmed,
+    readinessAnswers,
+    agreementsAccepted: (record.agreementsAccepted as Record<string, boolean> | null) ?? {},
+    referralAttribution,
+    applicationStatus: record.applicationStatus,
+    accountStatus: record.accountStatus,
+    operationalStatus: record.operationalStatus,
+    readinessStatus: record.readinessStatus,
+    reviewNotes: record.reviewNotes ?? undefined,
+    rejectionReason: record.rejectionReason ?? undefined,
+    requestedDocumentNotes: record.requestedDocumentNotes ?? undefined,
+    requestedDocumentTypes: record.requestedDocumentTypes,
+    submittedAt: record.submittedAt.toISOString(),
+    reviewedAt: toIso(record.reviewedAt),
+    reviewedBy: record.reviewedBy ?? undefined,
+    linkedUserId: record.linkedUserId ?? undefined,
+    linkedSlyderProfileId: record.linkedSlyderProfileId ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapSlyderApplicationVehicle(
+  record: Awaited<ReturnType<typeof prisma.slyderApplicationVehicle.findFirst>>,
+): SlyderApplicationVehicle | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    applicationId: record.applicationId,
+    make: record.make ?? undefined,
+    model: record.model ?? undefined,
+    year: record.year ?? undefined,
+    color: record.color ?? undefined,
+    plateNumber: record.plateNumber ?? undefined,
+    registrationExpiry: record.registrationExpiry?.toISOString().slice(0, 10),
+    insuranceExpiry: record.insuranceExpiry?.toISOString().slice(0, 10),
+    fitnessExpiry: record.fitnessExpiry?.toISOString().slice(0, 10),
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapSlyderApplicationDocument(
+  record: Awaited<ReturnType<typeof prisma.slyderApplicationDocument.findFirst>>,
+): SlyderApplicationDocument | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    applicationId: record.applicationId,
+    type: record.type,
+    fileUrl: record.fileUrl,
+    storageKey: record.storageKey,
+    fileName: record.fileName,
+    mimeType: record.mimeType,
+    verificationStatus: record.verificationStatus,
+    rejectionReason: record.rejectionReason ?? undefined,
+    uploadedAt: record.uploadedAt.toISOString(),
+    reviewedAt: toIso(record.reviewedAt),
+    reviewedBy: record.reviewedBy ?? undefined,
+  };
+}
+
+function mapSlyderProfile(record: Awaited<ReturnType<typeof prisma.slyderProfile.findFirst>>): SlyderProfile | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    userId: record.userId,
+    applicationId: record.applicationId,
+    coverageZoneId: record.coverageZoneId ?? undefined,
+    displayName: record.displayName,
+    phone: record.phone,
+    email: record.email,
+    courierType: record.courierType,
+    onboardingStatus: record.onboardingStatus,
+    readinessStatus: record.readinessStatus,
+    operationalStatus: record.operationalStatus,
+    accountStatus: record.accountStatus,
+    contractAccepted: record.contractAccepted,
+    contractAcceptedAt: toIso(record.contractAcceptedAt),
+    vehicleVerified: record.vehicleVerified,
+    payoutSetupComplete: record.payoutSetupComplete,
+    profileComplete: record.profileComplete,
+    trainingComplete: record.trainingComplete,
+    permissionsComplete: record.permissionsComplete,
+    requiredAgreementsAccepted: record.requiredAgreementsAccepted,
+    setupCompletedAt: toIso(record.setupCompletedAt),
+    trainingAcknowledgedAt: toIso(record.trainingAcknowledgedAt),
+    activatedAt: toIso(record.activatedAt),
+    canGoOnline: record.canGoOnline,
+    canReceiveOrders: record.canReceiveOrders,
+    readinessChecklist: {
+      profileConfirmed: record.profileConfirmed,
+      vehicleConfirmed: record.vehicleConfirmed,
+      payoutConfigured: record.payoutConfigured,
+      legalAccepted: record.legalAccepted,
+      locationPermissionConfirmed: record.locationPermissionConfirmed,
+      notificationPermissionConfirmed: record.notificationPermissionConfirmed,
+      equipmentConfirmed: record.equipmentConfirmed,
+      trainingAcknowledged: record.trainingAcknowledged,
+      emergencyContactConfirmed: record.emergencyContactConfirmed,
+      overallStatus: record.readinessChecklistStatus,
+      createdAt: toIso(record.readinessChecklistCreatedAt) ?? record.createdAt.toISOString(),
+      updatedAt: toIso(record.readinessChecklistUpdatedAt) ?? record.updatedAt.toISOString(),
+    },
+    approvedAt: record.approvedAt.toISOString(),
+    approvedBy: record.approvedBy,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapStatusHistory(record: Awaited<ReturnType<typeof prisma.statusHistory.findFirst>>): SlyderStatusHistory | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    entityType: record.entityType,
+    entityId: record.entityId,
+    eventType: record.eventType,
+    actorUserId: record.actorUserId ?? undefined,
+    actorLabel: record.actorLabel ?? undefined,
+    metadata: (record.metadata as Record<string, unknown> | null) ?? undefined,
+    createdAt: record.createdAt.toISOString(),
   };
 }
 
@@ -438,6 +632,13 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
   const [
     users,
     activationTokens,
+    otpChallenges,
+    sessions,
+    applications,
+    vehicles,
+    documents,
+    slyderProfiles,
+    history,
     employeeApplications,
     employeeProfiles,
     employeeAnnouncements,
@@ -454,14 +655,23 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
     coverageZones,
     merchantInterests,
   ] = await prisma.$transaction([
-    prisma.user.findMany({
-      where: {
-        userType: {
-          in: ["platform", "employee"],
-        },
+    prisma.user.findMany(),
+    prisma.activationToken.findMany(),
+    prisma.otpChallenge.findMany(),
+    prisma.sessionRecord.findMany(),
+    prisma.slyderApplication.findMany({
+      orderBy: {
+        createdAt: "desc",
       },
     }),
-    prisma.activationToken.findMany(),
+    prisma.slyderApplicationVehicle.findMany(),
+    prisma.slyderApplicationDocument.findMany(),
+    prisma.slyderProfile.findMany(),
+    prisma.statusHistory.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
     prisma.employeeApplication.findMany({
       orderBy: {
         submittedAt: "desc",
@@ -528,6 +738,48 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
       activationTokens
         .map((item) => mapActivationToken(item))
         .filter((item): item is ActivationToken => Boolean(item)),
+    ),
+    otpChallenges: mergeById(
+      store.otpChallenges,
+      otpChallenges
+        .map((item) => mapOtpChallenge(item))
+        .filter((item): item is OtpChallenge => Boolean(item)),
+    ),
+    sessions: mergeById(
+      store.sessions,
+      sessions
+        .map((item) => mapSessionRecord(item))
+        .filter((item): item is SessionRecord => Boolean(item)),
+    ),
+    applications: mergeById(
+      store.applications,
+      applications
+        .map((item) => mapSlyderApplication(item))
+        .filter((item): item is SlyderApplication => Boolean(item)),
+    ),
+    vehicles: mergeById(
+      store.vehicles,
+      vehicles
+        .map((item) => mapSlyderApplicationVehicle(item))
+        .filter((item): item is SlyderApplicationVehicle => Boolean(item)),
+    ),
+    documents: mergeById(
+      store.documents,
+      documents
+        .map((item) => mapSlyderApplicationDocument(item))
+        .filter((item): item is SlyderApplicationDocument => Boolean(item)),
+    ),
+    slyderProfiles: mergeById(
+      store.slyderProfiles,
+      slyderProfiles
+        .map((item) => mapSlyderProfile(item))
+        .filter((item): item is SlyderProfile => Boolean(item)),
+    ),
+    history: mergeById(
+      store.history,
+      history
+        .map((item) => mapStatusHistory(item))
+        .filter((item): item is SlyderStatusHistory => Boolean(item)),
     ),
     employeeApplications: mergeById(
       store.employeeApplications,
@@ -623,9 +875,18 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
 }
 
 async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: OnboardingStore) {
-  const supportedUsers = store.users.filter((user) => user.userType === "platform" || user.userType === "employee");
+  const supportedUsers = store.users;
   const supportedUserIds = new Set(supportedUsers.map((user) => user.id));
   const supportedActivationTokens = store.activationTokens.filter((token) => supportedUserIds.has(token.userId));
+  const supportedOtpChallenges = store.otpChallenges.filter((challenge) => supportedUserIds.has(challenge.userId));
+  const supportedSessions = store.sessions.filter((session) => supportedUserIds.has(session.userId));
+  const supportedApplications = store.applications;
+  const supportedVehicles = store.vehicles;
+  const supportedDocuments = store.documents;
+  const supportedSlyderProfiles = store.slyderProfiles;
+  const supportedHistory = store.history.filter(
+    (item) => item.entityType === "application" || item.entityType === "user" || item.entityType === "slyder_profile",
+  );
   const supportedEmployeeProfiles = store.employeeProfiles;
   const supportedEmployeeApplications = store.employeeApplications;
   const supportedEmployeeAnnouncements = store.employeeAnnouncements;
@@ -700,6 +961,312 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         consumedAt: toDate(token.consumedAt),
         createdAt: new Date(token.createdAt),
         updatedAt: toDate(token.updatedAt),
+      },
+    });
+  }
+
+  for (const challenge of supportedOtpChallenges) {
+    await tx.otpChallenge.upsert({
+      where: { id: challenge.id },
+      update: {
+        userId: challenge.userId,
+        codeHash: challenge.codeHash,
+        expiresAt: new Date(challenge.expiresAt),
+        consumedAt: toDate(challenge.consumedAt),
+        createdAt: new Date(challenge.createdAt),
+      },
+      create: {
+        id: challenge.id,
+        userId: challenge.userId,
+        codeHash: challenge.codeHash,
+        expiresAt: new Date(challenge.expiresAt),
+        consumedAt: toDate(challenge.consumedAt),
+        createdAt: new Date(challenge.createdAt),
+      },
+    });
+  }
+
+  for (const session of supportedSessions) {
+    await tx.sessionRecord.upsert({
+      where: { id: session.id },
+      update: {
+        userId: session.userId,
+        roles: session.roles,
+        createdAt: new Date(session.createdAt),
+        expiresAt: new Date(session.expiresAt),
+      },
+      create: {
+        id: session.id,
+        userId: session.userId,
+        roles: session.roles,
+        createdAt: new Date(session.createdAt),
+        expiresAt: new Date(session.expiresAt),
+      },
+    });
+  }
+
+  for (const application of supportedApplications) {
+    await tx.slyderApplication.upsert({
+      where: { id: application.id },
+      update: {
+        applicationCode: application.applicationCode,
+        fullName: application.fullName,
+        email: application.email,
+        phone: application.phone,
+        dateOfBirth: toDateOnly(application.dateOfBirth) ?? new Date(application.dateOfBirth),
+        parish: application.parish,
+        address: application.address,
+        trn: application.trn,
+        emergencyContactName: application.emergencyContactName,
+        emergencyContactPhone: application.emergencyContactPhone,
+        courierType: application.courierType,
+        workTypePreference: application.workTypePreference,
+        availability: application.availability,
+        preferredZones: application.preferredZones,
+        deliveryTypePreferences: application.deliveryTypePreferences,
+        maxTravelComfort: application.maxTravelComfort,
+        peakHours: application.peakHours,
+        smartphoneType: application.smartphoneType,
+        whatsappNumber: application.whatsappNumber,
+        gpsConfirmed: application.gpsConfirmed,
+        internetConfirmed: application.internetConfirmed,
+        readinessAnswers: application.readinessAnswers as any,
+        agreementsAccepted: application.agreementsAccepted as any,
+        applicationStatus: application.applicationStatus,
+        accountStatus: application.accountStatus,
+        operationalStatus: application.operationalStatus,
+        readinessStatus: application.readinessStatus,
+        reviewNotes: application.reviewNotes ?? null,
+        rejectionReason: application.rejectionReason ?? null,
+        requestedDocumentNotes: application.requestedDocumentNotes ?? null,
+        requestedDocumentTypes: application.requestedDocumentTypes ?? [],
+        submittedAt: new Date(application.submittedAt),
+        reviewedAt: toDate(application.reviewedAt),
+        reviewedBy: application.reviewedBy ?? null,
+        linkedUserId: application.linkedUserId ?? null,
+        linkedSlyderProfileId: application.linkedSlyderProfileId ?? null,
+        updatedAt: new Date(application.updatedAt),
+      },
+      create: {
+        id: application.id,
+        applicationCode: application.applicationCode,
+        fullName: application.fullName,
+        email: application.email,
+        phone: application.phone,
+        dateOfBirth: toDateOnly(application.dateOfBirth) ?? new Date(application.dateOfBirth),
+        parish: application.parish,
+        address: application.address,
+        trn: application.trn,
+        emergencyContactName: application.emergencyContactName,
+        emergencyContactPhone: application.emergencyContactPhone,
+        courierType: application.courierType,
+        workTypePreference: application.workTypePreference,
+        availability: application.availability,
+        preferredZones: application.preferredZones,
+        deliveryTypePreferences: application.deliveryTypePreferences,
+        maxTravelComfort: application.maxTravelComfort,
+        peakHours: application.peakHours,
+        smartphoneType: application.smartphoneType,
+        whatsappNumber: application.whatsappNumber,
+        gpsConfirmed: application.gpsConfirmed,
+        internetConfirmed: application.internetConfirmed,
+        readinessAnswers: application.readinessAnswers as any,
+        agreementsAccepted: application.agreementsAccepted as any,
+        applicationStatus: application.applicationStatus,
+        accountStatus: application.accountStatus,
+        operationalStatus: application.operationalStatus,
+        readinessStatus: application.readinessStatus,
+        reviewNotes: application.reviewNotes ?? null,
+        rejectionReason: application.rejectionReason ?? null,
+        requestedDocumentNotes: application.requestedDocumentNotes ?? null,
+        requestedDocumentTypes: application.requestedDocumentTypes ?? [],
+        submittedAt: new Date(application.submittedAt),
+        reviewedAt: toDate(application.reviewedAt),
+        reviewedBy: application.reviewedBy ?? null,
+        linkedUserId: application.linkedUserId ?? null,
+        linkedSlyderProfileId: application.linkedSlyderProfileId ?? null,
+        createdAt: new Date(application.createdAt),
+        updatedAt: new Date(application.updatedAt),
+      },
+    });
+  }
+
+  for (const vehicle of supportedVehicles) {
+    await tx.slyderApplicationVehicle.upsert({
+      where: { id: vehicle.id },
+      update: {
+        applicationId: vehicle.applicationId,
+        make: vehicle.make ?? null,
+        model: vehicle.model ?? null,
+        year: vehicle.year ?? null,
+        color: vehicle.color ?? null,
+        plateNumber: vehicle.plateNumber ?? null,
+        registrationExpiry: toDateOnly(vehicle.registrationExpiry),
+        insuranceExpiry: toDateOnly(vehicle.insuranceExpiry),
+        fitnessExpiry: toDateOnly(vehicle.fitnessExpiry),
+        updatedAt: new Date(vehicle.updatedAt),
+      },
+      create: {
+        id: vehicle.id,
+        applicationId: vehicle.applicationId,
+        make: vehicle.make ?? null,
+        model: vehicle.model ?? null,
+        year: vehicle.year ?? null,
+        color: vehicle.color ?? null,
+        plateNumber: vehicle.plateNumber ?? null,
+        registrationExpiry: toDateOnly(vehicle.registrationExpiry),
+        insuranceExpiry: toDateOnly(vehicle.insuranceExpiry),
+        fitnessExpiry: toDateOnly(vehicle.fitnessExpiry),
+        createdAt: new Date(vehicle.createdAt),
+        updatedAt: new Date(vehicle.updatedAt),
+      },
+    });
+  }
+
+  for (const document of supportedDocuments) {
+    await tx.slyderApplicationDocument.upsert({
+      where: { id: document.id },
+      update: {
+        applicationId: document.applicationId,
+        type: document.type,
+        fileUrl: document.fileUrl,
+        storageKey: document.storageKey,
+        fileName: document.fileName,
+        mimeType: document.mimeType,
+        verificationStatus: document.verificationStatus,
+        rejectionReason: document.rejectionReason ?? null,
+        uploadedAt: new Date(document.uploadedAt),
+        reviewedAt: toDate(document.reviewedAt),
+        reviewedBy: document.reviewedBy ?? null,
+      },
+      create: {
+        id: document.id,
+        applicationId: document.applicationId,
+        type: document.type,
+        fileUrl: document.fileUrl,
+        storageKey: document.storageKey,
+        fileName: document.fileName,
+        mimeType: document.mimeType,
+        verificationStatus: document.verificationStatus,
+        rejectionReason: document.rejectionReason ?? null,
+        uploadedAt: new Date(document.uploadedAt),
+        reviewedAt: toDate(document.reviewedAt),
+        reviewedBy: document.reviewedBy ?? null,
+      },
+    });
+  }
+
+  for (const profile of supportedSlyderProfiles) {
+    await tx.slyderProfile.upsert({
+      where: { id: profile.id },
+      update: {
+        userId: profile.userId,
+        applicationId: profile.applicationId,
+        coverageZoneId: isUuid(profile.coverageZoneId) ? profile.coverageZoneId : null,
+        displayName: profile.displayName,
+        phone: profile.phone,
+        email: profile.email,
+        courierType: profile.courierType,
+        onboardingStatus: profile.onboardingStatus,
+        readinessStatus: profile.readinessStatus,
+        operationalStatus: profile.operationalStatus,
+        accountStatus: profile.accountStatus,
+        contractAccepted: profile.contractAccepted,
+        contractAcceptedAt: toDate(profile.contractAcceptedAt),
+        vehicleVerified: profile.vehicleVerified,
+        payoutSetupComplete: profile.payoutSetupComplete,
+        profileComplete: profile.profileComplete,
+        trainingComplete: profile.trainingComplete,
+        permissionsComplete: profile.permissionsComplete,
+        requiredAgreementsAccepted: profile.requiredAgreementsAccepted,
+        setupCompletedAt: toDate(profile.setupCompletedAt),
+        trainingAcknowledgedAt: toDate(profile.trainingAcknowledgedAt),
+        activatedAt: toDate(profile.activatedAt),
+        canGoOnline: profile.canGoOnline,
+        canReceiveOrders: profile.canReceiveOrders,
+        profileConfirmed: profile.readinessChecklist?.profileConfirmed ?? false,
+        vehicleConfirmed: profile.readinessChecklist?.vehicleConfirmed ?? profile.vehicleVerified,
+        payoutConfigured: profile.readinessChecklist?.payoutConfigured ?? profile.payoutSetupComplete,
+        legalAccepted: profile.readinessChecklist?.legalAccepted ?? profile.requiredAgreementsAccepted,
+        locationPermissionConfirmed: profile.readinessChecklist?.locationPermissionConfirmed ?? false,
+        notificationPermissionConfirmed: profile.readinessChecklist?.notificationPermissionConfirmed ?? false,
+        equipmentConfirmed: profile.readinessChecklist?.equipmentConfirmed ?? false,
+        trainingAcknowledged: profile.readinessChecklist?.trainingAcknowledged ?? false,
+        emergencyContactConfirmed: profile.readinessChecklist?.emergencyContactConfirmed ?? false,
+        readinessChecklistStatus: profile.readinessChecklist?.overallStatus ?? profile.readinessStatus,
+        readinessChecklistCreatedAt: toDate(profile.readinessChecklist?.createdAt),
+        readinessChecklistUpdatedAt: toDate(profile.readinessChecklist?.updatedAt),
+        approvedAt: new Date(profile.approvedAt),
+        approvedBy: profile.approvedBy,
+        updatedAt: new Date(profile.updatedAt),
+      },
+      create: {
+        id: profile.id,
+        userId: profile.userId,
+        applicationId: profile.applicationId,
+        coverageZoneId: isUuid(profile.coverageZoneId) ? profile.coverageZoneId : null,
+        displayName: profile.displayName,
+        phone: profile.phone,
+        email: profile.email,
+        courierType: profile.courierType,
+        onboardingStatus: profile.onboardingStatus,
+        readinessStatus: profile.readinessStatus,
+        operationalStatus: profile.operationalStatus,
+        accountStatus: profile.accountStatus,
+        contractAccepted: profile.contractAccepted,
+        contractAcceptedAt: toDate(profile.contractAcceptedAt),
+        vehicleVerified: profile.vehicleVerified,
+        payoutSetupComplete: profile.payoutSetupComplete,
+        profileComplete: profile.profileComplete,
+        trainingComplete: profile.trainingComplete,
+        permissionsComplete: profile.permissionsComplete,
+        requiredAgreementsAccepted: profile.requiredAgreementsAccepted,
+        setupCompletedAt: toDate(profile.setupCompletedAt),
+        trainingAcknowledgedAt: toDate(profile.trainingAcknowledgedAt),
+        activatedAt: toDate(profile.activatedAt),
+        canGoOnline: profile.canGoOnline,
+        canReceiveOrders: profile.canReceiveOrders,
+        profileConfirmed: profile.readinessChecklist?.profileConfirmed ?? false,
+        vehicleConfirmed: profile.readinessChecklist?.vehicleConfirmed ?? profile.vehicleVerified,
+        payoutConfigured: profile.readinessChecklist?.payoutConfigured ?? profile.payoutSetupComplete,
+        legalAccepted: profile.readinessChecklist?.legalAccepted ?? profile.requiredAgreementsAccepted,
+        locationPermissionConfirmed: profile.readinessChecklist?.locationPermissionConfirmed ?? false,
+        notificationPermissionConfirmed: profile.readinessChecklist?.notificationPermissionConfirmed ?? false,
+        equipmentConfirmed: profile.readinessChecklist?.equipmentConfirmed ?? false,
+        trainingAcknowledged: profile.readinessChecklist?.trainingAcknowledged ?? false,
+        emergencyContactConfirmed: profile.readinessChecklist?.emergencyContactConfirmed ?? false,
+        readinessChecklistStatus: profile.readinessChecklist?.overallStatus ?? profile.readinessStatus,
+        readinessChecklistCreatedAt: toDate(profile.readinessChecklist?.createdAt),
+        readinessChecklistUpdatedAt: toDate(profile.readinessChecklist?.updatedAt),
+        approvedAt: new Date(profile.approvedAt),
+        approvedBy: profile.approvedBy,
+        createdAt: new Date(profile.createdAt),
+        updatedAt: new Date(profile.updatedAt),
+      },
+    });
+  }
+
+  for (const historyItem of supportedHistory) {
+    await tx.statusHistory.upsert({
+      where: { id: historyItem.id },
+      update: {
+        entityType: historyItem.entityType,
+        entityId: historyItem.entityId,
+        eventType: historyItem.eventType,
+        actorUserId: historyItem.actorUserId ?? null,
+        actorLabel: historyItem.actorLabel ?? null,
+        metadata: (historyItem.metadata ?? undefined) as any,
+        createdAt: new Date(historyItem.createdAt),
+      },
+      create: {
+        id: historyItem.id,
+        entityType: historyItem.entityType,
+        entityId: historyItem.entityId,
+        eventType: historyItem.eventType,
+        actorUserId: historyItem.actorUserId ?? null,
+        actorLabel: historyItem.actorLabel ?? null,
+        metadata: (historyItem.metadata ?? undefined) as any,
+        createdAt: new Date(historyItem.createdAt),
       },
     });
   }
