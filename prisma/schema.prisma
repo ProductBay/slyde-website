@@ -100,6 +100,8 @@ enum NotificationStatus {
 enum NotificationActorType {
   slyder_applicant
   slyder_user
+  employee_applicant
+  employee_user
   merchant_interest
   merchant_user
   admin_user
@@ -187,11 +189,18 @@ enum UserRoleCode {
   platform_admin
   operations_admin
   slyder
+  employee_staff
+  employee_logistics
+  employee_supervisor
+  employee_manager
+  employee_hr
+  employee_payroll
 }
 
 enum UserType {
   platform
   slyder
+  employee
 }
 
 enum EntityType {
@@ -219,6 +228,8 @@ enum RelatedEntityType {
   coverage_zone
   slyder_profile
   merchant_account
+  employee_application
+  employee_profile
 }
 
 enum MerchantAvailability {
@@ -234,6 +245,76 @@ enum MerchantLifecycleStatus {
   invited_to_onboarding
   activated
   declined
+}
+
+enum EmployeeDepartmentCode {
+  logistics
+  operations
+  support
+  finance
+  hr
+  leadership
+}
+
+enum EmployeeEmploymentType {
+  full_time
+  part_time
+  contract
+}
+
+enum EmployeeApplicationStatus {
+  submitted
+  under_review
+  interview
+  approved
+  rejected
+}
+
+enum EmployeePayrollFrequency {
+  weekly
+  biweekly
+  monthly
+}
+
+enum EmployeePayoutMethod {
+  bank_transfer
+  cash_pickup
+  mobile_wallet
+}
+
+enum EmployeeAnnouncementPriority {
+  normal
+  important
+  critical
+}
+
+enum EmployeeGuideAudience {
+  all_employees
+  logistics
+  operations
+  support
+  supervisors
+  managers
+}
+
+enum EmployeeGuideCategory {
+  handbook
+  operations
+  compliance
+  pay
+  announcements
+}
+
+enum EmployeePayrollRecordStatus {
+  scheduled
+  processed
+  paid
+}
+
+enum EmployeePayoutRecordStatus {
+  scheduled
+  sent
+  received
 }
 
 model User {
@@ -252,8 +333,12 @@ model User {
   updatedAt          DateTime          @db.Timestamptz(6)
 
   slyderProfile              SlyderProfile?
+  employeeProfile            EmployeeProfile?
   approvedApplications       SlyderProfile[]        @relation("SlyderProfileApprovedBy")
   reviewedApplications       SlyderApplication[]    @relation("SlyderApplicationReviewedBy")
+  employeeApplications       EmployeeApplication[]  @relation("EmployeeApplicationLinkedUser")
+  managedEmployees           EmployeeProfile[]      @relation("EmployeeProfileManager")
+  publishedEmployeeAnnouncements EmployeeAnnouncement[] @relation("EmployeeAnnouncementPublishedBy")
   triggeredNotifications     NotificationRecord[]   @relation("NotificationTriggeredBy")
   sessions                   SessionRecord[]
   activationTokens           ActivationToken[]
@@ -587,6 +672,149 @@ model MerchantInterest {
   updatedAt           DateTime                @db.Timestamptz(6)
 
   @@index([lifecycleStatus, createdAt(sort: Desc)])
+}
+
+model EmployeeApplication {
+  id                     String                    @id @db.Uuid
+  fullName               String
+  email                  String
+  phone                  String
+  roleInterest           String
+  departmentInterest     EmployeeDepartmentCode
+  employmentType         EmployeeEmploymentType
+  location               String
+  experienceSummary      String
+  managerTrackInterest   Boolean?
+  resumeUrl              String?
+  notes                  String?
+  status                 EmployeeApplicationStatus
+  submittedAt            DateTime                  @db.Timestamptz(6)
+  reviewedAt             DateTime?                 @db.Timestamptz(6)
+  reviewedByLabel        String?
+  linkedUserId           String?                   @db.Uuid
+  linkedEmployeeProfileId String?                  @unique @db.Uuid
+  createdAt              DateTime                  @db.Timestamptz(6)
+  updatedAt              DateTime                  @db.Timestamptz(6)
+
+  linkedUser       User?             @relation("EmployeeApplicationLinkedUser", fields: [linkedUserId], references: [id])
+  linkedProfile    EmployeeProfile?  @relation("EmployeeApplicationLinkedProfile", fields: [linkedEmployeeProfileId], references: [id])
+
+  @@index([status, submittedAt(sort: Desc)])
+  @@index([linkedUserId])
+  @@index([linkedEmployeeProfileId])
+}
+
+model EmployeeProfile {
+  id                    String                    @id @db.Uuid
+  userId                String                    @unique @db.Uuid
+  employeeCode          String                    @unique
+  displayName           String
+  department            EmployeeDepartmentCode
+  title                 String
+  employmentType        EmployeeEmploymentType
+  managerUserId         String?                   @db.Uuid
+  startDate             DateTime                  @db.Date
+  locationLabel         String
+  payrollFrequency      EmployeePayrollFrequency
+  payoutMethod          EmployeePayoutMethod
+  payoutAccountMasked   String?
+  isOnboarded           Boolean
+  onboardingCompletedAt DateTime?                 @db.Timestamptz(6)
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  createdAt             DateTime                  @db.Timestamptz(6)
+  updatedAt             DateTime                  @db.Timestamptz(6)
+
+  user                  User                      @relation(fields: [userId], references: [id])
+  manager               User?                     @relation("EmployeeProfileManager", fields: [managerUserId], references: [id])
+  linkedApplication     EmployeeApplication?      @relation("EmployeeApplicationLinkedProfile")
+  guideAcknowledgements EmployeeGuideAcknowledgement[]
+  payrollRecords        EmployeePayrollRecord[]
+  payoutRecords         EmployeePayoutRecord[]
+
+  @@index([department, isOnboarded])
+  @@index([managerUserId])
+}
+
+model EmployeeAnnouncement {
+  id                String                      @id @db.Uuid
+  title             String
+  excerpt           String
+  body              String
+  audience          EmployeeGuideAudience[]
+  publishedByUserId String?                     @db.Uuid
+  priority          EmployeeAnnouncementPriority
+  publishedAt       DateTime                    @db.Timestamptz(6)
+  createdAt         DateTime                    @db.Timestamptz(6)
+  updatedAt         DateTime                    @db.Timestamptz(6)
+
+  publishedBy User? @relation("EmployeeAnnouncementPublishedBy", fields: [publishedByUserId], references: [id])
+
+  @@index([publishedAt(sort: Desc)])
+}
+
+model EmployeeGuide {
+  id             String                    @id @db.Uuid
+  slug           String                    @unique
+  title          String
+  summary        String
+  category       EmployeeGuideCategory
+  audience       EmployeeGuideAudience[]
+  contentMarkdown String
+  isFeatured     Boolean
+  createdAt      DateTime                  @db.Timestamptz(6)
+  updatedAt      DateTime                  @db.Timestamptz(6)
+
+  acknowledgements EmployeeGuideAcknowledgement[]
+
+  @@index([category, isFeatured])
+}
+
+model EmployeeGuideAcknowledgement {
+  id                String          @id @db.Uuid
+  guideId           String          @db.Uuid
+  employeeProfileId String          @db.Uuid
+  acknowledgedAt    DateTime        @db.Timestamptz(6)
+  createdAt         DateTime        @db.Timestamptz(6)
+
+  guide            EmployeeGuide   @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  employeeProfile  EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([guideId, employeeProfileId])
+  @@index([employeeProfileId, acknowledgedAt(sort: Desc)])
+}
+
+model EmployeePayrollRecord {
+  id                String                    @id @db.Uuid
+  employeeProfileId String                    @db.Uuid
+  payPeriodStart    DateTime                  @db.Date
+  payPeriodEnd      DateTime                  @db.Date
+  grossAmount       Decimal                   @db.Decimal(12, 2)
+  deductionsAmount  Decimal                   @db.Decimal(12, 2)
+  netAmount         Decimal                   @db.Decimal(12, 2)
+  status            EmployeePayrollRecordStatus
+  payDate           DateTime                  @db.Date
+  createdAt         DateTime                  @db.Timestamptz(6)
+  updatedAt         DateTime                  @db.Timestamptz(6)
+
+  employeeProfile EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
+
+  @@index([employeeProfileId, payDate(sort: Desc)])
+}
+
+model EmployeePayoutRecord {
+  id                String                    @id @db.Uuid
+  employeeProfileId String                    @db.Uuid
+  sourceLabel       String
+  amount            Decimal                   @db.Decimal(12, 2)
+  status            EmployeePayoutRecordStatus
+  payoutDate        DateTime                  @db.Date
+  createdAt         DateTime                  @db.Timestamptz(6)
+  updatedAt         DateTime                  @db.Timestamptz(6)
+
+  employeeProfile EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
+
+  @@index([employeeProfileId, payoutDate(sort: Desc)])
 }
 
 model LegalDocument {

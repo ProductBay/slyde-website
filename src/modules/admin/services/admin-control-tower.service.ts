@@ -1,4 +1,4 @@
-import { withStoreTransaction, readStore } from "@/server/persistence/store";
+import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { getPersistenceDriver } from "@/server/persistence/repository";
 import {
   getNotificationHealthSummary,
@@ -71,7 +71,7 @@ async function ensureCoverageZones(store?: OnboardingStore) {
       return store;
     }
 
-    const snapshotStore = await readStore();
+    const snapshotStore = await readPersistenceStore();
     await syncApplicationsFromPrisma(snapshotStore);
     hydrateZones(snapshotStore);
     return snapshotStore;
@@ -82,7 +82,7 @@ async function ensureCoverageZones(store?: OnboardingStore) {
     return store;
   }
 
-  const snapshotStore = await readStore();
+  const snapshotStore = await readPersistenceStore();
   hydrateZones(snapshotStore);
   return snapshotStore;
 }
@@ -687,7 +687,7 @@ export async function listAdminNotifications(filters: {
 }
 
 export async function updateZoneLaunchState(zoneId: string, action: "mark_live" | "pause" | "resume") {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     await ensureCoverageZones(store);
     const zone = store.coverageZones.find((item) => item.id === zoneId);
     if (!zone) throw new Error("Zone not found");
@@ -717,7 +717,7 @@ export async function updateZoneLaunchState(zoneId: string, action: "mark_live" 
 }
 
 export async function resendAdminNotification(notificationId: string, triggeredByUserId?: string) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const notification = await resendNotification(store, notificationId, triggeredByUserId);
     return buildNotificationView(store, notification);
   });

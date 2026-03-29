@@ -1,5 +1,5 @@
 import { getLegalRegistryItem, legalCategories, merchantLegalCheckboxes, slyderLegalCheckboxes } from "@/content/legal";
-import { withStoreTransaction, readStore } from "@/server/persistence/store";
+import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import type { OnboardingStore } from "@/types/backend/onboarding";
 import type {
   AcceptanceSource,
@@ -56,7 +56,7 @@ export async function listLegalDocuments(filters?: {
   active?: string;
   actorScope?: string;
 }) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   let items = store.legalDocuments.map((document) => {
     const acceptanceCount = store.legalAcceptances.filter(
       (acceptance) => acceptance.documentType === document.documentType && acceptance.documentVersion === document.version,
@@ -75,31 +75,31 @@ export async function listLegalDocuments(filters?: {
 }
 
 export async function getLegalDocumentById(documentId: string) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   const document = store.legalDocuments.find((item) => item.id === documentId) ?? null;
   const history = store.legalPublishHistory.filter((item) => item.legalDocumentId === documentId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return { document, history };
 }
 
 export async function getPublishedLegalDocumentVersions(typeKey: LegalDocumentType) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   return store.legalDocuments
     .filter((item) => item.documentType === typeKey && item.status !== "draft")
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
 export async function getActiveLegalDocumentByType(typeKey: LegalDocumentType) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   return store.legalDocuments.find((item) => item.documentType === typeKey && item.isActive && item.status === "published") ?? null;
 }
 
 export async function getActiveLegalDocumentBySlug(slug: string) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   return store.legalDocuments.find((item) => item.slug === slug && item.status === "published" && item.isActive) ?? null;
 }
 
 export async function getLegalIndex() {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   return legalCategories.map((category) => ({
     ...category,
     documents: store.legalDocuments
@@ -135,7 +135,7 @@ export async function recordLegalAcceptance(input: {
   userAgent?: string;
   metadata?: Record<string, unknown>;
 }) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const existing = store.legalAcceptances.find(
       (acceptance) =>
         acceptance.actorType === input.actorType &&
@@ -261,7 +261,7 @@ export async function recordMultipleLegalAcceptancesInStore(
 }
 
 export async function hasAcceptedCurrentVersion(actorType: LegalActorType, actorId: string, typeKey: LegalDocumentType) {
-  const [document, store] = await Promise.all([getActiveLegalDocumentByType(typeKey), readStore()]);
+  const [document, store] = await Promise.all([getActiveLegalDocumentByType(typeKey), readPersistenceStore()]);
   if (!document) return true;
   return store.legalAcceptances.some(
     (acceptance) =>
@@ -274,7 +274,7 @@ export async function hasAcceptedCurrentVersion(actorType: LegalActorType, actor
 
 export async function getPendingLegalRequirements(actorType: LegalActorType, actorId: string, context: LegalContextKey) {
   const required = await getRequiredLegalDocumentsForContext(context);
-  const store = await readStore();
+  const store = await readPersistenceStore();
   return required.filter(
     (document) =>
       !store.legalAcceptances.some(
@@ -292,7 +292,7 @@ export async function actorNeedsReacceptance(actorType: LegalActorType, actorId:
 }
 
 export async function getPendingUpdatedLegalDocs(actorType: LegalActorType, actorId: string) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   const relevantTypes = store.legalDocuments
     .filter((document) => document.isActive && document.status === "published" && document.actorScopes.includes(actorType))
     .map((document) => document.documentType);
@@ -332,7 +332,7 @@ export async function createLegalDocumentDraft(input: {
   const registry = getLegalRegistryItem(input.documentType);
   if (!registry) throw new Error("Unknown legal document type");
 
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const document: LegalDocument = {
       id: crypto.randomUUID(),
       documentType: input.documentType,
@@ -364,7 +364,7 @@ export async function createLegalDocumentDraft(input: {
 }
 
 export async function updateLegalDocument(documentId: string, input: Partial<Pick<LegalDocument, "title" | "slug" | "version" | "summary" | "excerpt" | "contentMarkdown" | "effectiveFrom">> & { updatedBy?: string }) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const document = store.legalDocuments.find((item) => item.id === documentId);
     if (!document) throw new Error("Legal document not found");
     if (document.status !== "draft") throw new Error("Only draft documents can be edited directly.");
@@ -385,7 +385,7 @@ export async function updateLegalDocument(documentId: string, input: Partial<Pic
 }
 
 export async function publishLegalDocument(documentId: string, actedBy?: string) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const document = store.legalDocuments.find((item) => item.id === documentId);
     if (!document) throw new Error("Legal document not found");
     document.status = "published";
@@ -402,7 +402,7 @@ export async function publishLegalDocument(documentId: string, actedBy?: string)
 }
 
 export async function activateLegalDocumentVersion(documentId: string, actedBy?: string) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const document = store.legalDocuments.find((item) => item.id === documentId);
     if (!document) throw new Error("Legal document not found");
     if (document.status !== "published") throw new Error("Only published documents can be activated.");
@@ -435,7 +435,7 @@ export async function activateLegalDocumentVersion(documentId: string, actedBy?:
 }
 
 export async function archiveLegalDocument(documentId: string, actedBy?: string) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const document = store.legalDocuments.find((item) => item.id === documentId);
     if (!document) throw new Error("Legal document not found");
     document.status = "archived";
@@ -474,7 +474,7 @@ export async function listLegalAcceptances(filters?: {
   version?: string;
   source?: string;
 }) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   let items = [...store.legalAcceptances];
   if (filters?.actorType) items = items.filter((item) => item.actorType === filters.actorType);
   if (filters?.documentType) items = items.filter((item) => item.documentType === filters.documentType);

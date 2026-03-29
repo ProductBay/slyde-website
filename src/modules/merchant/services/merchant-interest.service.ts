@@ -1,6 +1,6 @@
 import { appendAuditEvent } from "@/server/audit/audit.service";
 import { onMerchantInterestSubmitted } from "@/server/notifications/notification.service";
-import { withStoreTransaction } from "@/server/persistence/store";
+import { withPersistenceTransaction } from "@/server/persistence";
 import { recordMultipleLegalAcceptances, hasAcceptedCurrentVersion } from "@/modules/legal/services/legal-document.service";
 import type { LegalDocumentType, MerchantInterestRecord } from "@/types/backend/onboarding";
 
@@ -39,7 +39,7 @@ export async function createMerchantInterest(input: {
   if (!input.legal.noGuaranteeAcknowledgement) throw new Error("Merchant onboarding acknowledgement is required.");
 
   const timestamp = nowIso();
-  const record = await withStoreTransaction(async (store) => {
+  const record = await withPersistenceTransaction(async (store) => {
     const existing = store.merchantInterests.find(
       (item) =>
         item.email.toLowerCase() === input.email.toLowerCase() &&

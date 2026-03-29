@@ -8,7 +8,7 @@ import type {
   OnboardingStore,
   SetupStatusResponse,
 } from "@/types/backend/onboarding";
-import { readStore, withStoreTransaction } from "@/server/persistence/store";
+import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { dispatchViaProvider } from "@/server/notifications/providers";
 import { isSmsConfigured } from "@/server/notifications/providers";
 import { evaluateSlyderOperationalEligibility } from "@/modules/onboarding/services/readiness.service";
@@ -342,7 +342,7 @@ export async function sendTemplateNotificationInStore(store: OnboardingStore, in
 }
 
 export async function sendTemplateNotification(input: SendTemplateInput) {
-  return withStoreTransaction(async (store) => sendTemplateNotificationInStore(store, input));
+  return withPersistenceTransaction(async (store) => sendTemplateNotificationInStore(store, input));
 }
 
 export function getNotificationHistoryForEntityInStore(store: OnboardingStore, entityType: RelatedEntityType, entityId: string) {
@@ -358,12 +358,12 @@ export function getNotificationHistoryForEntityInStore(store: OnboardingStore, e
 }
 
 export async function getNotificationHistoryForEntity(entityType: RelatedEntityType, entityId: string) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   return getNotificationHistoryForEntityInStore(store, entityType, entityId);
 }
 
 export async function listNotificationTemplates(filters: NotificationTemplateFilters = {}) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   ensureTemplatesSeeded(store);
   let items = [...store.notificationTemplates];
 
@@ -389,7 +389,7 @@ export async function listNotificationTemplates(filters: NotificationTemplateFil
 }
 
 export async function getNotificationTemplateById(templateId: string) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   ensureTemplatesSeeded(store);
   const template = store.notificationTemplates.find((item) => item.id === templateId);
   if (!template) return null;
@@ -437,7 +437,7 @@ export async function updateNotificationTemplate(
     description?: string;
   },
 ) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     ensureTemplatesSeeded(store);
     const template = store.notificationTemplates.find((item) => item.id === templateId);
     if (!template) throw new Error("Notification template not found");
@@ -455,7 +455,7 @@ export async function updateNotificationTemplate(
 }
 
 export async function listNotificationLogs(filters: NotificationFilters = {}) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   let items = [...store.notifications];
 
   if (filters.channel) items = items.filter((item) => item.channel === filters.channel);
@@ -482,7 +482,7 @@ export async function listNotificationLogs(filters: NotificationFilters = {}) {
 }
 
 export async function getNotificationLogById(notificationId: string) {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   const log = store.notifications.find((item) => item.id === notificationId);
   if (!log) return null;
   const trigger = log.triggerEventId ? store.notificationTriggers.find((item) => item.id === log.triggerEventId) ?? null : null;
@@ -490,7 +490,7 @@ export async function getNotificationLogById(notificationId: string) {
 }
 
 export async function getNotificationHealthSummary() {
-  const store = await readStore();
+  const store = await readPersistenceStore();
   const notifications = [...store.notifications];
   const sentCount = notifications.filter((item) => ["sent", "delivered", "confirmed"].includes(item.status ?? "pending")).length;
   const failedCount = notifications.filter((item) => item.status === "failed").length;
@@ -537,7 +537,7 @@ export async function getNotificationHealthSummary() {
 }
 
 export async function retryFailedNotification(notificationId: string) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const record = store.notifications.find((item) => item.id === notificationId);
     if (!record) throw new Error("Notification not found");
     if (record.status !== "failed") throw new Error("Only failed notifications can be retried.");
@@ -651,7 +651,7 @@ export async function resendNotification(store: OnboardingStore, notificationId:
 }
 
 export async function resendNotificationById(notificationId: string, triggeredByUserId?: string) {
-  return withStoreTransaction(async (store) => resendNotification(store, notificationId, triggeredByUserId));
+  return withPersistenceTransaction(async (store) => resendNotification(store, notificationId, triggeredByUserId));
 }
 
 export async function resendLatestNotificationForEntity(
@@ -660,7 +660,7 @@ export async function resendLatestNotificationForEntity(
   templateKey: string,
   triggeredByUserId?: string,
 ) {
-  return withStoreTransaction(async (store) => {
+  return withPersistenceTransaction(async (store) => {
     const log = [...store.notifications]
       .filter((item) => item.relatedEntityType === entityType && item.relatedEntityId === entityId && (item.templateKey || item.template) === templateKey)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
