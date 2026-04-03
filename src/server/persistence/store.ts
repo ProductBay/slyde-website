@@ -3,15 +3,33 @@ import path from "node:path";
 import { legalDocumentsRegistry } from "@/content/legal";
 import { notificationTemplatesRegistry } from "@/content/notifications";
 import type {
+  CoverageZone,
+  DeliveryLeg,
+  DeliveryTransferPlan,
   EmployeeAnnouncement,
   EmployeeGuide,
   EmployeePayrollRecord,
   EmployeeProfile,
   EmployeePayoutRecord,
   LegalDocument,
+  MerchantAddress,
+  MerchantDelivery,
+  MerchantDispatchEvent,
+  MerchantNotificationPreference,
+  MerchantOrder,
+  MerchantTeamMember,
   NotificationTemplate,
   OnboardingStore,
+  PartnerCarrier,
+  PartnerHandoffLocation,
+  PartnerTrackingEvent,
   StoredUser,
+  SupportContextSnapshot,
+  SupportConversation,
+  SupportEvent,
+  SupportHandoff,
+  SupportKnowledgeArticle,
+  SupportMessage,
 } from "@/types/backend/onboarding";
 import { hashPassword } from "@/server/auth/passwords";
 import { getDataDirectory } from "@/server/storage-paths";
@@ -27,6 +45,15 @@ let writeLock: Promise<void> = Promise.resolve();
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function toTitleFromEventType(eventType: string | undefined) {
+  if (!eventType) return "Referral event";
+  return eventType
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function seedLegalDocuments(timestamp: string): LegalDocument[] {
@@ -69,6 +96,121 @@ function seedNotificationTemplates(timestamp: string): NotificationTemplate[] {
     createdAt: timestamp,
     updatedAt: timestamp,
   }));
+}
+
+function seedCoverageZones(timestamp: string): CoverageZone[] {
+  return [
+    {
+      id: "kingston",
+      name: "Kingston",
+      parish: "Kingston",
+      requiredReadySlyders: 50,
+      merchantAvailability: "open",
+      estimatedLaunchLabel: "Live for local reward testing",
+      isLive: true,
+      isPaused: false,
+      notes: "Seeded as a live zone so local referral reward claim and gift flows can be tested end-to-end.",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+  ];
+}
+
+function seedPartnerCarriers(timestamp: string): PartnerCarrier[] {
+  return [
+    {
+      id: crypto.randomUUID(),
+      name: "Knutsford Express",
+      slug: "knutsford-express",
+      type: "branch_network",
+      supportsTracking: true,
+      supportsApi: false,
+      supportsFinalDelivery: false,
+      supportsBranchCollection: true,
+      active: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+    {
+      id: crypto.randomUUID(),
+      name: "Tara",
+      slug: "tara",
+      type: "branch_network",
+      supportsTracking: false,
+      supportsApi: false,
+      supportsFinalDelivery: false,
+      supportsBranchCollection: true,
+      active: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+    {
+      id: crypto.randomUUID(),
+      name: "DHL",
+      slug: "dhl",
+      type: "courier",
+      supportsTracking: true,
+      supportsApi: false,
+      supportsFinalDelivery: true,
+      supportsBranchCollection: false,
+      active: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+  ];
+}
+
+function seedPartnerHandoffLocations(timestamp: string, carriers: PartnerCarrier[]): PartnerHandoffLocation[] {
+  const knutsford = carriers.find((item) => item.slug === "knutsford-express");
+  const tara = carriers.find((item) => item.slug === "tara");
+  const dhl = carriers.find((item) => item.slug === "dhl");
+  return [
+    ...(knutsford
+      ? [
+          {
+            id: crypto.randomUUID(),
+            partnerCarrierId: knutsford.id,
+            name: "Knutsford Kingston Hub",
+            parish: "Kingston",
+            town: "Kingston",
+            addressLine: "Half-Way Tree Transport Centre",
+            active: true,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          },
+        ]
+      : []),
+    ...(tara
+      ? [
+          {
+            id: crypto.randomUUID(),
+            partnerCarrierId: tara.id,
+            name: "Tara Kingston Office",
+            parish: "Kingston",
+            town: "Kingston",
+            addressLine: "Downtown Kingston branch",
+            active: true,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          },
+        ]
+      : []),
+    ...(dhl
+      ? [
+          {
+            id: crypto.randomUUID(),
+            partnerCarrierId: dhl.id,
+            name: "DHL Kingston Service Point",
+            parish: "Kingston",
+            town: "Kingston",
+            addressLine: "New Kingston service counter",
+            active: true,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          },
+        ]
+      : []),
+  ];
 }
 
 async function seedEmployeeUsers(timestamp: string): Promise<StoredUser[]> {
@@ -293,12 +435,20 @@ export async function createSeedStore(): Promise<OnboardingStore> {
   };
   const employeeUsers = await seedEmployeeUsers(timestamp);
   const employeeProfiles = seedEmployeeProfiles(timestamp, employeeUsers);
+  const partnerCarriers = seedPartnerCarriers(timestamp);
 
   return {
     users: [adminUser, ...employeeUsers],
     applications: [],
     vehicles: [],
     documents: [],
+    referrerAccounts: [],
+    referrerLoginChallenges: [],
+    referrerSessions: [],
+    publicSlyderReferrals: [],
+    referralEvents: [],
+    referralRewards: [],
+    referralRewardAudits: [],
     slyderProfiles: [],
     history: [],
     activationTokens: [],
@@ -307,8 +457,29 @@ export async function createSeedStore(): Promise<OnboardingStore> {
     notifications: [],
     notificationTemplates: seedNotificationTemplates(timestamp),
     notificationTriggers: [],
-    coverageZones: [],
+    supportConversations: [],
+    supportMessages: [],
+    supportContextSnapshots: [],
+    supportHandoffs: [],
+    supportEvents: [],
+    supportKnowledgeArticles: [],
+    coverageZones: seedCoverageZones(timestamp),
     merchantInterests: [],
+    merchantLeads: [],
+    merchantApplications: [],
+    merchantIntegrationProfiles: [],
+    merchantOnboardingEvents: [],
+    merchantOrders: [],
+    merchantDeliveries: [],
+    merchantAddresses: [],
+    merchantTeamMembers: [],
+    merchantNotificationPreferences: [],
+    merchantDispatchEvents: [],
+    partnerCarriers,
+    partnerHandoffLocations: seedPartnerHandoffLocations(timestamp, partnerCarriers),
+    deliveryTransferPlans: [],
+    deliveryLegs: [],
+    partnerTrackingEvents: [],
     legalDocuments: seedLegalDocuments(timestamp),
     legalAcceptances: [],
     legalPublishHistory: [],
@@ -338,7 +509,7 @@ function sleep(ms: number) {
 }
 
 async function readJsonFile<T>(filePath: string): Promise<T> {
-  const raw = await readFile(filePath, "utf8");
+  const raw = (await readFile(filePath, "utf8")).replace(/^\uFEFF/, "");
   return JSON.parse(raw) as T;
 }
 
@@ -367,7 +538,9 @@ export async function readStore(): Promise<OnboardingStore> {
 
   const defaultLegalDocuments = seedLegalDocuments(new Date().toISOString());
   const defaultNotificationTemplates = seedNotificationTemplates(new Date().toISOString());
+  const defaultCoverageZones = seedCoverageZones(new Date().toISOString());
   const defaultEmployeeUsers = await seedEmployeeUsers(new Date().toISOString());
+  const normalizationTimestamp = new Date().toISOString();
   const baseDocuments = parsed.legalDocuments ?? [];
   const baseTemplates = parsed.notificationTemplates ?? [];
   const mergedUsers = [
@@ -464,6 +637,13 @@ export async function readStore(): Promise<OnboardingStore> {
       (seeded) => !baseTemplates.some((template) => template.key === seeded.key),
     ),
   ];
+  const baseCoverageZones = parsed.coverageZones ?? [];
+  const mergedCoverageZones = [
+    ...baseCoverageZones,
+    ...defaultCoverageZones.filter(
+      (seeded) => !baseCoverageZones.some((zone) => zone.id === seeded.id),
+    ),
+  ];
   const normalizedProfiles = (parsed.slyderProfiles ?? []).map((profile) => ({
     ...profile,
     onboardingStatus: profile.onboardingStatus ?? "activation_pending",
@@ -506,9 +686,180 @@ export async function readStore(): Promise<OnboardingStore> {
         ? "used"
         : new Date(token.expiresAt) <= new Date()
           ? "expired"
-          : "issued"),
+      : "issued"),
     issuedAt: token.issuedAt ?? token.createdAt,
     updatedAt: token.updatedAt ?? token.consumedAt ?? token.createdAt,
+  }));
+  const normalizedReferrerAccounts = (parsed.referrerAccounts ?? []).map((account) => {
+    const legacyAccount = account as typeof account & { displayName?: string };
+    return {
+      id: account.id,
+      fullName: account.fullName ?? legacyAccount.displayName ?? account.email ?? account.phone ?? "Referrer",
+      email: account.email ?? undefined,
+      phone: account.phone ?? undefined,
+      emailVerifiedAt: account.emailVerifiedAt ?? undefined,
+      phoneVerifiedAt: account.phoneVerifiedAt ?? undefined,
+      isEnabled: account.isEnabled ?? true,
+      createdAt: account.createdAt ?? normalizationTimestamp,
+      updatedAt: account.updatedAt ?? account.createdAt ?? normalizationTimestamp,
+    };
+  });
+  const normalizedReferrerLoginChallenges = (parsed.referrerLoginChallenges ?? []).map((challenge) => {
+    const legacyChallenge = challenge as typeof challenge & {
+      verifiedAt?: string;
+      status?: string;
+      updatedAt?: string;
+    };
+    return {
+      id: challenge.id,
+      referrerAccountId: challenge.referrerAccountId ?? undefined,
+      channel: challenge.channel ?? (challenge.phone && !challenge.email ? "sms" : "email"),
+      email: challenge.email ?? undefined,
+      phone: challenge.phone ?? undefined,
+      codeHash: challenge.codeHash,
+      expiresAt: challenge.expiresAt,
+      consumedAt:
+        challenge.consumedAt ??
+        legacyChallenge.verifiedAt ??
+        (legacyChallenge.status && legacyChallenge.status !== "pending"
+          ? legacyChallenge.updatedAt ?? challenge.createdAt
+          : undefined),
+      createdAt: challenge.createdAt ?? normalizationTimestamp,
+    };
+  });
+  const normalizedReferrerSessions = (parsed.referrerSessions ?? [])
+    .filter((session) => !(session as typeof session & { revokedAt?: string }).revokedAt)
+    .map((session) => ({
+      id: session.id,
+      referrerAccountId: session.referrerAccountId,
+      createdAt: session.createdAt ?? normalizationTimestamp,
+      expiresAt: session.expiresAt,
+    }));
+  const normalizedReferralEvents = (parsed.referralEvents ?? []).map((event) => {
+    const legacyEvent = event as typeof event & { notes?: string };
+    return {
+      id: event.id,
+      referralId: event.referralId,
+      eventType: event.eventType,
+      title: event.title ?? toTitleFromEventType(event.eventType),
+      description: event.description ?? legacyEvent.notes ?? undefined,
+      metadata: event.metadata ?? undefined,
+      createdAt: event.createdAt ?? normalizationTimestamp,
+    };
+  });
+  const normalizedMerchantOrders: MerchantOrder[] = (parsed.merchantOrders ?? []).map((order) => ({
+    ...order,
+    requestedTiming: order.requestedTiming ?? "asap",
+    status: order.status ?? "submitted",
+  }));
+  const normalizedMerchantApplications = (parsed.merchantApplications ?? []).map((application) => ({
+    ...application,
+    businessLicenseStatus: application.businessLicenseStatus ?? "missing",
+    businessLicenseNumber: application.businessLicenseNumber ?? undefined,
+    businessLicenseSubmittedAt: application.businessLicenseSubmittedAt ?? undefined,
+    businessLicenseVerifiedAt: application.businessLicenseVerifiedAt ?? undefined,
+    businessLicenseGraceEndsAt:
+      application.businessLicenseGraceEndsAt ??
+      (() => {
+        const date = new Date(application.createdAt);
+        date.setUTCDate(date.getUTCDate() + 30);
+        return date.toISOString();
+      })(),
+    businessLicenseRequiredAfterDeliveries: application.businessLicenseRequiredAfterDeliveries ?? 10,
+    businessLicenseDisabledAt: application.businessLicenseDisabledAt ?? undefined,
+  }));
+  const normalizedMerchantDeliveries: MerchantDelivery[] = (parsed.merchantDeliveries ?? []).map((delivery) => ({
+    ...delivery,
+    status: delivery.status ?? "submitted",
+    dispatchMode: delivery.dispatchMode ?? "manual_dashboard",
+    deliveryType: delivery.deliveryType ?? "in_parish",
+  }));
+  const normalizedMerchantAddresses: MerchantAddress[] = (parsed.merchantAddresses ?? []).map((address) => ({
+    ...address,
+    type: address.type ?? "pickup",
+    isDefault: address.isDefault ?? false,
+  }));
+  const normalizedMerchantTeamMembers: MerchantTeamMember[] = (parsed.merchantTeamMembers ?? []).map((member) => ({
+    ...member,
+    status: member.status ?? "active",
+    invitedAt: member.invitedAt ?? member.createdAt,
+  }));
+  const normalizedMerchantNotificationPreferences: MerchantNotificationPreference[] = (
+    parsed.merchantNotificationPreferences ?? []
+  ).map((preference) => ({
+    ...preference,
+    emailEnabled: preference.emailEnabled ?? true,
+    smsEnabled: preference.smsEnabled ?? false,
+    whatsappEnabled: preference.whatsappEnabled ?? true,
+    notifyOnAssigned: preference.notifyOnAssigned ?? true,
+    notifyOnDelivered: preference.notifyOnDelivered ?? true,
+    notifyOnFailed: preference.notifyOnFailed ?? true,
+    notifyOnBilling: preference.notifyOnBilling ?? true,
+  }));
+  const normalizedMerchantDispatchEvents: MerchantDispatchEvent[] = (
+    parsed.merchantDispatchEvents ?? []
+  ).map((event) => ({
+    ...event,
+    createdAt: event.createdAt ?? normalizationTimestamp,
+  }));
+  const normalizedPartnerCarriers: PartnerCarrier[] = (parsed.partnerCarriers ?? []).map((carrier) => ({
+    ...carrier,
+    supportsTracking: carrier.supportsTracking ?? false,
+    supportsApi: carrier.supportsApi ?? false,
+    supportsFinalDelivery: carrier.supportsFinalDelivery ?? false,
+    supportsBranchCollection: carrier.supportsBranchCollection ?? false,
+    active: carrier.active ?? true,
+  }));
+  const normalizedPartnerHandoffLocations: PartnerHandoffLocation[] = (parsed.partnerHandoffLocations ?? []).map((location) => ({
+    ...location,
+    active: location.active ?? true,
+  }));
+  const normalizedDeliveryTransferPlans: DeliveryTransferPlan[] = (parsed.deliveryTransferPlans ?? []).map((plan) => ({
+    ...plan,
+    deliveryType: plan.deliveryType ?? "out_of_parish",
+    overallStatus: plan.overallStatus ?? "submitted",
+  }));
+  const normalizedDeliveryLegs: DeliveryLeg[] = (parsed.deliveryLegs ?? []).map((leg) => ({
+    ...leg,
+    status: leg.status ?? "pending",
+  }));
+  const normalizedPartnerTrackingEvents: PartnerTrackingEvent[] = (parsed.partnerTrackingEvents ?? []).map((event) => ({
+    ...event,
+    eventTimestamp: event.eventTimestamp ?? event.createdAt ?? normalizationTimestamp,
+    createdAt: event.createdAt ?? normalizationTimestamp,
+  }));
+  const normalizedSupportConversations: SupportConversation[] = (parsed.supportConversations ?? []).map((conversation) => ({
+    ...conversation,
+    priority: conversation.priority ?? "normal",
+    status: conversation.status ?? "open",
+    updatedAt: conversation.updatedAt ?? conversation.createdAt ?? normalizationTimestamp,
+  }));
+  const normalizedSupportMessages: SupportMessage[] = (parsed.supportMessages ?? []).map((message) => ({
+    ...message,
+    messageFormat: message.messageFormat ?? "plain_text",
+    aiGenerated: message.aiGenerated ?? false,
+    createdAt: message.createdAt ?? normalizationTimestamp,
+  }));
+  const normalizedSupportContextSnapshots: SupportContextSnapshot[] = (parsed.supportContextSnapshots ?? []).map((snapshot) => ({
+    ...snapshot,
+    payload: snapshot.payload ?? {},
+    createdAt: snapshot.createdAt ?? normalizationTimestamp,
+  }));
+  const normalizedSupportHandoffs: SupportHandoff[] = (parsed.supportHandoffs ?? []).map((handoff) => ({
+    ...handoff,
+    createdAt: handoff.createdAt ?? normalizationTimestamp,
+  }));
+  const normalizedSupportEvents: SupportEvent[] = (parsed.supportEvents ?? []).map((event) => ({
+    ...event,
+    createdAt: event.createdAt ?? normalizationTimestamp,
+  }));
+  const normalizedSupportKnowledgeArticles: SupportKnowledgeArticle[] = (parsed.supportKnowledgeArticles ?? []).map((article) => ({
+    ...article,
+    audience: article.audience ?? [],
+    tags: article.tags ?? [],
+    published: article.published ?? false,
+    createdAt: article.createdAt ?? normalizationTimestamp,
+    updatedAt: article.updatedAt ?? article.createdAt ?? normalizationTimestamp,
   }));
 
   return {
@@ -516,6 +867,13 @@ export async function readStore(): Promise<OnboardingStore> {
     applications: parsed.applications ?? [],
     vehicles: parsed.vehicles ?? [],
     documents: parsed.documents ?? [],
+    referrerAccounts: normalizedReferrerAccounts,
+    referrerLoginChallenges: normalizedReferrerLoginChallenges,
+    referrerSessions: normalizedReferrerSessions,
+    publicSlyderReferrals: parsed.publicSlyderReferrals ?? [],
+    referralEvents: normalizedReferralEvents,
+    referralRewards: parsed.referralRewards ?? [],
+    referralRewardAudits: parsed.referralRewardAudits ?? [],
     slyderProfiles: normalizedProfiles,
     history: parsed.history ?? [],
     activationTokens: normalizedActivationTokens,
@@ -524,8 +882,29 @@ export async function readStore(): Promise<OnboardingStore> {
     notifications: parsed.notifications ?? [],
     notificationTemplates: mergedNotificationTemplates,
     notificationTriggers: parsed.notificationTriggers ?? [],
-    coverageZones: parsed.coverageZones ?? [],
+    supportConversations: normalizedSupportConversations,
+    supportMessages: normalizedSupportMessages,
+    supportContextSnapshots: normalizedSupportContextSnapshots,
+    supportHandoffs: normalizedSupportHandoffs,
+    supportEvents: normalizedSupportEvents,
+    supportKnowledgeArticles: normalizedSupportKnowledgeArticles,
+    coverageZones: mergedCoverageZones,
     merchantInterests: parsed.merchantInterests ?? [],
+    merchantLeads: parsed.merchantLeads ?? [],
+    merchantApplications: normalizedMerchantApplications,
+    merchantIntegrationProfiles: parsed.merchantIntegrationProfiles ?? [],
+    merchantOnboardingEvents: parsed.merchantOnboardingEvents ?? [],
+    merchantOrders: normalizedMerchantOrders,
+    merchantDeliveries: normalizedMerchantDeliveries,
+    merchantAddresses: normalizedMerchantAddresses,
+    merchantTeamMembers: normalizedMerchantTeamMembers,
+    merchantNotificationPreferences: normalizedMerchantNotificationPreferences,
+    merchantDispatchEvents: normalizedMerchantDispatchEvents,
+    partnerCarriers: normalizedPartnerCarriers,
+    partnerHandoffLocations: normalizedPartnerHandoffLocations,
+    deliveryTransferPlans: normalizedDeliveryTransferPlans,
+    deliveryLegs: normalizedDeliveryLegs,
+    partnerTrackingEvents: normalizedPartnerTrackingEvents,
     legalDocuments: mergedLegalDocuments,
     legalAcceptances: parsed.legalAcceptances ?? [],
     legalPublishHistory: parsed.legalPublishHistory ?? [],

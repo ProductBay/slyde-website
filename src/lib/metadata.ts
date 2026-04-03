@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 
+import { getAppBaseUrl } from "@/lib/app-base-url";
+
 const siteName = "SLYDE";
-const baseUrl = "https://slyde.app";
 
 export function buildMetadata(
   title: string,
   description: string,
   path = "/",
 ): Metadata {
+  const baseUrl = getAppBaseUrl();
   const url = new URL(path, baseUrl).toString();
 
   return {

@@ -11,8 +11,9 @@ export function AppChrome({ children }: { children: ReactNode }) {
   const isSlyderRoute = pathname.startsWith("/slyder");
   const isEmployeeRoute = pathname.startsWith("/employee-hub");
   const isDedicatedEmployeeRoute = pathname.startsWith("/employee");
+  const isMerchantRoute = pathname.startsWith("/merchant");
 
-  if (isAdminRoute || isSlyderRoute || isEmployeeRoute || isDedicatedEmployeeRoute) {
+  if (isAdminRoute || isSlyderRoute || isEmployeeRoute || isDedicatedEmployeeRoute || isMerchantRoute) {
     return <main className="relative isolate min-h-screen">{children}</main>;
   }
 

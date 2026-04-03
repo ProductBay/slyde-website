@@ -1,8 +1,11 @@
-import { ArrowRight, Boxes, BriefcaseBusiness, Cable, FileCheck2, Globe2, MapPinned, Radar, ShieldCheck, ShieldEllipsis, Sparkles, UserRoundCheck, Waypoints, Workflow } from "lucide-react";
+import { ArrowRight, Boxes, BriefcaseBusiness, Cable, Globe2, MapPinned, Radar, ShieldCheck, Sparkles, UserRoundCheck, Workflow } from "lucide-react";
 import { AnimatedCount } from "@/components/site/animated-count";
 import { CTASection } from "@/components/site/cta-section";
 import { CoverageSection } from "@/components/site/coverage-section";
+import { HomeHeroAmbientParticles } from "@/components/site/home-hero-ambient-particles";
+import { HomeHeroBackground } from "@/components/site/home-hero-background";
 import { HeroSection } from "@/components/site/hero-section";
+import { HomeHeroEnterpriseAside } from "@/components/site/home-hero-enterprise-aside";
 import { InfoCardGrid } from "@/components/site/info-card-grid";
 import { PathSelector } from "@/components/site/path-selector";
 import { ProcessTimeline } from "@/components/site/process-timeline";
@@ -139,72 +142,17 @@ export default function HomePage() {
     <>
       <HeroSection
         eyebrow="SLYDE Logistics Network"
-        title="Delivery infrastructure for modern Jamaica"
-        description="SLYDE powers fast, reliable delivery for businesses while building a new generation of independent couriers across the island."
-        supportText="Built for Jamaica first. Designed to scale across the Caribbean."
+        title="Delivery infrastructure that feels better for merchants, Slyders, and customers"
+        description="SLYDE helps businesses run delivery more professionally, gives Slyders a more structured path to work, and creates a clearer customer experience across Jamaica."
+        supportText="Friendly on the surface. Operations-grade underneath. Built for Jamaica first and designed to scale across the Caribbean."
         actions={[
           { href: "/become-a-slyder/apply", label: "Become a Slyder" },
           { href: "/for-businesses", label: "Partner with SLYDE", variant: "secondary" },
         ]}
         metrics={heroMetrics}
-        aside={
-          <div className="dark-panel enterprise-grid reveal-on-scroll overflow-hidden p-6 sm:p-8">
-            <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/5 p-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Operational flow</p>
-                <p className="mt-2 text-lg font-semibold">Public website to dispatch-ready network</p>
-              </div>
-              <div className="floating-orb rounded-2xl border border-sky-300/20 bg-sky-400/10 p-3">
-                <Workflow className="h-8 w-8 text-sky-300" />
-              </div>
-            </div>
-            <div className="mt-6 grid gap-3 text-sm text-slate-300">
-              {[
-                {
-                  icon: FileCheck2,
-                  title: "Structured intake",
-                  body: "Applications, documents, and business inquiries enter a controlled public review flow.",
-                },
-                {
-                  icon: ShieldEllipsis,
-                  title: "Approval gating",
-                  body: "Approved Slyders move into activation, setup, document review, and readiness controls.",
-                },
-                {
-                  icon: Radar,
-                  title: "Launch orchestration",
-                  body: "Zones, merchant demand, and courier readiness align before SLYDE enables operations.",
-                },
-              ].map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.title} className="enterprise-node p-4">
-                    <div className="flex items-start gap-4">
-                      <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-slate-900/70 text-sky-300">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-200/90">Stage 0{index + 1}</p>
-                        <p className="mt-2 text-base font-semibold text-white">{item.title}</p>
-                        <p className="mt-2 text-sm leading-7 text-slate-300">{item.body}</p>
-                      </div>
-                    </div>
-                    {index < 2 ? <div className="workflow-connector mt-4" /> : null}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-5 rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center gap-3">
-                <Waypoints className="h-5 w-5 text-sky-300" />
-                <p className="text-sm font-semibold text-white">Enterprise posture</p>
-              </div>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                SLYDE is being shaped as an operations-grade logistics surface: verified participants, symbolic workflow controls, and future integration readiness without changing the core public website architecture.
-              </p>
-            </div>
-          </div>
-        }
+        aside={<HomeHeroEnterpriseAside />}
+        backgroundDecor={<HomeHeroBackground />}
+        outerBackgroundDecor={<HomeHeroAmbientParticles />}
       />
 
       <TrustStrip />

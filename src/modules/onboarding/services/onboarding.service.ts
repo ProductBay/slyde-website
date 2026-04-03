@@ -50,6 +50,10 @@ import {
 } from "@/modules/onboarding/services/onboarding-rules.service";
 import { recordMultipleLegalAcceptancesInStore } from "@/modules/legal/services/legal-document.service";
 import type { SyncedSlydeAppApplication } from "@/modules/onboarding/services/slyde-app-sync.service";
+import {
+  syncReferralForApplicationApproved,
+  syncReferralForApplicationCreated,
+} from "@/modules/referrals/services/referral-lifecycle.service";
 
 function nowIso() {
   return new Date().toISOString();
@@ -112,7 +116,7 @@ export async function createPublicSlyderApplication(
   metadata?: { ipAddress?: string; userAgent?: string },
   syncResult?: SyncedSlydeAppApplication,
 ) {
-  return withPersistenceTransaction(async (store) => {
+  const result = await withPersistenceTransaction(async (store) => {
     const normalizedEmail = normalizeEmail(input.email);
     const normalizedPhone = normalizePhone(input.phone);
 
@@ -214,8 +218,23 @@ export async function createPublicSlyderApplication(
       submittedAt: application.submittedAt,
       linkedUserId: application.linkedUserId,
       linkedSlyderProfileId: application.linkedSlyderProfileId,
+      application,
     };
   });
+
+  const createdApplication = "application" in result ? result.application : undefined;
+  if (createdApplication) {
+    await syncReferralForApplicationCreated(createdApplication);
+  }
+
+  return {
+    applicationId: result.applicationId,
+    applicationCode: result.applicationCode,
+    applicationStatus: result.applicationStatus,
+    submittedAt: result.submittedAt,
+    linkedUserId: result.linkedUserId,
+    linkedSlyderProfileId: result.linkedSlyderProfileId,
+  };
 }
 
 export async function linkPublicSlyderApplicationToSyncedApp(
@@ -564,7 +583,7 @@ export async function approveApplication(
   payload: ApproveApplicationInput,
   actor: AdminActor,
 ) {
-  return withPersistenceTransaction(async (store) => {
+  const result = await withPersistenceTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) throw new Error("Application not found");
 
@@ -654,8 +673,26 @@ export async function approveApplication(
       activationStatus: user.accountStatus,
       activationToken, // returned for integration/testing; replace with provider delivery in production.
       readiness,
+      application: { ...application },
     };
   });
+
+  const approvedApplication = "application" in result ? result.application : undefined;
+  if (approvedApplication) {
+    await syncReferralForApplicationApproved(approvedApplication);
+  }
+
+  return {
+    applicationId: result.applicationId,
+    applicationStatus: result.applicationStatus,
+    email: result.email,
+    linkedUserId: result.linkedUserId,
+    linkedSlyderProfileId: result.linkedSlyderProfileId,
+    accountStatus: result.accountStatus,
+    activationStatus: result.activationStatus,
+    activationToken: result.activationToken,
+    readiness: result.readiness,
+  };
 }
 
 export async function updateDocumentVerification(

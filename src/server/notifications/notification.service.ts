@@ -6,12 +6,16 @@ import type {
   NotificationTemplate,
   NotificationTriggerEvent,
   OnboardingStore,
+  PublicSlyderReferral,
   SetupStatusResponse,
 } from "@/types/backend/onboarding";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { dispatchViaProvider } from "@/server/notifications/providers";
 import { isSmsConfigured } from "@/server/notifications/providers";
+import { isWhatsappConfigured } from "@/server/notifications/providers";
 import { evaluateSlyderOperationalEligibility } from "@/modules/onboarding/services/readiness.service";
+import { buildMerchantStatusUrl } from "@/modules/merchant/services/merchant-status-link.service";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 
 type RelatedEntityType = NotificationRecord["relatedEntityType"];
 
@@ -71,11 +75,7 @@ function nowIso() {
 }
 
 function getWebsiteBaseUrl() {
-  return (
-    process.env.SLYDE_WEBSITE_BASE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://127.0.0.1:3002"
-  ).replace(/\/+$/, "");
+  return getAppBaseUrl();
 }
 
 function createProviderMessageFallback() {
@@ -867,6 +867,388 @@ export async function sendEmployeeActivationCompletedNotification(
 
   updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
   return [result];
+}
+
+export async function sendMerchantActivationNotifications(
+  store: OnboardingStore,
+  applicationId: string,
+  activationToken?: string,
+  options?: {
+    force?: boolean;
+    dedupeSuffix?: string;
+  },
+) {
+  if (!activationToken) return [];
+
+  const application = store.merchantApplications.find((item) => item.id === applicationId);
+  if (!application) throw new Error("Merchant application not found");
+
+  const lead = store.merchantLeads.find((item) => item.id === application.merchantLeadId);
+  if (!lead) throw new Error("Merchant lead not found");
+
+  const user = store.users.find(
+    (item) =>
+      item.userType === "merchant" &&
+      item.roles.some((role) => role.startsWith("merchant_")) &&
+      (item.email.toLowerCase() === lead.email.toLowerCase() || item.phone === lead.phone),
+  );
+  if (!user) throw new Error("Merchant user not found");
+
+  const websiteBaseUrl = getWebsiteBaseUrl();
+  const loginUrl = `${websiteBaseUrl}/merchant/login`;
+  const activationUrl = activationToken ? `${websiteBaseUrl}/merchant/activate/${activationToken}` : undefined;
+  const statusUrl = buildMerchantStatusUrl(lead.id, application.id);
+  const signInIdentifier = lead.email || lead.phone;
+  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
+  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
+  const businessName = application.storeName || lead.businessName;
+
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `merchant_activation_ready:${application.id}:${user.id}:${application.activationStatus}`,
+    relatedEntityType: "merchant_account",
+    relatedEntityId: application.id,
+    actorType: "merchant_user",
+    actorId: user.id,
+    payload: { loginUrl, activationUrl, signInIdentifier, activationStatus: application.activationStatus },
+    force: options?.force,
+  });
+  if (isDuplicate) return [];
+
+  const variables = {
+    contactName: lead.contactName,
+    businessName,
+    activationUrl,
+    loginUrl,
+    statusUrl,
+    signInIdentifier,
+    supportEmail,
+    supportPhone,
+  };
+
+  const results: NotificationRecord[] = [];
+
+  results.push(
+    await sendTemplateNotificationInStore(store, {
+      templateKey: "merchant_activation_ready_email",
+      actorType: "merchant_user",
+      actorId: user.id,
+      recipient: user.email,
+      recipientName: lead.contactName,
+      relatedEntityType: "merchant_account",
+      relatedEntityId: application.id,
+      userId: user.id,
+      variables,
+      payload: { loginUrl, activationUrl, statusUrl, signInIdentifier, activationStatus: application.activationStatus },
+      triggerEventId: event.id,
+      triggerEventKey: event.eventKey,
+      dedupeKey: `merchant_activation_ready:email:${application.id}:${user.id}${options?.dedupeSuffix ? `:${options.dedupeSuffix}` : ""}`,
+      force: options?.force,
+    }),
+  );
+
+  if (isWhatsappConfigured() && lead.phone) {
+    results.push(
+      await sendTemplateNotificationInStore(store, {
+        templateKey: "merchant_activation_ready_whatsapp",
+        actorType: "merchant_user",
+        actorId: user.id,
+        recipient: lead.phone,
+        recipientName: lead.contactName,
+        relatedEntityType: "merchant_account",
+        relatedEntityId: application.id,
+        userId: user.id,
+        variables,
+        payload: { loginUrl, activationUrl, statusUrl, signInIdentifier, activationStatus: application.activationStatus },
+        triggerEventId: event.id,
+        triggerEventKey: event.eventKey,
+        dedupeKey: `merchant_activation_ready:whatsapp:${application.id}:${user.id}${options?.dedupeSuffix ? `:${options.dedupeSuffix}` : ""}`,
+        force: options?.force,
+      }),
+    );
+  }
+
+  if (isSmsConfigured() && lead.phone) {
+    results.push(
+      await sendTemplateNotificationInStore(store, {
+        templateKey: "merchant_activation_ready_sms",
+        actorType: "merchant_user",
+        actorId: user.id,
+        recipient: lead.phone,
+        recipientName: lead.contactName,
+        relatedEntityType: "merchant_account",
+        relatedEntityId: application.id,
+        userId: user.id,
+        variables,
+        payload: { loginUrl, activationUrl, statusUrl, signInIdentifier, activationStatus: application.activationStatus },
+        triggerEventId: event.id,
+        triggerEventKey: event.eventKey,
+        dedupeKey: `merchant_activation_ready:sms:${application.id}:${user.id}${options?.dedupeSuffix ? `:${options.dedupeSuffix}` : ""}`,
+        force: options?.force,
+      }),
+    );
+  }
+
+  updateTriggerStatus(
+    store,
+    event.id,
+    results.some((item) => item.status === "failed") ? "partially_processed" : "processed",
+  );
+  return results;
+}
+
+export async function sendMerchantActivationCompletedNotification(
+  store: OnboardingStore,
+  userId: string,
+  applicationId: string,
+) {
+  const application = store.merchantApplications.find((item) => item.id === applicationId);
+  const user = store.users.find((item) => item.id === userId);
+  if (!application || !user) throw new Error("Linked merchant activation completion records not found");
+
+  const lead = store.merchantLeads.find((item) => item.id === application.merchantLeadId);
+  if (!lead) throw new Error("Merchant lead not found");
+
+  const websiteBaseUrl = getWebsiteBaseUrl();
+  const loginUrl = `${websiteBaseUrl}/merchant/login`;
+  const statusUrl = buildMerchantStatusUrl(lead.id, application.id);
+  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
+  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
+  const businessName = application.storeName || lead.businessName;
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `merchant_activation_completed:${userId}:${applicationId}`,
+    relatedEntityType: "merchant_account",
+    relatedEntityId: applicationId,
+    actorType: "merchant_user",
+    actorId: userId,
+    payload: { loginUrl },
+  });
+  if (isDuplicate) return [];
+
+  const result = await sendTemplateNotificationInStore(store, {
+    templateKey: "merchant_activation_completed_email",
+    actorType: "merchant_user",
+    actorId: userId,
+    recipient: user.email,
+    recipientName: lead.contactName,
+    relatedEntityType: "merchant_account",
+    relatedEntityId: applicationId,
+    userId,
+    variables: {
+      contactName: lead.contactName,
+      businessName,
+      loginUrl,
+      statusUrl,
+      supportEmail,
+      supportPhone,
+    },
+    payload: { loginUrl, statusUrl },
+    triggerEventId: event.id,
+    triggerEventKey: event.eventKey,
+    dedupeKey: `merchant_activation_completed:email:${userId}:${applicationId}`,
+  });
+
+  updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
+  return [result];
+}
+
+export async function sendMerchantApprovedNotification(
+  store: OnboardingStore,
+  applicationId: string,
+) {
+  const application = store.merchantApplications.find((item) => item.id === applicationId);
+  if (!application) throw new Error("Merchant application not found");
+
+  const lead = store.merchantLeads.find((item) => item.id === application.merchantLeadId);
+  if (!lead) throw new Error("Merchant lead not found");
+
+  const statusUrl = buildMerchantStatusUrl(lead.id, application.id);
+  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
+  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
+
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `merchant_application_approved:${application.id}`,
+    relatedEntityType: "merchant_account",
+    relatedEntityId: application.id,
+    actorType: "merchant_user",
+    actorId: lead.id,
+    payload: { statusUrl },
+  });
+  if (isDuplicate) return [];
+
+  const variables = {
+    contactName: lead.contactName,
+    businessName: application.storeName || lead.businessName,
+    statusUrl,
+    supportEmail,
+    supportPhone,
+  };
+
+  const results: NotificationRecord[] = [];
+
+  results.push(
+    await sendTemplateNotificationInStore(store, {
+      templateKey: "merchant_application_approved_email",
+      actorType: "merchant_user",
+      actorId: lead.id,
+      recipient: lead.email,
+      recipientName: lead.contactName,
+      relatedEntityType: "merchant_account",
+      relatedEntityId: application.id,
+      variables,
+      payload: { statusUrl },
+      triggerEventId: event.id,
+      triggerEventKey: event.eventKey,
+      dedupeKey: `merchant_application_approved:email:${application.id}`,
+    }),
+  );
+
+  if (isWhatsappConfigured() && lead.phone) {
+    results.push(
+      await sendTemplateNotificationInStore(store, {
+        templateKey: "merchant_application_approved_whatsapp",
+        actorType: "merchant_user",
+        actorId: lead.id,
+        recipient: lead.phone,
+        recipientName: lead.contactName,
+        relatedEntityType: "merchant_account",
+        relatedEntityId: application.id,
+        variables,
+        payload: { statusUrl },
+        triggerEventId: event.id,
+        triggerEventKey: event.eventKey,
+        dedupeKey: `merchant_application_approved:whatsapp:${application.id}`,
+      }),
+    );
+  }
+
+  if (isSmsConfigured() && lead.phone) {
+    results.push(
+      await sendTemplateNotificationInStore(store, {
+        templateKey: "merchant_application_approved_sms",
+        actorType: "merchant_user",
+        actorId: lead.id,
+        recipient: lead.phone,
+        recipientName: lead.contactName,
+        relatedEntityType: "merchant_account",
+        relatedEntityId: application.id,
+        variables,
+        payload: { statusUrl },
+        triggerEventId: event.id,
+        triggerEventKey: event.eventKey,
+        dedupeKey: `merchant_application_approved:sms:${application.id}`,
+      }),
+    );
+  }
+
+  updateTriggerStatus(
+    store,
+    event.id,
+    results.some((item) => item.status === "failed") ? "partially_processed" : "processed",
+  );
+  return results;
+}
+
+export async function sendMerchantInformationRequestedNotifications(
+  store: OnboardingStore,
+  applicationId: string,
+  requestNote: string,
+) {
+  const application = store.merchantApplications.find((item) => item.id === applicationId);
+  if (!application) throw new Error("Merchant application not found");
+
+  const lead = store.merchantLeads.find((item) => item.id === application.merchantLeadId);
+  if (!lead) throw new Error("Merchant lead not found");
+
+  const statusUrl = buildMerchantStatusUrl(lead.id, application.id);
+  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
+  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
+  const businessName = application.storeName || lead.businessName;
+  const eventKey = `merchant_information_requested_notification:${application.id}:${requestNote}`;
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey,
+    relatedEntityType: "merchant_account",
+    relatedEntityId: application.id,
+    actorType: "merchant_user",
+    actorId: lead.id,
+    payload: { requestNote, statusUrl },
+  });
+  if (isDuplicate) return [];
+
+  const variables = {
+    contactName: lead.contactName,
+    businessName,
+    requestNote,
+    statusUrl,
+    supportEmail,
+    supportPhone,
+  };
+
+  const results: NotificationRecord[] = [];
+
+  results.push(
+    await sendTemplateNotificationInStore(store, {
+      templateKey: "merchant_additional_info_requested_email",
+      actorType: "merchant_user",
+      actorId: lead.id,
+      recipient: lead.email,
+      recipientName: lead.contactName,
+      relatedEntityType: "merchant_account",
+      relatedEntityId: application.id,
+      variables,
+      payload: { applicationId: application.id, requestNote, statusUrl },
+      triggerEventId: event.id,
+      triggerEventKey: event.eventKey,
+      dedupeKey: `merchant_information_requested:email:${application.id}:${requestNote}`,
+      force: true,
+    }),
+  );
+
+  if (isWhatsappConfigured() && lead.phone) {
+    results.push(
+      await sendTemplateNotificationInStore(store, {
+        templateKey: "merchant_additional_info_requested_whatsapp",
+        actorType: "merchant_user",
+        actorId: lead.id,
+        recipient: lead.phone,
+        recipientName: lead.contactName,
+        relatedEntityType: "merchant_account",
+        relatedEntityId: application.id,
+        variables,
+        payload: { applicationId: application.id, requestNote, statusUrl },
+        triggerEventId: event.id,
+        triggerEventKey: event.eventKey,
+        dedupeKey: `merchant_information_requested:whatsapp:${application.id}:${requestNote}`,
+        force: true,
+      }),
+    );
+  }
+
+  if (isSmsConfigured() && lead.phone) {
+    results.push(
+      await sendTemplateNotificationInStore(store, {
+        templateKey: "merchant_additional_info_requested_sms",
+        actorType: "merchant_user",
+        actorId: lead.id,
+        recipient: lead.phone,
+        recipientName: lead.contactName,
+        relatedEntityType: "merchant_account",
+        relatedEntityId: application.id,
+        variables,
+        payload: { applicationId: application.id, requestNote, statusUrl },
+        triggerEventId: event.id,
+        triggerEventKey: event.eventKey,
+        dedupeKey: `merchant_information_requested:sms:${application.id}:${requestNote}`,
+        force: true,
+      }),
+    );
+  }
+
+  updateTriggerStatus(
+    store,
+    event.id,
+    results.some((item) => item.status === "failed") ? "partially_processed" : "processed",
+  );
+  return results;
 }
 
 export async function sendEmployeeRejectedNotification(store: OnboardingStore, applicationId: string, reason: string) {
@@ -1729,6 +2111,72 @@ export async function onZoneMarkedLive(store: OnboardingStore, zoneId: string) {
 
 export async function sendSlyderApplicationSubmittedNotification(store: OnboardingStore, applicationId: string) {
   return onSlyderApplicationSubmitted(store, applicationId);
+}
+
+export async function sendPublicReferralInviteNotification(referral: PublicSlyderReferral) {
+  if (!referral.referredEmail) return null;
+
+  const baseUrl = getWebsiteBaseUrl();
+  const applicationUrl = `${baseUrl}/become-a-slyder/apply?ref=${encodeURIComponent(referral.referralCode)}`;
+
+  return sendTemplateNotification({
+    templateKey: "public_referral_invite_email",
+    actorType: "slyder_applicant",
+    actorId: referral.id,
+    recipient: referral.referredEmail,
+    recipientName: referral.referredName,
+    variables: {
+      referredName: referral.referredName,
+      referrerName: referral.referrerName,
+      referrerPhone: referral.referrerPhone,
+      referrerEmailLine: referral.referrerEmail ? `- Email: ${referral.referrerEmail}` : "",
+      referralCode: referral.referralCode,
+      applicationUrl,
+      supportEmail: "info@slyde.app",
+      supportPhone: "876-594-7320",
+    },
+    payload: {
+      referralId: referral.id,
+      referralCode: referral.referralCode,
+      referredEmail: referral.referredEmail,
+      applicationUrl,
+    },
+    dedupeKey: `public_referral_invite_email:${referral.id}:${referral.referredEmail.toLowerCase()}`,
+  });
+}
+
+export async function sendReferrerLoginCodeNotification(input: {
+  referrerAccountId: string;
+  email: string;
+  displayName?: string;
+  code: string;
+  challengeId: string;
+  expiresInMinutes: number;
+}) {
+  const baseUrl = getWebsiteBaseUrl();
+  const verifyUrl = `${baseUrl}/refer/verify?challenge=${encodeURIComponent(input.challengeId)}&email=${encodeURIComponent(input.email)}`;
+
+  return sendTemplateNotification({
+    templateKey: "referrer_login_code_email",
+    actorType: "public_user",
+    actorId: input.referrerAccountId,
+    recipient: input.email,
+    recipientName: input.displayName || input.email,
+    variables: {
+      displayName: input.displayName || input.email,
+      otpCode: input.code,
+      verifyUrl,
+      expiresInMinutes: input.expiresInMinutes,
+    },
+    payload: {
+      referrerAccountId: input.referrerAccountId,
+      challengeId: input.challengeId,
+      email: input.email,
+      verifyUrl,
+    },
+    dedupeKey: `referrer_login_code_email:${input.challengeId}:${input.email.toLowerCase()}`,
+    force: true,
+  });
 }
 
 export async function sendSlyderDocumentsRequestedNotification(store: OnboardingStore, applicationId: string, _userId: string | undefined, requestedDocumentTypes: string[], notes: string) {

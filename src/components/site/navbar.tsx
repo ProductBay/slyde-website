@@ -12,12 +12,15 @@ import { cn } from "@/lib/utils";
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const tabletDesktopNavItems = navItems.filter((item) =>
+    ["/", "/about", "/become-a-slyder", "/for-businesses", "/safety", "/contact"].includes(item.href),
+  );
 
   const isActive = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(href));
 
   return (
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-5">
-      <div className="mx-auto flex max-w-shell items-center justify-between gap-3 rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(242,247,251,0.86))] px-4 py-3 shadow-panel backdrop-blur-xl sm:px-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:px-6">
+      <div className="mx-auto flex max-w-shell items-center justify-between gap-3 rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(242,247,251,0.86))] px-4 py-3 shadow-panel backdrop-blur-xl sm:px-5 xl:grid xl:grid-cols-[auto_minmax(0,1fr)_auto] xl:items-center xl:gap-4 xl:px-6">
         <div className="flex items-center gap-3">
           <BrandMark compact />
           <div className="hidden items-center gap-2 rounded-full border border-sky-100 bg-sky-50/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700 2xl:inline-flex">
@@ -26,8 +29,29 @@ export function Navbar() {
           </div>
         </div>
 
-        <nav className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
-          <div className="flex min-w-0 max-w-full items-center gap-1 rounded-full border border-slate-200/80 bg-white/78 p-1.5 shadow-soft">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
+          <div className="flex min-w-0 max-w-full items-center gap-1 rounded-full border border-slate-200/80 bg-white/78 p-1.5 shadow-soft 2xl:hidden">
+            {tabletDesktopNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "group relative whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold tracking-[0.01em] transition duration-200",
+                  isActive(item.href) ? "bg-slate-950 text-white shadow-soft" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+                )}
+              >
+                <span className="relative z-10">{item.label}</span>
+                <span
+                  className={cn(
+                    "absolute inset-x-3 bottom-1 h-px rounded-full bg-gradient-to-r from-transparent via-sky-300 to-transparent transition-opacity duration-200",
+                    isActive(item.href) ? "opacity-90" : "opacity-0 group-hover:opacity-70",
+                  )}
+                />
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden min-w-0 max-w-full items-center gap-1 rounded-full border border-slate-200/80 bg-white/78 p-1.5 shadow-soft 2xl:flex">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -49,7 +73,7 @@ export function Navbar() {
           </div>
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 xl:flex">
           <LinkButton href="/employee/login" variant="secondary" className="hidden h-11 px-5 text-[13px] 2xl:inline-flex xl:text-sm">
             Employee Portal
           </LinkButton>
@@ -69,7 +93,7 @@ export function Navbar() {
 
         <button
           type="button"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 lg:hidden"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 xl:hidden"
           onClick={() => setOpen((value) => !value)}
           aria-label="Toggle navigation"
         >
@@ -78,7 +102,7 @@ export function Navbar() {
       </div>
 
       {open ? (
-        <div className="mx-auto mt-3 max-w-shell rounded-[2rem] border border-white/60 bg-white/94 px-4 py-4 shadow-soft backdrop-blur-xl lg:hidden">
+        <div className="mx-auto mt-3 max-h-[calc(100vh-7.5rem)] max-w-shell overflow-y-auto overscroll-contain rounded-[2rem] border border-white/60 bg-white/94 px-4 py-4 shadow-soft backdrop-blur-xl xl:hidden">
           <div className="flex flex-col gap-3">
             {navItems.map((item) => (
               <Link

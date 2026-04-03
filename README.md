@@ -17,8 +17,8 @@ This document is a practical reference to the current architecture in this repos
 - `TypeScript`
 - `Tailwind CSS`
 - `Zod` for schema validation
-- file-backed persistence by default
-- Prisma packages are present, but the Prisma repository is not fully implemented yet
+- Prisma-backed Postgres persistence for deployed environments
+- file-backed persistence remains available for local development
 
 ## High-Level Domains
 
@@ -196,7 +196,7 @@ Current role groups:
 
 ## Persistence Model
 
-The project currently runs primarily on a file-backed store.
+The project supports both a file-backed store and a Prisma/Postgres-backed store.
 
 Relevant files:
 - [src/server/persistence/store.ts](/c:/Users/ashan/SLYDE%20Website/src/server/persistence/store.ts)
@@ -207,9 +207,10 @@ Default data file:
 - `.data/slyde-onboarding-store.json`
 
 Current state:
-- file persistence works
-- Prisma repository exists as a future target
-- Prisma persistence is not yet implemented end-to-end
+- local development can run with `PERSISTENCE_DRIVER=file`
+- deployed environments are expected to run with `PERSISTENCE_DRIVER=prisma`
+- Prisma schema is defined in [prisma/schema.prisma](/c:/Users/ashan/SLYDE%20Website/prisma/schema.prisma)
+- runtime connectivity is validated through `/api/internal/health`
 
 ## Core Data Areas
 
@@ -321,9 +322,56 @@ npm run lint
 
 Useful notes:
 - `.env` controls runtime behavior
-- file persistence is the current working storage mode
+- local development may use `PERSISTENCE_DRIVER=file` with a local `.data` store
+- local development may also point `DATABASE_URL` at Postgres when testing Prisma-backed flows
 - employee seed accounts are created in the store bootstrap logic
 - admin fallback behavior exists for local admin access
+
+## Production Deployment
+
+Current production deployment expectations:
+
+- host on `Vercel`
+- use `Neon` for the production Postgres database
+- set `PERSISTENCE_DRIVER=prisma`
+- set `DATABASE_URL` to the Neon pooled connection string
+- set `DATABASE_URL_UNPOOLED` to the Neon direct connection string
+
+Core production environment variables:
+
+- `DATABASE_URL`
+- `DATABASE_URL_UNPOOLED`
+- `PERSISTENCE_DRIVER=prisma`
+- `SLYDE_WEBSITE_BASE_URL=https://slydenetwork.com`
+- `SLYDE_APP_SYNC_BASE_URL=https://slyde.app`
+- `SLYDE_APP_SYNC_SECRET=<shared secret>`
+- `RESEND_API_KEY=<resend api key>`
+- `RESEND_FROM_EMAIL=SLYDE <no-reply@...>`
+
+Database bootstrap:
+
+```powershell
+$env:DATABASE_URL="<production DATABASE_URL_UNPOOLED>"
+cmd /c npx prisma db push
+```
+
+Health verification:
+
+- open `/api/internal/health`
+- confirm `overallStatus` is `healthy`
+- confirm `persistence.status` is `healthy`
+- confirm `productionLocked` is `true`
+
+Turnstile note:
+
+- if `PUBLIC_INTAKE_TURNSTILE_MODE=enforce`, both `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` must be configured
+- if Turnstile keys are not ready yet, use `PUBLIC_INTAKE_TURNSTILE_MODE=monitor`
+
+Upload storage warning:
+
+- uploads are currently written to runtime disk under `/tmp/slyde-data/uploads` in production
+- this is ephemeral on Vercel and is not durable object storage
+- move uploads to a durable provider such as Vercel Blob, S3, or Cloudinary before relying on production document storage
 
 ## Architectural Notes
 
@@ -331,7 +379,7 @@ Useful notes:
 - Slyders and employees are now separate access domains
 - Admin is separate from both
 - The codebase already has a service-layer direction, but not every area is fully normalized yet
-- File persistence is the active system; Prisma is staged for future implementation
+- Local file persistence remains useful for development, while production is expected to use Prisma with Postgres
 
 ## Recommended Next Architecture Improvements
 
@@ -341,4 +389,3 @@ Useful notes:
 - add richer shared document and handbook infrastructure
 - add route-level architecture diagrams to `docs/`
 - formalize a root `src/types` split between public, admin, Slyder, and employee domains
-

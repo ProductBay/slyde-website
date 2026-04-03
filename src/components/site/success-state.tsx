@@ -7,6 +7,7 @@ export function SuccessState({
   supportLine,
   description,
   highlights,
+  notice,
   areaStatus,
   footerNote,
   actions,
@@ -15,6 +16,11 @@ export function SuccessState({
   supportLine?: string;
   description: string;
   highlights?: string[];
+  notice?: {
+    eyebrow?: string;
+    title: string;
+    description: string;
+  };
   areaStatus?: {
     heading: string;
     title: string;
@@ -42,6 +48,13 @@ export function SuccessState({
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+      {notice ? (
+        <div className="mt-6 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-5">
+          {notice.eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">{notice.eyebrow}</p> : null}
+          <h2 className="mt-3 text-xl font-semibold text-slate-950">{notice.title}</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">{notice.description}</p>
         </div>
       ) : null}
       {areaStatus ? (

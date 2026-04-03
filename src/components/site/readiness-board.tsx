@@ -98,13 +98,15 @@ export function ReadinessBoard() {
             })}
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 rounded-[1.6rem] border border-slate-200 bg-slate-50/90 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-3xl text-sm leading-7 text-slate-600">
+          <div className="mt-5 flex flex-col gap-4 rounded-[1.6rem] border border-slate-200 bg-slate-50/90 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="max-w-3xl flex-1 min-w-0 text-sm leading-7 text-slate-600">
               Readiness combines courier pipeline strength, document review throughput, and merchant demand. SLYDE uses this posture to decide where live activation should happen next.
             </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <LinkButton href="/become-a-slyder/apply">Apply as a Slyder</LinkButton>
-              <LinkButton href="/coverage" variant="secondary">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:shrink-0">
+              <LinkButton href="/become-a-slyder/apply" className="whitespace-nowrap sm:shrink-0">
+                Apply as a Slyder
+              </LinkButton>
+              <LinkButton href="/coverage" variant="secondary" className="whitespace-nowrap sm:shrink-0">
                 Check your area <ArrowUpRight className="h-4 w-4" />
               </LinkButton>
             </div>

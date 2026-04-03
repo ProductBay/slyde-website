@@ -10,6 +10,8 @@ export function HeroSection({
   actions,
   aside,
   metrics,
+  backgroundDecor,
+  outerBackgroundDecor,
 }: {
   eyebrow: string;
   title: string;
@@ -18,12 +20,16 @@ export function HeroSection({
   actions: CtaLink[];
   aside?: ReactNode;
   metrics?: Array<{ value: string; label: string }>;
+  backgroundDecor?: ReactNode;
+  outerBackgroundDecor?: ReactNode;
 }) {
   return (
-    <section className="section-shell py-8 sm:py-10 lg:py-12">
+    <section className="section-shell relative py-8 sm:py-10 lg:py-12">
+      {outerBackgroundDecor ? <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">{outerBackgroundDecor}</div> : null}
       <div className="relative overflow-hidden rounded-[2.25rem] border border-white/50 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(240,247,252,0.92))] px-5 py-8 shadow-panel sm:px-8 sm:py-10 lg:px-10 lg:py-12">
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-r from-sky-100/80 via-transparent to-slate-100/40" />
         <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-sky-200/20 blur-3xl" />
+        {backgroundDecor ? <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">{backgroundDecor}</div> : null}
         <div className="relative z-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
           <div className="space-y-8">
             <div className="space-y-5">

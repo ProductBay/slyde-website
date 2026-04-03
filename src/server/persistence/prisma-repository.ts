@@ -1,8 +1,12 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import type { PersistenceRepository } from "@/server/persistence/repository";
 import { createSeedStore } from "@/server/persistence/store";
 import type {
   ActivationToken,
+  AdminReferralFilters,
+  DeliveryLeg,
+  DeliveryTransferPlan,
   EmployeeAnnouncement,
   EmployeeApplication,
   EmployeeGuide,
@@ -14,13 +18,39 @@ import type {
   LegalAcceptance,
   LegalDocument,
   LegalDocumentPublishHistory,
+  MerchantAddress,
+  MerchantApplication,
+  MerchantDelivery,
+  MerchantDispatchEvent,
+  MerchantIntegrationProfile,
   MerchantInterestRecord,
+  MerchantLead,
+  MerchantNotificationPreference,
+  MerchantOnboardingEvent,
+  MerchantOrder,
+  MerchantTeamMember,
   NotificationRecord,
   NotificationTemplate,
   NotificationTriggerEvent,
   OnboardingStore,
   OtpChallenge,
+  PartnerCarrier,
+  PartnerHandoffLocation,
+  PartnerTrackingEvent,
+  PublicSlyderReferral,
+  ReferralEvent,
   SessionRecord,
+  ReferrerAccount,
+  ReferrerLoginChallenge,
+  ReferrerSession,
+  ReferralReward,
+  ReferralRewardAudit,
+  SupportContextSnapshot,
+  SupportConversation,
+  SupportEvent,
+  SupportHandoff,
+  SupportKnowledgeArticle,
+  SupportMessage,
   SlyderApplication,
   SlyderApplicationDocument,
   SlyderApplicationVehicle,
@@ -28,6 +58,7 @@ import type {
   SlyderStatusHistory,
   StoredUser,
 } from "@/types/backend/onboarding";
+import type { ReferralRewardWithReferral } from "@/server/persistence/repository";
 
 type PrismaTransactionClient = Omit<
   typeof prisma,
@@ -464,6 +495,505 @@ function mapMerchantInterest(
   };
 }
 
+function mapMerchantLead(record: any): MerchantLead | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    businessName: record.businessName,
+    contactName: record.contactName,
+    phone: record.phone,
+    email: record.email,
+    parish: record.parish,
+    town: record.town,
+    category: record.category,
+    instagramHandle: record.instagramHandle ?? undefined,
+    website: record.website ?? undefined,
+    orderChannels: Array.isArray(record.orderChannels) ? (record.orderChannels as string[]) : [],
+    averageDailyOrders: record.averageDailyOrders ?? undefined,
+    currentDeliveryMethod: record.currentDeliveryMethod ?? undefined,
+    preferredStartTimeline: record.preferredStartTimeline ?? undefined,
+    productIntent: record.productIntent,
+    status: record.status,
+    notes: record.notes ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapMerchantApplication(record: any): MerchantApplication | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantLeadId: record.merchantLeadId,
+    onboardingTrack: record.onboardingTrack,
+    storeName: record.storeName ?? undefined,
+    logoUrl: record.logoUrl ?? undefined,
+    heroBannerUrl: record.heroBannerUrl ?? undefined,
+    heroBannerPosition:
+      record.heroBannerPosition === "left" || record.heroBannerPosition === "right" || record.heroBannerPosition === "center"
+        ? record.heroBannerPosition
+        : undefined,
+    businessDescription: record.businessDescription ?? undefined,
+    category: record.category ?? undefined,
+    pickupAddress: record.pickupAddress ?? undefined,
+    serviceAreas: Array.isArray(record.serviceAreas) ? (record.serviceAreas as string[]) : [],
+    fulfillmentMode: record.fulfillmentMode ?? undefined,
+    catalogReady: record.catalogReady ?? undefined,
+    payoutDetails:
+      record.payoutDetails && typeof record.payoutDetails === "object" && !Array.isArray(record.payoutDetails)
+        ? (record.payoutDetails as Record<string, unknown>)
+        : undefined,
+    operatingHours:
+      record.operatingHours && typeof record.operatingHours === "object" && !Array.isArray(record.operatingHours)
+        ? (record.operatingHours as Record<string, unknown>)
+        : undefined,
+    documentStatus: record.documentStatus,
+    legalStatus: record.legalStatus,
+    approvalStatus: record.approvalStatus,
+    activationStatus: record.activationStatus,
+    businessLicenseStatus: record.businessLicenseStatus ?? "missing",
+    businessLicenseNumber: record.businessLicenseNumber ?? undefined,
+    businessLicenseSubmittedAt: toIso(record.businessLicenseSubmittedAt),
+    businessLicenseVerifiedAt: toIso(record.businessLicenseVerifiedAt),
+    businessLicenseGraceEndsAt: toIso(record.businessLicenseGraceEndsAt),
+    businessLicenseRequiredAfterDeliveries: record.businessLicenseRequiredAfterDeliveries ?? 10,
+    businessLicenseDisabledAt: toIso(record.businessLicenseDisabledAt),
+    assignedAdminId: record.assignedAdminId ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapMerchantIntegrationProfile(record: any): MerchantIntegrationProfile | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantApplicationId: record.merchantApplicationId,
+    dispatchMode: record.dispatchMode,
+    acceptsCOD: record.acceptsCOD,
+    averageBasketSize: record.averageBasketSize ?? undefined,
+    packageTypes: Array.isArray(record.packageTypes) ? (record.packageTypes as string[]) : [],
+    operatingHours:
+      record.operatingHours && typeof record.operatingHours === "object" && !Array.isArray(record.operatingHours)
+        ? (record.operatingHours as Record<string, unknown>)
+        : undefined,
+    orderSources: Array.isArray(record.orderSources) ? (record.orderSources as string[]) : [],
+    pickupLocations: Array.isArray(record.pickupLocations) ? (record.pickupLocations as string[]) : [],
+    deliveryRadius: record.deliveryRadius ?? undefined,
+    sameDaySupported: record.sameDaySupported,
+    scheduledSupported: record.scheduledSupported,
+    integrationReadiness: record.integrationReadiness,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapMerchantOnboardingEvent(record: any): MerchantOnboardingEvent | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantApplicationId: record.merchantApplicationId,
+    eventType: record.eventType,
+    actorType: record.actorType,
+    actorId: record.actorId ?? undefined,
+    notes: record.notes ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapMerchantOrder(record: any): MerchantOrder | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantId: record.merchantId,
+    orderNumber: record.orderNumber,
+    customerName: record.customerName,
+    customerPhone: record.customerPhone,
+    deliveryAddress: record.deliveryAddress,
+    pickupLocationId: record.pickupLocationId ?? undefined,
+    pickupAddressSnapshot: record.pickupAddressSnapshot ?? undefined,
+    itemDescription: record.itemDescription,
+    packageType: record.packageType,
+    paymentType: record.paymentType,
+    codAmount: record.codAmount === null || record.codAmount === undefined ? undefined : Number(record.codAmount),
+    internalNote: record.internalNote ?? undefined,
+    riderNote: record.riderNote ?? undefined,
+    requestedTiming: record.requestedTiming,
+    scheduledFor: toIso(record.scheduledFor),
+    status: record.status,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapMerchantDelivery(record: any): MerchantDelivery | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantOrderId: record.merchantOrderId,
+    merchantId: record.merchantId,
+    dispatchMode: record.dispatchMode,
+    riderId: record.riderId ?? undefined,
+    quoteAmount: record.quoteAmount === null || record.quoteAmount === undefined ? undefined : Number(record.quoteAmount),
+    assignedAt: toIso(record.assignedAt),
+    pickedUpAt: toIso(record.pickedUpAt),
+    deliveredAt: toIso(record.deliveredAt),
+    failedAt: toIso(record.failedAt),
+    cancelledAt: toIso(record.cancelledAt),
+    status: record.status,
+    proofOfDeliveryUrl: record.proofOfDeliveryUrl ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapMerchantAddress(record: any): MerchantAddress | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantId: record.merchantId,
+    type: record.type,
+    label: record.label,
+    contactName: record.contactName,
+    contactPhone: record.contactPhone,
+    addressLine: record.addressLine,
+    parish: record.parish,
+    town: record.town,
+    notes: record.notes ?? undefined,
+    isDefault: record.isDefault,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapMerchantTeamMember(record: any): MerchantTeamMember | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantId: record.merchantId,
+    userId: record.userId,
+    role: record.role,
+    status: record.status,
+    invitedAt: toIso(record.invitedAt),
+    joinedAt: toIso(record.joinedAt),
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapMerchantNotificationPreference(record: any): MerchantNotificationPreference | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantId: record.merchantId,
+    emailEnabled: record.emailEnabled,
+    smsEnabled: record.smsEnabled,
+    whatsappEnabled: record.whatsappEnabled,
+    notifyOnAssigned: record.notifyOnAssigned,
+    notifyOnDelivered: record.notifyOnDelivered,
+    notifyOnFailed: record.notifyOnFailed,
+    notifyOnBilling: record.notifyOnBilling,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapMerchantDispatchEvent(record: any): MerchantDispatchEvent | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantDeliveryId: record.merchantDeliveryId,
+    eventType: record.eventType,
+    actorType: record.actorType,
+    actorId: record.actorId ?? undefined,
+    notes: record.notes ?? undefined,
+    metadata:
+      record.metadata && typeof record.metadata === "object" && !Array.isArray(record.metadata)
+        ? (record.metadata as Record<string, unknown>)
+        : undefined,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapPartnerCarrier(record: any): PartnerCarrier | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    name: record.name,
+    slug: record.slug,
+    type: record.type,
+    supportsTracking: record.supportsTracking,
+    supportsApi: record.supportsApi,
+    supportsFinalDelivery: record.supportsFinalDelivery,
+    supportsBranchCollection: record.supportsBranchCollection,
+    active: record.active,
+    contactConfig:
+      record.contactConfig && typeof record.contactConfig === "object" && !Array.isArray(record.contactConfig)
+        ? (record.contactConfig as Record<string, unknown>)
+        : undefined,
+    trackingConfig:
+      record.trackingConfig && typeof record.trackingConfig === "object" && !Array.isArray(record.trackingConfig)
+        ? (record.trackingConfig as Record<string, unknown>)
+        : undefined,
+    webhookConfig:
+      record.webhookConfig && typeof record.webhookConfig === "object" && !Array.isArray(record.webhookConfig)
+        ? (record.webhookConfig as Record<string, unknown>)
+        : undefined,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapPartnerHandoffLocation(record: any): PartnerHandoffLocation | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    partnerCarrierId: record.partnerCarrierId,
+    name: record.name,
+    parish: record.parish,
+    town: record.town,
+    addressLine: record.addressLine,
+    openingHours:
+      record.openingHours && typeof record.openingHours === "object" && !Array.isArray(record.openingHours)
+        ? (record.openingHours as Record<string, unknown>)
+        : undefined,
+    active: record.active,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapDeliveryTransferPlan(record: any): DeliveryTransferPlan | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantDeliveryId: record.merchantDeliveryId,
+    deliveryType: record.deliveryType,
+    originParish: record.originParish,
+    destinationParish: record.destinationParish,
+    destinationTown: record.destinationTown ?? undefined,
+    transferPartnerId: record.transferPartnerId,
+    originHandoffLocationId: record.originHandoffLocationId ?? undefined,
+    destinationHandoffLocationId: record.destinationHandoffLocationId ?? undefined,
+    finalFulfillmentMethod: record.finalFulfillmentMethod,
+    packageValue: record.packageValue === null || record.packageValue === undefined ? undefined : Number(record.packageValue),
+    specialHandlingNotes: record.specialHandlingNotes ?? undefined,
+    customerTrackingCode: record.customerTrackingCode,
+    overallStatus: record.overallStatus,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapDeliveryLeg(record: any): DeliveryLeg | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    merchantDeliveryId: record.merchantDeliveryId,
+    transferPlanId: record.transferPlanId ?? undefined,
+    legSequence: record.legSequence,
+    legType: record.legType,
+    providerType: record.providerType,
+    providerId: record.providerId ?? undefined,
+    originLabel: record.originLabel,
+    originAddress: record.originAddress ?? undefined,
+    destinationLabel: record.destinationLabel,
+    destinationAddress: record.destinationAddress ?? undefined,
+    partnerTrackingReference: record.partnerTrackingReference ?? undefined,
+    status: record.status,
+    eta: toIso(record.eta),
+    startedAt: toIso(record.startedAt),
+    completedAt: toIso(record.completedAt),
+    failedAt: toIso(record.failedAt),
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapPartnerTrackingEvent(record: any): PartnerTrackingEvent | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    deliveryLegId: record.deliveryLegId,
+    partnerCarrierId: record.partnerCarrierId,
+    externalTrackingReference: record.externalTrackingReference ?? undefined,
+    rawStatus: record.rawStatus,
+    normalizedStatus: record.normalizedStatus,
+    notes: record.notes ?? undefined,
+    eventTimestamp: record.eventTimestamp.toISOString(),
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapReferrerAccount(
+  record: Awaited<ReturnType<typeof prisma.referrerAccount.findFirst>>,
+): ReferrerAccount | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    fullName: record.fullName,
+    email: record.email ?? undefined,
+    phone: record.phone ?? undefined,
+    emailVerifiedAt: toIso(record.emailVerifiedAt),
+    phoneVerifiedAt: toIso(record.phoneVerifiedAt),
+    isEnabled: record.isEnabled,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapReferrerLoginChallenge(
+  record: Awaited<ReturnType<typeof prisma.referrerLoginChallenge.findFirst>>,
+): ReferrerLoginChallenge | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    referrerAccountId: record.referrerAccountId ?? undefined,
+    channel: record.channel,
+    email: record.email ?? undefined,
+    phone: record.phone ?? undefined,
+    codeHash: record.codeHash,
+    expiresAt: record.expiresAt.toISOString(),
+    consumedAt: toIso(record.consumedAt),
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapReferrerSession(
+  record: Awaited<ReturnType<typeof prisma.referrerSession.findFirst>>,
+): ReferrerSession | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    referrerAccountId: record.referrerAccountId,
+    createdAt: record.createdAt.toISOString(),
+    expiresAt: record.expiresAt.toISOString(),
+  };
+}
+
+function mapPublicSlyderReferral(
+  record: Awaited<ReturnType<typeof prisma.publicSlyderReferral.findFirst>>,
+): PublicSlyderReferral | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    referralCode: record.referralCode,
+    referrerName: record.referrerName,
+    referrerPhone: record.referrerPhone,
+    referrerEmail: record.referrerEmail ?? undefined,
+    referrerAccountId: record.referrerAccountId ?? undefined,
+    referredName: record.referredName,
+    referredEmail: record.referredEmail ?? undefined,
+    referredPhone: record.referredPhone,
+    referredParish: record.referredParish ?? undefined,
+    referredTown: record.referredTown ?? undefined,
+    referredVehicleType: record.referredVehicleType ?? undefined,
+    notes: record.notes ?? undefined,
+    status: record.status as PublicSlyderReferral["status"],
+    statusReason: record.statusReason ?? undefined,
+    inviteEmailSentAt: toIso(record.inviteEmailSentAt),
+    inviteEmailStatus: record.inviteEmailStatus ?? undefined,
+    applicationStartedAt: toIso(record.applicationStartedAt),
+    applicationCompletedAt: toIso(record.applicationCompletedAt),
+    approvedAt: toIso(record.approvedAt),
+    activatedAt: toIso(record.activatedAt),
+    readyAt: toIso(record.readyAt),
+    firstDeliveryCompletedAt: toIso(record.firstDeliveryCompletedAt),
+    rewardEarnedAt: toIso(record.rewardEarnedAt),
+    rewardClaimedAt: toIso(record.rewardClaimedAt),
+    rewardGiftedAt: toIso(record.rewardGiftedAt),
+    rewardRedeemedAt: toIso(record.rewardRedeemedAt),
+    linkedSlyderApplicationId: record.linkedSlyderApplicationId ?? undefined,
+    linkedSlyderProfileId: record.linkedSlyderProfileId ?? undefined,
+    rewardId: record.rewardId ?? undefined,
+    duplicateOfReferralId: record.duplicateOfReferralId ?? undefined,
+    submittedIpHash: record.submittedIpHash ?? undefined,
+    submittedUserAgent: record.submittedUserAgent ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapReferralEvent(
+  record: Awaited<ReturnType<typeof prisma.referralEvent.findFirst>>,
+): ReferralEvent | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    referralId: record.referralId,
+    eventType: record.eventType,
+    title: record.title,
+    description: record.description ?? undefined,
+    metadata: (record.metadata as Record<string, unknown> | null) ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapReferralReward(
+  record: Awaited<ReturnType<typeof prisma.referralReward.findFirst>>,
+): ReferralReward | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    publicReferralId: record.publicReferralId,
+    rewardType: record.rewardType as ReferralReward["rewardType"],
+    rewardValue: record.rewardValue,
+    currency: record.currency,
+    status: record.status as ReferralReward["status"],
+    isTransferable: record.isTransferable,
+    transferCount: record.transferCount,
+    transferredAt: toIso(record.transferredAt),
+    ownerCustomerAccountId: record.ownerCustomerAccountId ?? undefined,
+    ownerPhone: record.ownerPhone ?? undefined,
+    giftedToCustomerAccountId: record.giftedToCustomerAccountId ?? undefined,
+    giftedToPhone: record.giftedToPhone ?? undefined,
+    giftedByReferrerPhone: record.giftedByReferrerPhone ?? undefined,
+    minOrderValue: record.minOrderValue ?? undefined,
+    expiresAt: record.expiresAt.toISOString(),
+    redeemedAt: toIso(record.redeemedAt),
+    redemptionOrderId: record.redemptionOrderId ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapReferralRewardAudit(
+  record: Awaited<ReturnType<typeof prisma.referralRewardAudit.findFirst>>,
+): ReferralRewardAudit | null {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    rewardId: record.rewardId,
+    action: record.action,
+    actorType: record.actorType,
+    actorId: record.actorId ?? undefined,
+    notes: record.notes ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
 function mapNotificationTemplate(
   record: Awaited<ReturnType<typeof prisma.notificationTemplate.findFirst>>,
 ): NotificationTemplate | null {
@@ -552,6 +1082,105 @@ function mapNotificationRecord(
   };
 }
 
+function mapSupportConversation(record: any): SupportConversation | null {
+  if (!record) return null;
+  return {
+    id: record.id,
+    channel: record.channel,
+    domain: record.domain,
+    status: record.status,
+    priority: record.priority,
+    subject: record.subject,
+    externalProvider: record.externalProvider ?? undefined,
+    externalConversationId: record.externalConversationId ?? undefined,
+    externalTicketId: record.externalTicketId ?? undefined,
+    userId: record.userId ?? undefined,
+    merchantId: record.merchantId ?? undefined,
+    slyderProfileId: record.slyderProfileId ?? undefined,
+    employeeProfileId: record.employeeProfileId ?? undefined,
+    referrerAccountId: record.referrerAccountId ?? undefined,
+    assignedTeam: record.assignedTeam ?? undefined,
+    assignedAgentId: record.assignedAgentId ?? undefined,
+    lastMessageAt: toIso(record.lastMessageAt),
+    resolvedAt: toIso(record.resolvedAt),
+    closedAt: toIso(record.closedAt),
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapSupportMessage(record: any): SupportMessage | null {
+  if (!record) return null;
+  return {
+    id: record.id,
+    conversationId: record.conversationId,
+    senderType: record.senderType,
+    senderId: record.senderId ?? undefined,
+    body: record.body,
+    messageFormat: record.messageFormat,
+    externalMessageId: record.externalMessageId ?? undefined,
+    aiGenerated: record.aiGenerated,
+    metadata: (record.metadata as Record<string, unknown> | null) ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapSupportContextSnapshot(record: any): SupportContextSnapshot | null {
+  if (!record) return null;
+  return {
+    id: record.id,
+    conversationId: record.conversationId,
+    contextType: record.contextType,
+    payload: (record.payload as Record<string, unknown> | null) ?? {},
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapSupportHandoff(record: any): SupportHandoff | null {
+  if (!record) return null;
+  return {
+    id: record.id,
+    conversationId: record.conversationId,
+    reason: record.reason,
+    summary: record.summary,
+    recommendedTeam: record.recommendedTeam,
+    confidenceScore: record.confidenceScore ?? undefined,
+    acceptedByAgentId: record.acceptedByAgentId ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapSupportEvent(record: any): SupportEvent | null {
+  if (!record) return null;
+  return {
+    id: record.id,
+    conversationId: record.conversationId,
+    eventType: record.eventType,
+    actorType: record.actorType,
+    actorId: record.actorId ?? undefined,
+    notes: record.notes ?? undefined,
+    metadata: (record.metadata as Record<string, unknown> | null) ?? undefined,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapSupportKnowledgeArticle(record: any): SupportKnowledgeArticle | null {
+  if (!record) return null;
+  return {
+    id: record.id,
+    domain: record.domain,
+    audience: Array.isArray(record.audience) ? record.audience : [],
+    title: record.title,
+    slug: record.slug,
+    summary: record.summary ?? undefined,
+    content: record.content,
+    tags: Array.isArray(record.tags) ? record.tags : [],
+    published: record.published,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
 function mapLegalDocument(
   record: Awaited<ReturnType<typeof prisma.legalDocument.findFirst>>,
 ): LegalDocument | null {
@@ -634,6 +1263,9 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
     activationTokens,
     otpChallenges,
     sessions,
+    referrerAccounts,
+    referrerLoginChallenges,
+    referrerSessions,
     applications,
     vehicles,
     documents,
@@ -646,19 +1278,59 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
     employeeGuideAcknowledgements,
     employeePayrollRecords,
     employeePayoutRecords,
+    publicSlyderReferrals,
+    referralEvents,
+    referralRewards,
+    referralRewardAudits,
     notificationTemplates,
     notificationTriggerEvents,
     notificationRecords,
+    supportConversations,
+    supportMessages,
+    supportContextSnapshots,
+    supportHandoffs,
+    supportEvents,
+    supportKnowledgeArticles,
     legalDocuments,
     legalAcceptances,
     legalDocumentPublishHistory,
     coverageZones,
     merchantInterests,
+    merchantLeads,
+    merchantApplications,
+    merchantIntegrationProfiles,
+    merchantOnboardingEvents,
+    merchantOrders,
+    merchantDeliveries,
+    merchantAddresses,
+    merchantTeamMembers,
+    merchantNotificationPreferences,
+    merchantDispatchEvents,
+    partnerCarriers,
+    partnerHandoffLocations,
+    deliveryTransferPlans,
+    deliveryLegs,
+    partnerTrackingEvents,
   ] = await prisma.$transaction([
     prisma.user.findMany(),
     prisma.activationToken.findMany(),
     prisma.otpChallenge.findMany(),
     prisma.sessionRecord.findMany(),
+    prisma.referrerAccount.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.referrerLoginChallenge.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.referrerSession.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
     prisma.slyderApplication.findMany({
       orderBy: {
         createdAt: "desc",
@@ -699,11 +1371,61 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
         payoutDate: "desc",
       },
     }),
+    prisma.publicSlyderReferral.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.referralEvent.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.referralReward.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.referralRewardAudit.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
     prisma.notificationTemplate.findMany(),
     prisma.notificationTriggerEvent.findMany(),
     prisma.notificationRecord.findMany({
       orderBy: {
         createdAt: "desc",
+      },
+    }),
+    (prisma as any).supportConversation.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).supportMessage.findMany({
+      orderBy: {
+        createdAt: "asc",
+      },
+    }),
+    (prisma as any).supportContextSnapshot.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).supportHandoff.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).supportEvent.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).supportKnowledgeArticle.findMany({
+      orderBy: {
+        updatedAt: "desc",
       },
     }),
     prisma.legalDocument.findMany(),
@@ -719,6 +1441,81 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
     }),
     prisma.coverageZone.findMany(),
     prisma.merchantInterest.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantLead.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantApplication.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantIntegrationProfile.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantOnboardingEvent.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantOrder.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantDelivery.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantAddress.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantTeamMember.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantNotificationPreference.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).merchantDispatchEvent.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).partnerCarrier.findMany({
+      orderBy: {
+        name: "asc",
+      },
+    }),
+    (prisma as any).partnerHandoffLocation.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).deliveryTransferPlan.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).deliveryLeg.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    (prisma as any).partnerTrackingEvent.findMany({
       orderBy: {
         createdAt: "desc",
       },
@@ -750,6 +1547,24 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
       sessions
         .map((item) => mapSessionRecord(item))
         .filter((item): item is SessionRecord => Boolean(item)),
+    ),
+    referrerAccounts: mergeById(
+      store.referrerAccounts,
+      referrerAccounts
+        .map((item) => mapReferrerAccount(item))
+        .filter((item): item is ReferrerAccount => Boolean(item)),
+    ),
+    referrerLoginChallenges: mergeById(
+      store.referrerLoginChallenges,
+      referrerLoginChallenges
+        .map((item) => mapReferrerLoginChallenge(item))
+        .filter((item): item is ReferrerLoginChallenge => Boolean(item)),
+    ),
+    referrerSessions: mergeById(
+      store.referrerSessions,
+      referrerSessions
+        .map((item) => mapReferrerSession(item))
+        .filter((item): item is ReferrerSession => Boolean(item)),
     ),
     applications: mergeById(
       store.applications,
@@ -823,6 +1638,30 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
         .map((item) => mapEmployeePayoutRecord(item))
         .filter((item): item is EmployeePayoutRecord => Boolean(item)),
     ),
+    publicSlyderReferrals: mergeById(
+      store.publicSlyderReferrals,
+      publicSlyderReferrals
+        .map((item) => mapPublicSlyderReferral(item))
+        .filter((item): item is PublicSlyderReferral => Boolean(item)),
+    ),
+    referralEvents: mergeById(
+      store.referralEvents,
+      referralEvents
+        .map((item) => mapReferralEvent(item))
+        .filter((item): item is ReferralEvent => Boolean(item)),
+    ),
+    referralRewards: mergeById(
+      store.referralRewards,
+      referralRewards
+        .map((item) => mapReferralReward(item))
+        .filter((item): item is ReferralReward => Boolean(item)),
+    ),
+    referralRewardAudits: mergeById(
+      store.referralRewardAudits,
+      referralRewardAudits
+        .map((item) => mapReferralRewardAudit(item))
+        .filter((item): item is ReferralRewardAudit => Boolean(item)),
+    ),
     notificationTemplates: mergeById(
       store.notificationTemplates,
       notificationTemplates
@@ -840,6 +1679,42 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
       notificationRecords
         .map((item) => mapNotificationRecord(item))
         .filter((item): item is NotificationRecord => Boolean(item)),
+    ),
+    supportConversations: mergeById(
+      store.supportConversations,
+      supportConversations
+        .map((item: any) => mapSupportConversation(item))
+        .filter((item: SupportConversation | null): item is SupportConversation => Boolean(item)),
+    ),
+    supportMessages: mergeById(
+      store.supportMessages,
+      supportMessages
+        .map((item: any) => mapSupportMessage(item))
+        .filter((item: SupportMessage | null): item is SupportMessage => Boolean(item)),
+    ),
+    supportContextSnapshots: mergeById(
+      store.supportContextSnapshots,
+      supportContextSnapshots
+        .map((item: any) => mapSupportContextSnapshot(item))
+        .filter((item: SupportContextSnapshot | null): item is SupportContextSnapshot => Boolean(item)),
+    ),
+    supportHandoffs: mergeById(
+      store.supportHandoffs,
+      supportHandoffs
+        .map((item: any) => mapSupportHandoff(item))
+        .filter((item: SupportHandoff | null): item is SupportHandoff => Boolean(item)),
+    ),
+    supportEvents: mergeById(
+      store.supportEvents,
+      supportEvents
+        .map((item: any) => mapSupportEvent(item))
+        .filter((item: SupportEvent | null): item is SupportEvent => Boolean(item)),
+    ),
+    supportKnowledgeArticles: mergeById(
+      store.supportKnowledgeArticles,
+      supportKnowledgeArticles
+        .map((item: any) => mapSupportKnowledgeArticle(item))
+        .filter((item: SupportKnowledgeArticle | null): item is SupportKnowledgeArticle => Boolean(item)),
     ),
     legalDocuments: mergeById(
       store.legalDocuments,
@@ -871,6 +1746,96 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
         .map((item) => mapMerchantInterest(item))
         .filter((item): item is MerchantInterestRecord => Boolean(item)),
     ),
+    merchantLeads: mergeById(
+      store.merchantLeads,
+      merchantLeads
+        .map((item: any) => mapMerchantLead(item))
+        .filter((item: MerchantLead | null): item is MerchantLead => Boolean(item)),
+    ),
+    merchantApplications: mergeById(
+      store.merchantApplications,
+      merchantApplications
+        .map((item: any) => mapMerchantApplication(item))
+        .filter((item: MerchantApplication | null): item is MerchantApplication => Boolean(item)),
+    ),
+    merchantIntegrationProfiles: mergeById(
+      store.merchantIntegrationProfiles,
+      merchantIntegrationProfiles
+        .map((item: any) => mapMerchantIntegrationProfile(item))
+        .filter((item: MerchantIntegrationProfile | null): item is MerchantIntegrationProfile => Boolean(item)),
+    ),
+    merchantOnboardingEvents: mergeById(
+      store.merchantOnboardingEvents,
+      merchantOnboardingEvents
+        .map((item: any) => mapMerchantOnboardingEvent(item))
+        .filter((item: MerchantOnboardingEvent | null): item is MerchantOnboardingEvent => Boolean(item)),
+    ),
+    merchantOrders: mergeById(
+      store.merchantOrders,
+      merchantOrders
+        .map((item: any) => mapMerchantOrder(item))
+        .filter((item: MerchantOrder | null): item is MerchantOrder => Boolean(item)),
+    ),
+    merchantDeliveries: mergeById(
+      store.merchantDeliveries,
+      merchantDeliveries
+        .map((item: any) => mapMerchantDelivery(item))
+        .filter((item: MerchantDelivery | null): item is MerchantDelivery => Boolean(item)),
+    ),
+    merchantAddresses: mergeById(
+      store.merchantAddresses,
+      merchantAddresses
+        .map((item: any) => mapMerchantAddress(item))
+        .filter((item: MerchantAddress | null): item is MerchantAddress => Boolean(item)),
+    ),
+    merchantTeamMembers: mergeById(
+      store.merchantTeamMembers,
+      merchantTeamMembers
+        .map((item: any) => mapMerchantTeamMember(item))
+        .filter((item: MerchantTeamMember | null): item is MerchantTeamMember => Boolean(item)),
+    ),
+    merchantNotificationPreferences: mergeById(
+      store.merchantNotificationPreferences,
+      merchantNotificationPreferences
+        .map((item: any) => mapMerchantNotificationPreference(item))
+        .filter((item: MerchantNotificationPreference | null): item is MerchantNotificationPreference => Boolean(item)),
+    ),
+    merchantDispatchEvents: mergeById(
+      store.merchantDispatchEvents,
+      merchantDispatchEvents
+        .map((item: any) => mapMerchantDispatchEvent(item))
+        .filter((item: MerchantDispatchEvent | null): item is MerchantDispatchEvent => Boolean(item)),
+    ),
+    partnerCarriers: mergeById(
+      store.partnerCarriers,
+      partnerCarriers
+        .map((item: any) => mapPartnerCarrier(item))
+        .filter((item: PartnerCarrier | null): item is PartnerCarrier => Boolean(item)),
+    ),
+    partnerHandoffLocations: mergeById(
+      store.partnerHandoffLocations,
+      partnerHandoffLocations
+        .map((item: any) => mapPartnerHandoffLocation(item))
+        .filter((item: PartnerHandoffLocation | null): item is PartnerHandoffLocation => Boolean(item)),
+    ),
+    deliveryTransferPlans: mergeById(
+      store.deliveryTransferPlans,
+      deliveryTransferPlans
+        .map((item: any) => mapDeliveryTransferPlan(item))
+        .filter((item: DeliveryTransferPlan | null): item is DeliveryTransferPlan => Boolean(item)),
+    ),
+    deliveryLegs: mergeById(
+      store.deliveryLegs,
+      deliveryLegs
+        .map((item: any) => mapDeliveryLeg(item))
+        .filter((item: DeliveryLeg | null): item is DeliveryLeg => Boolean(item)),
+    ),
+    partnerTrackingEvents: mergeById(
+      store.partnerTrackingEvents,
+      partnerTrackingEvents
+        .map((item: any) => mapPartnerTrackingEvent(item))
+        .filter((item: PartnerTrackingEvent | null): item is PartnerTrackingEvent => Boolean(item)),
+    ),
   };
 }
 
@@ -880,6 +1845,14 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   const supportedActivationTokens = store.activationTokens.filter((token) => supportedUserIds.has(token.userId));
   const supportedOtpChallenges = store.otpChallenges.filter((challenge) => supportedUserIds.has(challenge.userId));
   const supportedSessions = store.sessions.filter((session) => supportedUserIds.has(session.userId));
+  const supportedReferrerAccounts = store.referrerAccounts;
+  const supportedReferrerAccountIds = new Set(supportedReferrerAccounts.map((account) => account.id));
+  const supportedReferrerLoginChallenges = store.referrerLoginChallenges.filter(
+    (challenge) => !challenge.referrerAccountId || supportedReferrerAccountIds.has(challenge.referrerAccountId),
+  );
+  const supportedReferrerSessions = store.referrerSessions.filter((session) =>
+    supportedReferrerAccountIds.has(session.referrerAccountId),
+  );
   const supportedApplications = store.applications;
   const supportedVehicles = store.vehicles;
   const supportedDocuments = store.documents;
@@ -894,6 +1867,11 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   const supportedEmployeeGuideAcknowledgements = store.employeeGuideAcknowledgements;
   const supportedEmployeePayrollRecords = store.employeePayrollRecords;
   const supportedEmployeePayoutRecords = store.employeePayoutRecords;
+  const supportedPublicSlyderReferrals = store.publicSlyderReferrals;
+  const supportedPublicReferralIds = new Set(supportedPublicSlyderReferrals.map((referral) => referral.id));
+  const supportedReferralEvents = store.referralEvents.filter((event) => supportedPublicReferralIds.has(event.referralId));
+  const supportedReferralRewards = store.referralRewards;
+  const supportedReferralRewardAudits = store.referralRewardAudits;
   const supportedNotificationTemplates = store.notificationTemplates;
   const supportedNotificationTriggers = store.notificationTriggers;
   const supportedNotifications = store.notifications;
@@ -902,6 +1880,88 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   const supportedLegalPublishHistory = store.legalPublishHistory;
   const supportedCoverageZones = store.coverageZones;
   const supportedMerchantInterests = store.merchantInterests;
+  const supportedMerchantLeads = store.merchantLeads;
+  const supportedMerchantLeadIds = new Set(supportedMerchantLeads.map((lead) => lead.id));
+  const supportedMerchantApplications = store.merchantApplications.filter((application) =>
+    supportedMerchantLeadIds.has(application.merchantLeadId),
+  );
+  const supportedMerchantApplicationIds = new Set(supportedMerchantApplications.map((application) => application.id));
+  const supportedMerchantIntegrationProfiles = store.merchantIntegrationProfiles.filter((profile) =>
+    supportedMerchantApplicationIds.has(profile.merchantApplicationId),
+  );
+  const supportedMerchantOnboardingEvents = store.merchantOnboardingEvents.filter((event) =>
+    supportedMerchantApplicationIds.has(event.merchantApplicationId),
+  );
+  const supportedMerchantOrders = store.merchantOrders.filter((order) =>
+    supportedMerchantApplicationIds.has(order.merchantId),
+  );
+  const supportedMerchantOrderIds = new Set(supportedMerchantOrders.map((order) => order.id));
+  const supportedMerchantAddresses = store.merchantAddresses.filter((address) =>
+    supportedMerchantApplicationIds.has(address.merchantId),
+  );
+  const supportedMerchantAddressIds = new Set(supportedMerchantAddresses.map((address) => address.id));
+  const supportedMerchantDeliveries = store.merchantDeliveries.filter(
+    (delivery) =>
+      supportedMerchantApplicationIds.has(delivery.merchantId) &&
+      supportedMerchantOrderIds.has(delivery.merchantOrderId),
+  );
+  const supportedMerchantDeliveryIds = new Set(supportedMerchantDeliveries.map((delivery) => delivery.id));
+  const supportedMerchantTeamMembers = store.merchantTeamMembers.filter(
+    (member) => supportedMerchantApplicationIds.has(member.merchantId) && supportedUserIds.has(member.userId),
+  );
+  const supportedMerchantNotificationPreferences = store.merchantNotificationPreferences.filter((preference) =>
+    supportedMerchantApplicationIds.has(preference.merchantId),
+  );
+  const supportedMerchantDispatchEvents = store.merchantDispatchEvents.filter((event) =>
+    supportedMerchantDeliveryIds.has(event.merchantDeliveryId),
+  );
+  const supportedPartnerCarriers = store.partnerCarriers;
+  const supportedPartnerCarrierIds = new Set(supportedPartnerCarriers.map((carrier) => carrier.id));
+  const supportedPartnerHandoffLocations = store.partnerHandoffLocations.filter((location) =>
+    supportedPartnerCarrierIds.has(location.partnerCarrierId),
+  );
+  const supportedPartnerHandoffLocationIds = new Set(supportedPartnerHandoffLocations.map((location) => location.id));
+  const supportedDeliveryTransferPlans = store.deliveryTransferPlans.filter(
+    (plan) =>
+      supportedMerchantDeliveryIds.has(plan.merchantDeliveryId) &&
+      supportedPartnerCarrierIds.has(plan.transferPartnerId),
+  );
+  const supportedDeliveryTransferPlanIds = new Set(supportedDeliveryTransferPlans.map((plan) => plan.id));
+  const supportedDeliveryLegs = store.deliveryLegs.filter(
+    (leg) =>
+      supportedMerchantDeliveryIds.has(leg.merchantDeliveryId) &&
+      (!leg.transferPlanId || supportedDeliveryTransferPlanIds.has(leg.transferPlanId)),
+  );
+  const supportedDeliveryLegIds = new Set(supportedDeliveryLegs.map((leg) => leg.id));
+  const supportedPartnerTrackingEvents = store.partnerTrackingEvents.filter(
+    (event) =>
+      supportedDeliveryLegIds.has(event.deliveryLegId) &&
+      supportedPartnerCarrierIds.has(event.partnerCarrierId),
+  );
+  const supportedSlyderProfileIds = new Set(supportedSlyderProfiles.map((profile) => profile.id));
+  const supportedEmployeeProfileIds = new Set(supportedEmployeeProfiles.map((profile) => profile.id));
+  const supportedSupportConversations = store.supportConversations.filter(
+    (conversation) =>
+      (!conversation.userId || supportedUserIds.has(conversation.userId)) &&
+      (!conversation.merchantId || supportedMerchantApplicationIds.has(conversation.merchantId)) &&
+      (!conversation.slyderProfileId || supportedSlyderProfileIds.has(conversation.slyderProfileId)) &&
+      (!conversation.employeeProfileId || supportedEmployeeProfileIds.has(conversation.employeeProfileId)) &&
+      (!conversation.referrerAccountId || supportedReferrerAccountIds.has(conversation.referrerAccountId)),
+  );
+  const supportedSupportConversationIds = new Set(supportedSupportConversations.map((conversation) => conversation.id));
+  const supportedSupportMessages = store.supportMessages.filter((message) =>
+    supportedSupportConversationIds.has(message.conversationId),
+  );
+  const supportedSupportContextSnapshots = store.supportContextSnapshots.filter((snapshot) =>
+    supportedSupportConversationIds.has(snapshot.conversationId),
+  );
+  const supportedSupportHandoffs = store.supportHandoffs.filter((handoff) =>
+    supportedSupportConversationIds.has(handoff.conversationId),
+  );
+  const supportedSupportEvents = store.supportEvents.filter((event) =>
+    supportedSupportConversationIds.has(event.conversationId),
+  );
+  const supportedSupportKnowledgeArticles = store.supportKnowledgeArticles;
 
   for (const user of supportedUsers) {
     await tx.user.upsert({
@@ -911,8 +1971,8 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         phone: user.phone,
         fullName: user.fullName,
         passwordHash: user.passwordHash ?? null,
-        roles: user.roles,
-        userType: user.userType,
+        roles: user.roles as any,
+        userType: user.userType as any,
         accountStatus: user.accountStatus,
         isEnabled: user.isEnabled,
         activationIssuedAt: toDate(user.activationIssuedAt),
@@ -925,8 +1985,8 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         phone: user.phone,
         fullName: user.fullName,
         passwordHash: user.passwordHash ?? null,
-        roles: user.roles,
-        userType: user.userType,
+        roles: user.roles as any,
+        userType: user.userType as any,
         accountStatus: user.accountStatus,
         isEnabled: user.isEnabled,
         activationIssuedAt: toDate(user.activationIssuedAt),
@@ -965,6 +2025,76 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
     });
   }
 
+  for (const account of supportedReferrerAccounts) {
+    await tx.referrerAccount.upsert({
+      where: { id: account.id },
+      update: {
+        fullName: account.fullName,
+        email: account.email ?? null,
+        phone: account.phone ?? null,
+        emailVerifiedAt: toDate(account.emailVerifiedAt),
+        phoneVerifiedAt: toDate(account.phoneVerifiedAt),
+        isEnabled: account.isEnabled,
+        updatedAt: new Date(account.updatedAt),
+      },
+      create: {
+        id: account.id,
+        fullName: account.fullName,
+        email: account.email ?? null,
+        phone: account.phone ?? null,
+        emailVerifiedAt: toDate(account.emailVerifiedAt),
+        phoneVerifiedAt: toDate(account.phoneVerifiedAt),
+        isEnabled: account.isEnabled,
+        createdAt: new Date(account.createdAt),
+        updatedAt: new Date(account.updatedAt),
+      },
+    });
+  }
+
+  for (const challenge of supportedReferrerLoginChallenges) {
+    await tx.referrerLoginChallenge.upsert({
+      where: { id: challenge.id },
+      update: {
+        referrerAccountId: challenge.referrerAccountId ?? null,
+        channel: challenge.channel,
+        email: challenge.email ?? null,
+        phone: challenge.phone ?? null,
+        codeHash: challenge.codeHash,
+        expiresAt: new Date(challenge.expiresAt),
+        consumedAt: toDate(challenge.consumedAt),
+        createdAt: new Date(challenge.createdAt),
+      },
+      create: {
+        id: challenge.id,
+        referrerAccountId: challenge.referrerAccountId ?? null,
+        channel: challenge.channel,
+        email: challenge.email ?? null,
+        phone: challenge.phone ?? null,
+        codeHash: challenge.codeHash,
+        expiresAt: new Date(challenge.expiresAt),
+        consumedAt: toDate(challenge.consumedAt),
+        createdAt: new Date(challenge.createdAt),
+      },
+    });
+  }
+
+  for (const session of supportedReferrerSessions) {
+    await tx.referrerSession.upsert({
+      where: { id: session.id },
+      update: {
+        referrerAccountId: session.referrerAccountId,
+        createdAt: new Date(session.createdAt),
+        expiresAt: new Date(session.expiresAt),
+      },
+      create: {
+        id: session.id,
+        referrerAccountId: session.referrerAccountId,
+        createdAt: new Date(session.createdAt),
+        expiresAt: new Date(session.expiresAt),
+      },
+    });
+  }
+
   for (const challenge of supportedOtpChallenges) {
     await tx.otpChallenge.upsert({
       where: { id: challenge.id },
@@ -991,14 +2121,14 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
       where: { id: session.id },
       update: {
         userId: session.userId,
-        roles: session.roles,
+        roles: session.roles as any,
         createdAt: new Date(session.createdAt),
         expiresAt: new Date(session.expiresAt),
       },
       create: {
         id: session.id,
         userId: session.userId,
-        roles: session.roles,
+        roles: session.roles as any,
         createdAt: new Date(session.createdAt),
         expiresAt: new Date(session.expiresAt),
       },
@@ -1637,10 +2767,188 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         createdAt: new Date(notification.createdAt),
         updatedAt: toDate(notification.updatedAt),
       },
-    });
-  }
+      });
+    }
 
-  for (const document of supportedLegalDocuments) {
+    for (const conversation of supportedSupportConversations) {
+      await (tx as any).supportConversation.upsert({
+        where: { id: conversation.id },
+        update: {
+          channel: conversation.channel,
+          domain: conversation.domain,
+          status: conversation.status,
+          priority: conversation.priority,
+          subject: conversation.subject,
+          externalProvider: conversation.externalProvider ?? null,
+          externalConversationId: conversation.externalConversationId ?? null,
+          externalTicketId: conversation.externalTicketId ?? null,
+          userId: conversation.userId ?? null,
+          merchantId: conversation.merchantId ?? null,
+          slyderProfileId: conversation.slyderProfileId ?? null,
+          employeeProfileId: conversation.employeeProfileId ?? null,
+          referrerAccountId: conversation.referrerAccountId ?? null,
+          assignedTeam: conversation.assignedTeam ?? null,
+          assignedAgentId: conversation.assignedAgentId ?? null,
+          lastMessageAt: toDate(conversation.lastMessageAt),
+          resolvedAt: toDate(conversation.resolvedAt),
+          closedAt: toDate(conversation.closedAt),
+          updatedAt: new Date(conversation.updatedAt),
+        },
+        create: {
+          id: conversation.id,
+          channel: conversation.channel,
+          domain: conversation.domain,
+          status: conversation.status,
+          priority: conversation.priority,
+          subject: conversation.subject,
+          externalProvider: conversation.externalProvider ?? null,
+          externalConversationId: conversation.externalConversationId ?? null,
+          externalTicketId: conversation.externalTicketId ?? null,
+          userId: conversation.userId ?? null,
+          merchantId: conversation.merchantId ?? null,
+          slyderProfileId: conversation.slyderProfileId ?? null,
+          employeeProfileId: conversation.employeeProfileId ?? null,
+          referrerAccountId: conversation.referrerAccountId ?? null,
+          assignedTeam: conversation.assignedTeam ?? null,
+          assignedAgentId: conversation.assignedAgentId ?? null,
+          lastMessageAt: toDate(conversation.lastMessageAt),
+          resolvedAt: toDate(conversation.resolvedAt),
+          closedAt: toDate(conversation.closedAt),
+          createdAt: new Date(conversation.createdAt),
+          updatedAt: new Date(conversation.updatedAt),
+        },
+      });
+    }
+
+    for (const message of supportedSupportMessages) {
+      await (tx as any).supportMessage.upsert({
+        where: { id: message.id },
+        update: {
+          conversationId: message.conversationId,
+          senderType: message.senderType,
+          senderId: message.senderId ?? null,
+          body: message.body,
+          messageFormat: message.messageFormat,
+          externalMessageId: message.externalMessageId ?? null,
+          aiGenerated: message.aiGenerated,
+          metadata: (message.metadata ?? undefined) as any,
+          createdAt: new Date(message.createdAt),
+        },
+        create: {
+          id: message.id,
+          conversationId: message.conversationId,
+          senderType: message.senderType,
+          senderId: message.senderId ?? null,
+          body: message.body,
+          messageFormat: message.messageFormat,
+          externalMessageId: message.externalMessageId ?? null,
+          aiGenerated: message.aiGenerated,
+          metadata: (message.metadata ?? undefined) as any,
+          createdAt: new Date(message.createdAt),
+        },
+      });
+    }
+
+    for (const snapshot of supportedSupportContextSnapshots) {
+      await (tx as any).supportContextSnapshot.upsert({
+        where: { id: snapshot.id },
+        update: {
+          conversationId: snapshot.conversationId,
+          contextType: snapshot.contextType,
+          payload: snapshot.payload as any,
+          createdAt: new Date(snapshot.createdAt),
+        },
+        create: {
+          id: snapshot.id,
+          conversationId: snapshot.conversationId,
+          contextType: snapshot.contextType,
+          payload: snapshot.payload as any,
+          createdAt: new Date(snapshot.createdAt),
+        },
+      });
+    }
+
+    for (const handoff of supportedSupportHandoffs) {
+      await (tx as any).supportHandoff.upsert({
+        where: { id: handoff.id },
+        update: {
+          conversationId: handoff.conversationId,
+          reason: handoff.reason,
+          summary: handoff.summary,
+          recommendedTeam: handoff.recommendedTeam,
+          confidenceScore: handoff.confidenceScore ?? null,
+          acceptedByAgentId: handoff.acceptedByAgentId ?? null,
+          createdAt: new Date(handoff.createdAt),
+        },
+        create: {
+          id: handoff.id,
+          conversationId: handoff.conversationId,
+          reason: handoff.reason,
+          summary: handoff.summary,
+          recommendedTeam: handoff.recommendedTeam,
+          confidenceScore: handoff.confidenceScore ?? null,
+          acceptedByAgentId: handoff.acceptedByAgentId ?? null,
+          createdAt: new Date(handoff.createdAt),
+        },
+      });
+    }
+
+    for (const event of supportedSupportEvents) {
+      await (tx as any).supportEvent.upsert({
+        where: { id: event.id },
+        update: {
+          conversationId: event.conversationId,
+          eventType: event.eventType,
+          actorType: event.actorType,
+          actorId: event.actorId ?? null,
+          notes: event.notes ?? null,
+          metadata: (event.metadata ?? undefined) as any,
+          createdAt: new Date(event.createdAt),
+        },
+        create: {
+          id: event.id,
+          conversationId: event.conversationId,
+          eventType: event.eventType,
+          actorType: event.actorType,
+          actorId: event.actorId ?? null,
+          notes: event.notes ?? null,
+          metadata: (event.metadata ?? undefined) as any,
+          createdAt: new Date(event.createdAt),
+        },
+      });
+    }
+
+    for (const article of supportedSupportKnowledgeArticles) {
+      await (tx as any).supportKnowledgeArticle.upsert({
+        where: { id: article.id },
+        update: {
+          domain: article.domain,
+          audience: article.audience,
+          title: article.title,
+          slug: article.slug,
+          summary: article.summary ?? null,
+          content: article.content,
+          tags: article.tags,
+          published: article.published,
+          updatedAt: new Date(article.updatedAt),
+        },
+        create: {
+          id: article.id,
+          domain: article.domain,
+          audience: article.audience,
+          title: article.title,
+          slug: article.slug,
+          summary: article.summary ?? null,
+          content: article.content,
+          tags: article.tags,
+          published: article.published,
+          createdAt: new Date(article.createdAt),
+          updatedAt: new Date(article.updatedAt),
+        },
+      });
+    }
+
+    for (const document of supportedLegalDocuments) {
     await tx.legalDocument.upsert({
       where: { id: document.id },
       update: {
@@ -1822,6 +3130,739 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
       },
     });
   }
+
+  for (const lead of supportedMerchantLeads) {
+    await (tx as any).merchantLead.upsert({
+      where: { id: lead.id },
+      update: {
+        businessName: lead.businessName,
+        contactName: lead.contactName,
+        phone: lead.phone,
+        email: lead.email,
+        parish: lead.parish,
+        town: lead.town,
+        category: lead.category,
+        instagramHandle: lead.instagramHandle ?? null,
+        website: lead.website ?? null,
+        orderChannels: lead.orderChannels,
+        averageDailyOrders: lead.averageDailyOrders ?? null,
+        currentDeliveryMethod: lead.currentDeliveryMethod ?? null,
+        preferredStartTimeline: lead.preferredStartTimeline ?? null,
+        productIntent: lead.productIntent,
+        status: lead.status,
+        notes: lead.notes ?? null,
+        updatedAt: new Date(lead.updatedAt),
+      },
+      create: {
+        id: lead.id,
+        businessName: lead.businessName,
+        contactName: lead.contactName,
+        phone: lead.phone,
+        email: lead.email,
+        parish: lead.parish,
+        town: lead.town,
+        category: lead.category,
+        instagramHandle: lead.instagramHandle ?? null,
+        website: lead.website ?? null,
+        orderChannels: lead.orderChannels,
+        averageDailyOrders: lead.averageDailyOrders ?? null,
+        currentDeliveryMethod: lead.currentDeliveryMethod ?? null,
+        preferredStartTimeline: lead.preferredStartTimeline ?? null,
+        productIntent: lead.productIntent,
+        status: lead.status,
+        notes: lead.notes ?? null,
+        createdAt: new Date(lead.createdAt),
+        updatedAt: new Date(lead.updatedAt),
+      },
+    });
+  }
+
+  for (const application of supportedMerchantApplications) {
+    await (tx as any).merchantApplication.upsert({
+      where: { id: application.id },
+      update: {
+        merchantLeadId: application.merchantLeadId,
+        onboardingTrack: application.onboardingTrack,
+        storeName: application.storeName ?? null,
+        logoUrl: application.logoUrl ?? null,
+        heroBannerUrl: application.heroBannerUrl ?? null,
+        heroBannerPosition: application.heroBannerPosition ?? null,
+        businessDescription: application.businessDescription ?? null,
+        category: application.category ?? null,
+        pickupAddress: application.pickupAddress ?? null,
+        serviceAreas: application.serviceAreas,
+        fulfillmentMode: application.fulfillmentMode ?? null,
+        catalogReady: application.catalogReady ?? null,
+        payoutDetails: application.payoutDetails ?? Prisma.JsonNull,
+        operatingHours: application.operatingHours ?? Prisma.JsonNull,
+        documentStatus: application.documentStatus,
+        legalStatus: application.legalStatus,
+        approvalStatus: application.approvalStatus,
+        activationStatus: application.activationStatus,
+        businessLicenseStatus: application.businessLicenseStatus,
+        businessLicenseNumber: application.businessLicenseNumber ?? null,
+        businessLicenseSubmittedAt: toDate(application.businessLicenseSubmittedAt),
+        businessLicenseVerifiedAt: toDate(application.businessLicenseVerifiedAt),
+        businessLicenseGraceEndsAt: toDate(application.businessLicenseGraceEndsAt),
+        businessLicenseRequiredAfterDeliveries: application.businessLicenseRequiredAfterDeliveries,
+        businessLicenseDisabledAt: toDate(application.businessLicenseDisabledAt),
+        assignedAdminId: application.assignedAdminId ?? null,
+        updatedAt: new Date(application.updatedAt),
+      },
+      create: {
+        id: application.id,
+        merchantLeadId: application.merchantLeadId,
+        onboardingTrack: application.onboardingTrack,
+        storeName: application.storeName ?? null,
+        logoUrl: application.logoUrl ?? null,
+        heroBannerUrl: application.heroBannerUrl ?? null,
+        heroBannerPosition: application.heroBannerPosition ?? null,
+        businessDescription: application.businessDescription ?? null,
+        category: application.category ?? null,
+        pickupAddress: application.pickupAddress ?? null,
+        serviceAreas: application.serviceAreas,
+        fulfillmentMode: application.fulfillmentMode ?? null,
+        catalogReady: application.catalogReady ?? null,
+        payoutDetails: application.payoutDetails ?? Prisma.JsonNull,
+        operatingHours: application.operatingHours ?? Prisma.JsonNull,
+        documentStatus: application.documentStatus,
+        legalStatus: application.legalStatus,
+        approvalStatus: application.approvalStatus,
+        activationStatus: application.activationStatus,
+        businessLicenseStatus: application.businessLicenseStatus,
+        businessLicenseNumber: application.businessLicenseNumber ?? null,
+        businessLicenseSubmittedAt: toDate(application.businessLicenseSubmittedAt),
+        businessLicenseVerifiedAt: toDate(application.businessLicenseVerifiedAt),
+        businessLicenseGraceEndsAt: toDate(application.businessLicenseGraceEndsAt),
+        businessLicenseRequiredAfterDeliveries: application.businessLicenseRequiredAfterDeliveries,
+        businessLicenseDisabledAt: toDate(application.businessLicenseDisabledAt),
+        assignedAdminId: application.assignedAdminId ?? null,
+        createdAt: new Date(application.createdAt),
+        updatedAt: new Date(application.updatedAt),
+      },
+    });
+  }
+
+  for (const profile of supportedMerchantIntegrationProfiles) {
+    await (tx as any).merchantIntegrationProfile.upsert({
+      where: { merchantApplicationId: profile.merchantApplicationId },
+      update: {
+        dispatchMode: profile.dispatchMode,
+        acceptsCOD: profile.acceptsCOD,
+        averageBasketSize: profile.averageBasketSize ?? null,
+        packageTypes: profile.packageTypes,
+        operatingHours: profile.operatingHours ?? Prisma.JsonNull,
+        orderSources: profile.orderSources,
+        pickupLocations: profile.pickupLocations,
+        deliveryRadius: profile.deliveryRadius ?? null,
+        sameDaySupported: profile.sameDaySupported,
+        scheduledSupported: profile.scheduledSupported,
+        integrationReadiness: profile.integrationReadiness,
+        updatedAt: new Date(profile.updatedAt),
+      },
+      create: {
+        id: profile.id,
+        merchantApplicationId: profile.merchantApplicationId,
+        dispatchMode: profile.dispatchMode,
+        acceptsCOD: profile.acceptsCOD,
+        averageBasketSize: profile.averageBasketSize ?? null,
+        packageTypes: profile.packageTypes,
+        operatingHours: profile.operatingHours ?? Prisma.JsonNull,
+        orderSources: profile.orderSources,
+        pickupLocations: profile.pickupLocations,
+        deliveryRadius: profile.deliveryRadius ?? null,
+        sameDaySupported: profile.sameDaySupported,
+        scheduledSupported: profile.scheduledSupported,
+        integrationReadiness: profile.integrationReadiness,
+        createdAt: new Date(profile.createdAt),
+        updatedAt: new Date(profile.updatedAt),
+      },
+    });
+  }
+
+  for (const event of supportedMerchantOnboardingEvents) {
+    await (tx as any).merchantOnboardingEvent.upsert({
+      where: { id: event.id },
+      update: {
+        merchantApplicationId: event.merchantApplicationId,
+        eventType: event.eventType,
+        actorType: event.actorType,
+        actorId: event.actorId ?? null,
+        notes: event.notes ?? null,
+        createdAt: new Date(event.createdAt),
+      },
+      create: {
+        id: event.id,
+        merchantApplicationId: event.merchantApplicationId,
+        eventType: event.eventType,
+        actorType: event.actorType,
+        actorId: event.actorId ?? null,
+        notes: event.notes ?? null,
+        createdAt: new Date(event.createdAt),
+      },
+    });
+  }
+
+  for (const address of supportedMerchantAddresses) {
+    await (tx as any).merchantAddress.upsert({
+      where: { id: address.id },
+      update: {
+        merchantId: address.merchantId,
+        type: address.type,
+        label: address.label,
+        contactName: address.contactName,
+        contactPhone: address.contactPhone,
+        addressLine: address.addressLine,
+        parish: address.parish,
+        town: address.town,
+        notes: address.notes ?? null,
+        isDefault: address.isDefault,
+        updatedAt: new Date(address.updatedAt),
+      },
+      create: {
+        id: address.id,
+        merchantId: address.merchantId,
+        type: address.type,
+        label: address.label,
+        contactName: address.contactName,
+        contactPhone: address.contactPhone,
+        addressLine: address.addressLine,
+        parish: address.parish,
+        town: address.town,
+        notes: address.notes ?? null,
+        isDefault: address.isDefault,
+        createdAt: new Date(address.createdAt),
+        updatedAt: new Date(address.updatedAt),
+      },
+    });
+  }
+
+  for (const order of supportedMerchantOrders) {
+    await (tx as any).merchantOrder.upsert({
+      where: { id: order.id },
+      update: {
+        merchantId: order.merchantId,
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        deliveryAddress: order.deliveryAddress,
+        pickupLocationId:
+          order.pickupLocationId && supportedMerchantAddressIds.has(order.pickupLocationId) ? order.pickupLocationId : null,
+        pickupAddressSnapshot: order.pickupAddressSnapshot ?? null,
+        itemDescription: order.itemDescription,
+        packageType: order.packageType,
+        paymentType: order.paymentType,
+        codAmount: order.codAmount ?? null,
+        internalNote: order.internalNote ?? null,
+        riderNote: order.riderNote ?? null,
+        requestedTiming: order.requestedTiming,
+        scheduledFor: toDate(order.scheduledFor),
+        status: order.status,
+        updatedAt: new Date(order.updatedAt),
+      },
+      create: {
+        id: order.id,
+        merchantId: order.merchantId,
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        deliveryAddress: order.deliveryAddress,
+        pickupLocationId:
+          order.pickupLocationId && supportedMerchantAddressIds.has(order.pickupLocationId) ? order.pickupLocationId : null,
+        pickupAddressSnapshot: order.pickupAddressSnapshot ?? null,
+        itemDescription: order.itemDescription,
+        packageType: order.packageType,
+        paymentType: order.paymentType,
+        codAmount: order.codAmount ?? null,
+        internalNote: order.internalNote ?? null,
+        riderNote: order.riderNote ?? null,
+        requestedTiming: order.requestedTiming,
+        scheduledFor: toDate(order.scheduledFor),
+        status: order.status,
+        createdAt: new Date(order.createdAt),
+        updatedAt: new Date(order.updatedAt),
+      },
+    });
+  }
+
+  for (const delivery of supportedMerchantDeliveries) {
+    await (tx as any).merchantDelivery.upsert({
+      where: { id: delivery.id },
+      update: {
+        merchantOrderId: delivery.merchantOrderId,
+        merchantId: delivery.merchantId,
+        dispatchMode: delivery.dispatchMode,
+        riderId: delivery.riderId ?? null,
+        quoteAmount: delivery.quoteAmount ?? null,
+        assignedAt: toDate(delivery.assignedAt),
+        pickedUpAt: toDate(delivery.pickedUpAt),
+        deliveredAt: toDate(delivery.deliveredAt),
+        failedAt: toDate(delivery.failedAt),
+        cancelledAt: toDate(delivery.cancelledAt),
+        status: delivery.status,
+        proofOfDeliveryUrl: delivery.proofOfDeliveryUrl ?? null,
+        updatedAt: new Date(delivery.updatedAt),
+      },
+      create: {
+        id: delivery.id,
+        merchantOrderId: delivery.merchantOrderId,
+        merchantId: delivery.merchantId,
+        dispatchMode: delivery.dispatchMode,
+        riderId: delivery.riderId ?? null,
+        quoteAmount: delivery.quoteAmount ?? null,
+        assignedAt: toDate(delivery.assignedAt),
+        pickedUpAt: toDate(delivery.pickedUpAt),
+        deliveredAt: toDate(delivery.deliveredAt),
+        failedAt: toDate(delivery.failedAt),
+        cancelledAt: toDate(delivery.cancelledAt),
+        status: delivery.status,
+        proofOfDeliveryUrl: delivery.proofOfDeliveryUrl ?? null,
+        createdAt: new Date(delivery.createdAt),
+        updatedAt: new Date(delivery.updatedAt),
+      },
+    });
+  }
+
+  for (const member of supportedMerchantTeamMembers) {
+    await (tx as any).merchantTeamMember.upsert({
+      where: { id: member.id },
+      update: {
+        merchantId: member.merchantId,
+        userId: member.userId,
+        role: member.role,
+        status: member.status,
+        invitedAt: toDate(member.invitedAt),
+        joinedAt: toDate(member.joinedAt),
+        updatedAt: new Date(member.updatedAt),
+      },
+      create: {
+        id: member.id,
+        merchantId: member.merchantId,
+        userId: member.userId,
+        role: member.role,
+        status: member.status,
+        invitedAt: toDate(member.invitedAt),
+        joinedAt: toDate(member.joinedAt),
+        createdAt: new Date(member.createdAt),
+        updatedAt: new Date(member.updatedAt),
+      },
+    });
+  }
+
+  for (const preference of supportedMerchantNotificationPreferences) {
+    await (tx as any).merchantNotificationPreference.upsert({
+      where: { merchantId: preference.merchantId },
+      update: {
+        emailEnabled: preference.emailEnabled,
+        smsEnabled: preference.smsEnabled,
+        whatsappEnabled: preference.whatsappEnabled,
+        notifyOnAssigned: preference.notifyOnAssigned,
+        notifyOnDelivered: preference.notifyOnDelivered,
+        notifyOnFailed: preference.notifyOnFailed,
+        notifyOnBilling: preference.notifyOnBilling,
+        updatedAt: new Date(preference.updatedAt),
+      },
+      create: {
+        id: preference.id,
+        merchantId: preference.merchantId,
+        emailEnabled: preference.emailEnabled,
+        smsEnabled: preference.smsEnabled,
+        whatsappEnabled: preference.whatsappEnabled,
+        notifyOnAssigned: preference.notifyOnAssigned,
+        notifyOnDelivered: preference.notifyOnDelivered,
+        notifyOnFailed: preference.notifyOnFailed,
+        notifyOnBilling: preference.notifyOnBilling,
+        createdAt: new Date(preference.createdAt),
+        updatedAt: new Date(preference.updatedAt),
+      },
+    });
+  }
+
+    for (const event of supportedMerchantDispatchEvents) {
+      await (tx as any).merchantDispatchEvent.upsert({
+        where: { id: event.id },
+        update: {
+          merchantDeliveryId: event.merchantDeliveryId,
+          eventType: event.eventType,
+          actorType: event.actorType,
+          actorId: event.actorId ?? null,
+          notes: event.notes ?? null,
+          metadata: event.metadata ?? undefined,
+          createdAt: new Date(event.createdAt),
+        },
+        create: {
+          id: event.id,
+          merchantDeliveryId: event.merchantDeliveryId,
+          eventType: event.eventType,
+          actorType: event.actorType,
+          actorId: event.actorId ?? null,
+          notes: event.notes ?? null,
+          metadata: event.metadata ?? undefined,
+          createdAt: new Date(event.createdAt),
+        },
+      });
+    }
+
+  for (const carrier of supportedPartnerCarriers) {
+    await (tx as any).partnerCarrier.upsert({
+      where: { id: carrier.id },
+      update: {
+        name: carrier.name,
+        slug: carrier.slug,
+        type: carrier.type,
+        supportsTracking: carrier.supportsTracking,
+        supportsApi: carrier.supportsApi,
+        supportsFinalDelivery: carrier.supportsFinalDelivery,
+        supportsBranchCollection: carrier.supportsBranchCollection,
+        active: carrier.active,
+        contactConfig: (carrier.contactConfig ?? undefined) as any,
+        trackingConfig: (carrier.trackingConfig ?? undefined) as any,
+        webhookConfig: (carrier.webhookConfig ?? undefined) as any,
+        updatedAt: new Date(carrier.updatedAt),
+      },
+      create: {
+        id: carrier.id,
+        name: carrier.name,
+        slug: carrier.slug,
+        type: carrier.type,
+        supportsTracking: carrier.supportsTracking,
+        supportsApi: carrier.supportsApi,
+        supportsFinalDelivery: carrier.supportsFinalDelivery,
+        supportsBranchCollection: carrier.supportsBranchCollection,
+        active: carrier.active,
+        contactConfig: (carrier.contactConfig ?? undefined) as any,
+        trackingConfig: (carrier.trackingConfig ?? undefined) as any,
+        webhookConfig: (carrier.webhookConfig ?? undefined) as any,
+        createdAt: new Date(carrier.createdAt),
+        updatedAt: new Date(carrier.updatedAt),
+      },
+    });
+  }
+
+  for (const location of supportedPartnerHandoffLocations) {
+    await (tx as any).partnerHandoffLocation.upsert({
+      where: { id: location.id },
+      update: {
+        partnerCarrierId: location.partnerCarrierId,
+        name: location.name,
+        parish: location.parish,
+        town: location.town,
+        addressLine: location.addressLine,
+        openingHours: (location.openingHours ?? undefined) as any,
+        active: location.active,
+        updatedAt: new Date(location.updatedAt),
+      },
+      create: {
+        id: location.id,
+        partnerCarrierId: location.partnerCarrierId,
+        name: location.name,
+        parish: location.parish,
+        town: location.town,
+        addressLine: location.addressLine,
+        openingHours: (location.openingHours ?? undefined) as any,
+        active: location.active,
+        createdAt: new Date(location.createdAt),
+        updatedAt: new Date(location.updatedAt),
+      },
+    });
+  }
+
+  for (const plan of supportedDeliveryTransferPlans) {
+    await (tx as any).deliveryTransferPlan.upsert({
+      where: { id: plan.id },
+      update: {
+        merchantDeliveryId: plan.merchantDeliveryId,
+        deliveryType: plan.deliveryType,
+        originParish: plan.originParish,
+        destinationParish: plan.destinationParish,
+        destinationTown: plan.destinationTown ?? null,
+        transferPartnerId: plan.transferPartnerId,
+        originHandoffLocationId:
+          plan.originHandoffLocationId && supportedPartnerHandoffLocationIds.has(plan.originHandoffLocationId)
+            ? plan.originHandoffLocationId
+            : null,
+        destinationHandoffLocationId:
+          plan.destinationHandoffLocationId && supportedPartnerHandoffLocationIds.has(plan.destinationHandoffLocationId)
+            ? plan.destinationHandoffLocationId
+            : null,
+        finalFulfillmentMethod: plan.finalFulfillmentMethod,
+        packageValue: plan.packageValue ?? null,
+        specialHandlingNotes: plan.specialHandlingNotes ?? null,
+        customerTrackingCode: plan.customerTrackingCode,
+        overallStatus: plan.overallStatus,
+        updatedAt: new Date(plan.updatedAt),
+      },
+      create: {
+        id: plan.id,
+        merchantDeliveryId: plan.merchantDeliveryId,
+        deliveryType: plan.deliveryType,
+        originParish: plan.originParish,
+        destinationParish: plan.destinationParish,
+        destinationTown: plan.destinationTown ?? null,
+        transferPartnerId: plan.transferPartnerId,
+        originHandoffLocationId:
+          plan.originHandoffLocationId && supportedPartnerHandoffLocationIds.has(plan.originHandoffLocationId)
+            ? plan.originHandoffLocationId
+            : null,
+        destinationHandoffLocationId:
+          plan.destinationHandoffLocationId && supportedPartnerHandoffLocationIds.has(plan.destinationHandoffLocationId)
+            ? plan.destinationHandoffLocationId
+            : null,
+        finalFulfillmentMethod: plan.finalFulfillmentMethod,
+        packageValue: plan.packageValue ?? null,
+        specialHandlingNotes: plan.specialHandlingNotes ?? null,
+        customerTrackingCode: plan.customerTrackingCode,
+        overallStatus: plan.overallStatus,
+        createdAt: new Date(plan.createdAt),
+        updatedAt: new Date(plan.updatedAt),
+      },
+    });
+  }
+
+  for (const leg of supportedDeliveryLegs) {
+    await (tx as any).deliveryLeg.upsert({
+      where: { id: leg.id },
+      update: {
+        merchantDeliveryId: leg.merchantDeliveryId,
+        transferPlanId: leg.transferPlanId ?? null,
+        legSequence: leg.legSequence,
+        legType: leg.legType,
+        providerType: leg.providerType,
+        providerId: leg.providerId ?? null,
+        originLabel: leg.originLabel,
+        originAddress: leg.originAddress ?? null,
+        destinationLabel: leg.destinationLabel,
+        destinationAddress: leg.destinationAddress ?? null,
+        partnerTrackingReference: leg.partnerTrackingReference ?? null,
+        status: leg.status,
+        eta: toDate(leg.eta),
+        startedAt: toDate(leg.startedAt),
+        completedAt: toDate(leg.completedAt),
+        failedAt: toDate(leg.failedAt),
+        updatedAt: new Date(leg.updatedAt),
+      },
+      create: {
+        id: leg.id,
+        merchantDeliveryId: leg.merchantDeliveryId,
+        transferPlanId: leg.transferPlanId ?? null,
+        legSequence: leg.legSequence,
+        legType: leg.legType,
+        providerType: leg.providerType,
+        providerId: leg.providerId ?? null,
+        originLabel: leg.originLabel,
+        originAddress: leg.originAddress ?? null,
+        destinationLabel: leg.destinationLabel,
+        destinationAddress: leg.destinationAddress ?? null,
+        partnerTrackingReference: leg.partnerTrackingReference ?? null,
+        status: leg.status,
+        eta: toDate(leg.eta),
+        startedAt: toDate(leg.startedAt),
+        completedAt: toDate(leg.completedAt),
+        failedAt: toDate(leg.failedAt),
+        createdAt: new Date(leg.createdAt),
+        updatedAt: new Date(leg.updatedAt),
+      },
+    });
+  }
+
+  for (const event of supportedPartnerTrackingEvents) {
+    await (tx as any).partnerTrackingEvent.upsert({
+      where: { id: event.id },
+      update: {
+        deliveryLegId: event.deliveryLegId,
+        partnerCarrierId: event.partnerCarrierId,
+        externalTrackingReference: event.externalTrackingReference ?? null,
+        rawStatus: event.rawStatus,
+        normalizedStatus: event.normalizedStatus,
+        notes: event.notes ?? null,
+        eventTimestamp: new Date(event.eventTimestamp),
+        createdAt: new Date(event.createdAt),
+      },
+      create: {
+        id: event.id,
+        deliveryLegId: event.deliveryLegId,
+        partnerCarrierId: event.partnerCarrierId,
+        externalTrackingReference: event.externalTrackingReference ?? null,
+        rawStatus: event.rawStatus,
+        normalizedStatus: event.normalizedStatus,
+        notes: event.notes ?? null,
+        eventTimestamp: new Date(event.eventTimestamp),
+        createdAt: new Date(event.createdAt),
+      },
+    });
+  }
+
+  for (const referral of supportedPublicSlyderReferrals) {
+    await tx.publicSlyderReferral.upsert({
+      where: { id: referral.id },
+      update: {
+        referralCode: referral.referralCode,
+        referrerName: referral.referrerName,
+        referrerPhone: referral.referrerPhone,
+        referrerEmail: referral.referrerEmail ?? null,
+        referrerAccountId: referral.referrerAccountId ?? null,
+        referredName: referral.referredName,
+        referredEmail: referral.referredEmail ?? null,
+        referredPhone: referral.referredPhone,
+        referredParish: referral.referredParish ?? null,
+        referredTown: referral.referredTown ?? null,
+        referredVehicleType: referral.referredVehicleType ?? null,
+        notes: referral.notes ?? null,
+        status: referral.status,
+        statusReason: referral.statusReason ?? null,
+        inviteEmailSentAt: toDate(referral.inviteEmailSentAt),
+        inviteEmailStatus: referral.inviteEmailStatus ?? null,
+        applicationStartedAt: toDate(referral.applicationStartedAt),
+        applicationCompletedAt: toDate(referral.applicationCompletedAt),
+        approvedAt: toDate(referral.approvedAt),
+        activatedAt: toDate(referral.activatedAt),
+        readyAt: toDate(referral.readyAt),
+        firstDeliveryCompletedAt: toDate(referral.firstDeliveryCompletedAt),
+        rewardEarnedAt: toDate(referral.rewardEarnedAt),
+        rewardClaimedAt: toDate(referral.rewardClaimedAt),
+        rewardGiftedAt: toDate(referral.rewardGiftedAt),
+        rewardRedeemedAt: toDate(referral.rewardRedeemedAt),
+        linkedSlyderApplicationId: referral.linkedSlyderApplicationId ?? null,
+        linkedSlyderProfileId: referral.linkedSlyderProfileId ?? null,
+        rewardId: referral.rewardId ?? null,
+        duplicateOfReferralId: referral.duplicateOfReferralId ?? null,
+        submittedIpHash: referral.submittedIpHash ?? null,
+        submittedUserAgent: referral.submittedUserAgent ?? null,
+        updatedAt: new Date(referral.updatedAt),
+      },
+      create: {
+        id: referral.id,
+        referralCode: referral.referralCode,
+        referrerName: referral.referrerName,
+        referrerPhone: referral.referrerPhone,
+        referrerEmail: referral.referrerEmail ?? null,
+        referrerAccountId: referral.referrerAccountId ?? null,
+        referredName: referral.referredName,
+        referredEmail: referral.referredEmail ?? null,
+        referredPhone: referral.referredPhone,
+        referredParish: referral.referredParish ?? null,
+        referredTown: referral.referredTown ?? null,
+        referredVehicleType: referral.referredVehicleType ?? null,
+        notes: referral.notes ?? null,
+        status: referral.status,
+        statusReason: referral.statusReason ?? null,
+        inviteEmailSentAt: toDate(referral.inviteEmailSentAt),
+        inviteEmailStatus: referral.inviteEmailStatus ?? null,
+        applicationStartedAt: toDate(referral.applicationStartedAt),
+        applicationCompletedAt: toDate(referral.applicationCompletedAt),
+        approvedAt: toDate(referral.approvedAt),
+        activatedAt: toDate(referral.activatedAt),
+        readyAt: toDate(referral.readyAt),
+        firstDeliveryCompletedAt: toDate(referral.firstDeliveryCompletedAt),
+        rewardEarnedAt: toDate(referral.rewardEarnedAt),
+        rewardClaimedAt: toDate(referral.rewardClaimedAt),
+        rewardGiftedAt: toDate(referral.rewardGiftedAt),
+        rewardRedeemedAt: toDate(referral.rewardRedeemedAt),
+        linkedSlyderApplicationId: referral.linkedSlyderApplicationId ?? null,
+        linkedSlyderProfileId: referral.linkedSlyderProfileId ?? null,
+        rewardId: referral.rewardId ?? null,
+        duplicateOfReferralId: referral.duplicateOfReferralId ?? null,
+        submittedIpHash: referral.submittedIpHash ?? null,
+        submittedUserAgent: referral.submittedUserAgent ?? null,
+        createdAt: new Date(referral.createdAt),
+        updatedAt: new Date(referral.updatedAt),
+      },
+    });
+  }
+
+  for (const event of supportedReferralEvents) {
+    await tx.referralEvent.upsert({
+      where: { id: event.id },
+      update: {
+        referralId: event.referralId,
+        eventType: event.eventType,
+        title: event.title,
+        description: event.description ?? null,
+        metadata: (event.metadata ?? undefined) as any,
+        createdAt: new Date(event.createdAt),
+      },
+      create: {
+        id: event.id,
+        referralId: event.referralId,
+        eventType: event.eventType,
+        title: event.title,
+        description: event.description ?? null,
+        metadata: (event.metadata ?? undefined) as any,
+        createdAt: new Date(event.createdAt),
+      },
+    });
+  }
+
+  for (const reward of supportedReferralRewards) {
+    await tx.referralReward.upsert({
+      where: { id: reward.id },
+      update: {
+        publicReferralId: reward.publicReferralId,
+        rewardType: reward.rewardType,
+        rewardValue: reward.rewardValue,
+        currency: reward.currency,
+        status: reward.status,
+        isTransferable: reward.isTransferable,
+        transferCount: reward.transferCount,
+        transferredAt: toDate(reward.transferredAt),
+        ownerCustomerAccountId: reward.ownerCustomerAccountId ?? null,
+        ownerPhone: reward.ownerPhone ?? null,
+        giftedToCustomerAccountId: reward.giftedToCustomerAccountId ?? null,
+        giftedToPhone: reward.giftedToPhone ?? null,
+        giftedByReferrerPhone: reward.giftedByReferrerPhone ?? null,
+        minOrderValue: reward.minOrderValue ?? null,
+        expiresAt: new Date(reward.expiresAt),
+        redeemedAt: toDate(reward.redeemedAt),
+        redemptionOrderId: reward.redemptionOrderId ?? null,
+        updatedAt: new Date(reward.updatedAt),
+      },
+      create: {
+        id: reward.id,
+        publicReferralId: reward.publicReferralId,
+        rewardType: reward.rewardType,
+        rewardValue: reward.rewardValue,
+        currency: reward.currency,
+        status: reward.status,
+        isTransferable: reward.isTransferable,
+        transferCount: reward.transferCount,
+        transferredAt: toDate(reward.transferredAt),
+        ownerCustomerAccountId: reward.ownerCustomerAccountId ?? null,
+        ownerPhone: reward.ownerPhone ?? null,
+        giftedToCustomerAccountId: reward.giftedToCustomerAccountId ?? null,
+        giftedToPhone: reward.giftedToPhone ?? null,
+        giftedByReferrerPhone: reward.giftedByReferrerPhone ?? null,
+        minOrderValue: reward.minOrderValue ?? null,
+        expiresAt: new Date(reward.expiresAt),
+        redeemedAt: toDate(reward.redeemedAt),
+        redemptionOrderId: reward.redemptionOrderId ?? null,
+        createdAt: new Date(reward.createdAt),
+        updatedAt: new Date(reward.updatedAt),
+      },
+    });
+  }
+
+  for (const audit of supportedReferralRewardAudits) {
+    await tx.referralRewardAudit.upsert({
+      where: { id: audit.id },
+      update: {
+        rewardId: audit.rewardId,
+        action: audit.action,
+        actorType: audit.actorType,
+        actorId: audit.actorId ?? null,
+        notes: audit.notes ?? null,
+        createdAt: new Date(audit.createdAt),
+      },
+      create: {
+        id: audit.id,
+        rewardId: audit.rewardId,
+        action: audit.action,
+        actorType: audit.actorType,
+        actorId: audit.actorId ?? null,
+        notes: audit.notes ?? null,
+        createdAt: new Date(audit.createdAt),
+      },
+    });
+  }
 }
 
 export class PrismaRepository implements PersistenceRepository {
@@ -1841,6 +3882,1110 @@ export class PrismaRepository implements PersistenceRepository {
     });
 
     return result;
+  }
+
+  async createReferrerAccount(account: ReferrerAccount): Promise<ReferrerAccount> {
+    const record = await prisma.referrerAccount.create({
+      data: {
+        id: account.id,
+        fullName: account.fullName,
+        email: account.email ?? null,
+        phone: account.phone ?? null,
+        emailVerifiedAt: toDate(account.emailVerifiedAt),
+        phoneVerifiedAt: toDate(account.phoneVerifiedAt),
+        isEnabled: account.isEnabled,
+        createdAt: new Date(account.createdAt),
+        updatedAt: new Date(account.updatedAt),
+      },
+    });
+    return mapReferrerAccount(record)!;
+  }
+
+  async updateReferrerAccount(account: ReferrerAccount): Promise<ReferrerAccount> {
+    const record = await prisma.referrerAccount.update({
+      where: { id: account.id },
+      data: {
+        fullName: account.fullName,
+        email: account.email ?? null,
+        phone: account.phone ?? null,
+        emailVerifiedAt: toDate(account.emailVerifiedAt),
+        phoneVerifiedAt: toDate(account.phoneVerifiedAt),
+        isEnabled: account.isEnabled,
+        updatedAt: new Date(account.updatedAt),
+      },
+    });
+    return mapReferrerAccount(record)!;
+  }
+
+  async findReferrerAccountById(id: string): Promise<ReferrerAccount | null> {
+    return mapReferrerAccount(await prisma.referrerAccount.findUnique({ where: { id } }));
+  }
+
+  async findReferrerAccountByEmail(email: string): Promise<ReferrerAccount | null> {
+    return mapReferrerAccount(await prisma.referrerAccount.findUnique({ where: { email } }));
+  }
+
+  async findReferrerAccountByPhone(phone: string): Promise<ReferrerAccount | null> {
+    return mapReferrerAccount(await prisma.referrerAccount.findUnique({ where: { phone } }));
+  }
+
+  async createReferrerLoginChallenge(challenge: ReferrerLoginChallenge): Promise<ReferrerLoginChallenge> {
+    const record = await prisma.referrerLoginChallenge.create({
+      data: {
+        id: challenge.id,
+        referrerAccountId: challenge.referrerAccountId ?? null,
+        channel: challenge.channel,
+        email: challenge.email ?? null,
+        phone: challenge.phone ?? null,
+        codeHash: challenge.codeHash,
+        expiresAt: new Date(challenge.expiresAt),
+        consumedAt: toDate(challenge.consumedAt),
+        createdAt: new Date(challenge.createdAt),
+      },
+    });
+    return mapReferrerLoginChallenge(record)!;
+  }
+
+  async updateReferrerLoginChallenge(challenge: ReferrerLoginChallenge): Promise<ReferrerLoginChallenge> {
+    const record = await prisma.referrerLoginChallenge.update({
+      where: { id: challenge.id },
+      data: {
+        referrerAccountId: challenge.referrerAccountId ?? null,
+        channel: challenge.channel,
+        email: challenge.email ?? null,
+        phone: challenge.phone ?? null,
+        codeHash: challenge.codeHash,
+        expiresAt: new Date(challenge.expiresAt),
+        consumedAt: toDate(challenge.consumedAt),
+      },
+    });
+    return mapReferrerLoginChallenge(record)!;
+  }
+
+  async findReferrerLoginChallengeById(id: string): Promise<ReferrerLoginChallenge | null> {
+    return mapReferrerLoginChallenge(await prisma.referrerLoginChallenge.findUnique({ where: { id } }));
+  }
+
+  async createReferrerSession(session: ReferrerSession): Promise<ReferrerSession> {
+    const record = await prisma.referrerSession.create({
+      data: {
+        id: session.id,
+        referrerAccountId: session.referrerAccountId,
+        createdAt: new Date(session.createdAt),
+        expiresAt: new Date(session.expiresAt),
+      },
+    });
+    return mapReferrerSession(record)!;
+  }
+
+  async findReferrerSessionById(id: string): Promise<ReferrerSession | null> {
+    return mapReferrerSession(await prisma.referrerSession.findUnique({ where: { id } }));
+  }
+
+  async deleteReferrerSession(id: string): Promise<void> {
+    await prisma.referrerSession.deleteMany({ where: { id } });
+  }
+
+  async createReferral(referral: PublicSlyderReferral): Promise<PublicSlyderReferral> {
+    const record = await prisma.publicSlyderReferral.create({
+      data: {
+        id: referral.id,
+        referralCode: referral.referralCode,
+        referrerName: referral.referrerName,
+        referrerPhone: referral.referrerPhone,
+        referrerEmail: referral.referrerEmail ?? null,
+        referrerAccountId: referral.referrerAccountId ?? null,
+        referredName: referral.referredName,
+        referredEmail: referral.referredEmail ?? null,
+        referredPhone: referral.referredPhone,
+        referredParish: referral.referredParish ?? null,
+        referredTown: referral.referredTown ?? null,
+        referredVehicleType: referral.referredVehicleType ?? null,
+        notes: referral.notes ?? null,
+        status: referral.status,
+        statusReason: referral.statusReason ?? null,
+        inviteEmailSentAt: toDate(referral.inviteEmailSentAt),
+        inviteEmailStatus: referral.inviteEmailStatus ?? null,
+        applicationStartedAt: toDate(referral.applicationStartedAt),
+        applicationCompletedAt: toDate(referral.applicationCompletedAt),
+        approvedAt: toDate(referral.approvedAt),
+        activatedAt: toDate(referral.activatedAt),
+        readyAt: toDate(referral.readyAt),
+        firstDeliveryCompletedAt: toDate(referral.firstDeliveryCompletedAt),
+        rewardEarnedAt: toDate(referral.rewardEarnedAt),
+        rewardClaimedAt: toDate(referral.rewardClaimedAt),
+        rewardGiftedAt: toDate(referral.rewardGiftedAt),
+        rewardRedeemedAt: toDate(referral.rewardRedeemedAt),
+        linkedSlyderApplicationId: referral.linkedSlyderApplicationId ?? null,
+        linkedSlyderProfileId: referral.linkedSlyderProfileId ?? null,
+        rewardId: referral.rewardId ?? null,
+        duplicateOfReferralId: referral.duplicateOfReferralId ?? null,
+        submittedIpHash: referral.submittedIpHash ?? null,
+        submittedUserAgent: referral.submittedUserAgent ?? null,
+        createdAt: new Date(referral.createdAt),
+        updatedAt: new Date(referral.updatedAt),
+      },
+    });
+    return mapPublicSlyderReferral(record)!;
+  }
+
+  async findReferralById(id: string): Promise<PublicSlyderReferral | null> {
+    return mapPublicSlyderReferral(await prisma.publicSlyderReferral.findUnique({ where: { id } }));
+  }
+
+  async findReferralByIdForReferrerAccount(
+    id: string,
+    referrerAccountId: string,
+  ): Promise<PublicSlyderReferral | null> {
+    return mapPublicSlyderReferral(
+      await prisma.publicSlyderReferral.findFirst({
+        where: { id, referrerAccountId },
+      }),
+    );
+  }
+
+  async findReferralByCode(referralCode: string): Promise<PublicSlyderReferral | null> {
+    return mapPublicSlyderReferral(await prisma.publicSlyderReferral.findUnique({ where: { referralCode } }));
+  }
+
+  async findReferralByReferredPhone(referredPhone: string): Promise<PublicSlyderReferral | null> {
+    return mapPublicSlyderReferral(
+      await prisma.publicSlyderReferral.findFirst({
+        where: { referredPhone },
+        orderBy: { createdAt: "desc" },
+      }),
+    );
+  }
+
+  async listReferralsByReferrerAccountId(referrerAccountId: string): Promise<ReferralRewardWithReferral[]> {
+    const records = await prisma.publicSlyderReferral.findMany({
+      where: { referrerAccountId },
+      include: { reward: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return records.map((record) => ({
+      referral: mapPublicSlyderReferral(record)!,
+      reward: mapReferralReward(record.reward) ?? undefined,
+    }));
+  }
+
+  async listReferrals(filters?: AdminReferralFilters): Promise<ReferralRewardWithReferral[]> {
+    const where: Prisma.PublicSlyderReferralWhereInput = {
+      ...(filters?.status ? { status: filters.status } : {}),
+      ...(filters?.parish ? { referredParish: { equals: filters.parish, mode: "insensitive" } } : {}),
+      ...(filters?.duplicateFlagged !== undefined
+        ? filters.duplicateFlagged
+          ? { OR: [{ status: "duplicate_flagged" }, { duplicateOfReferralId: { not: null } }] }
+          : { duplicateOfReferralId: null }
+        : {}),
+      ...(filters?.dateFrom || filters?.dateTo
+        ? {
+            createdAt: {
+              ...(filters.dateFrom ? { gte: new Date(filters.dateFrom) } : {}),
+              ...(filters.dateTo ? { lte: new Date(`${filters.dateTo}T23:59:59.999Z`) } : {}),
+            },
+          }
+        : {}),
+      ...(filters?.search
+        ? {
+            OR: [
+              { referralCode: { contains: filters.search, mode: "insensitive" } },
+              { referrerName: { contains: filters.search, mode: "insensitive" } },
+              { referrerPhone: { contains: filters.search, mode: "insensitive" } },
+              { referrerEmail: { contains: filters.search, mode: "insensitive" } },
+              { referredName: { contains: filters.search, mode: "insensitive" } },
+              { referredPhone: { contains: filters.search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
+
+    const records = await prisma.publicSlyderReferral.findMany({
+      where: filters?.rewardStatus ? { ...where, reward: { is: { status: filters.rewardStatus } } } : where,
+      include: { reward: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return records.map((record) => ({
+      referral: mapPublicSlyderReferral(record)!,
+      reward: mapReferralReward(record.reward) ?? undefined,
+    }));
+  }
+
+  async updateReferral(referral: PublicSlyderReferral): Promise<PublicSlyderReferral> {
+    const record = await prisma.publicSlyderReferral.update({
+      where: { id: referral.id },
+      data: {
+        referralCode: referral.referralCode,
+        referrerName: referral.referrerName,
+        referrerPhone: referral.referrerPhone,
+        referrerEmail: referral.referrerEmail ?? null,
+        referrerAccountId: referral.referrerAccountId ?? null,
+        referredName: referral.referredName,
+        referredEmail: referral.referredEmail ?? null,
+        referredPhone: referral.referredPhone,
+        referredParish: referral.referredParish ?? null,
+        referredTown: referral.referredTown ?? null,
+        referredVehicleType: referral.referredVehicleType ?? null,
+        notes: referral.notes ?? null,
+        status: referral.status,
+        statusReason: referral.statusReason ?? null,
+        inviteEmailSentAt: toDate(referral.inviteEmailSentAt),
+        inviteEmailStatus: referral.inviteEmailStatus ?? null,
+        applicationStartedAt: toDate(referral.applicationStartedAt),
+        applicationCompletedAt: toDate(referral.applicationCompletedAt),
+        approvedAt: toDate(referral.approvedAt),
+        activatedAt: toDate(referral.activatedAt),
+        readyAt: toDate(referral.readyAt),
+        firstDeliveryCompletedAt: toDate(referral.firstDeliveryCompletedAt),
+        rewardEarnedAt: toDate(referral.rewardEarnedAt),
+        rewardClaimedAt: toDate(referral.rewardClaimedAt),
+        rewardGiftedAt: toDate(referral.rewardGiftedAt),
+        rewardRedeemedAt: toDate(referral.rewardRedeemedAt),
+        linkedSlyderApplicationId: referral.linkedSlyderApplicationId ?? null,
+        linkedSlyderProfileId: referral.linkedSlyderProfileId ?? null,
+        rewardId: referral.rewardId ?? null,
+        duplicateOfReferralId: referral.duplicateOfReferralId ?? null,
+        submittedIpHash: referral.submittedIpHash ?? null,
+        submittedUserAgent: referral.submittedUserAgent ?? null,
+        updatedAt: new Date(referral.updatedAt),
+      },
+    });
+    return mapPublicSlyderReferral(record)!;
+  }
+
+  async createReferralEvent(event: ReferralEvent): Promise<ReferralEvent> {
+    const record = await prisma.referralEvent.create({
+      data: {
+        id: event.id,
+        referralId: event.referralId,
+        eventType: event.eventType,
+        title: event.title,
+        description: event.description ?? null,
+        metadata: (event.metadata ?? undefined) as any,
+        createdAt: new Date(event.createdAt),
+      },
+    });
+    return mapReferralEvent(record)!;
+  }
+
+  async listReferralEventsByReferralId(referralId: string): Promise<ReferralEvent[]> {
+    const records = await prisma.referralEvent.findMany({
+      where: { referralId },
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map((record) => mapReferralEvent(record)!);
+  }
+
+  async createReward(reward: ReferralReward): Promise<ReferralReward> {
+    const record = await prisma.referralReward.create({
+      data: {
+        id: reward.id,
+        publicReferralId: reward.publicReferralId,
+        rewardType: reward.rewardType,
+        rewardValue: reward.rewardValue,
+        currency: reward.currency,
+        status: reward.status,
+        isTransferable: reward.isTransferable,
+        transferCount: reward.transferCount,
+        transferredAt: toDate(reward.transferredAt),
+        ownerCustomerAccountId: reward.ownerCustomerAccountId ?? null,
+        ownerPhone: reward.ownerPhone ?? null,
+        giftedToCustomerAccountId: reward.giftedToCustomerAccountId ?? null,
+        giftedToPhone: reward.giftedToPhone ?? null,
+        giftedByReferrerPhone: reward.giftedByReferrerPhone ?? null,
+        minOrderValue: reward.minOrderValue ?? null,
+        expiresAt: new Date(reward.expiresAt),
+        redeemedAt: toDate(reward.redeemedAt),
+        redemptionOrderId: reward.redemptionOrderId ?? null,
+        createdAt: new Date(reward.createdAt),
+        updatedAt: new Date(reward.updatedAt),
+      },
+    });
+    return mapReferralReward(record)!;
+  }
+
+  async findRewardById(id: string): Promise<ReferralReward | null> {
+    return mapReferralReward(await prisma.referralReward.findUnique({ where: { id } }));
+  }
+
+  async findRewardByReferralId(publicReferralId: string): Promise<ReferralReward | null> {
+    return mapReferralReward(await prisma.referralReward.findUnique({ where: { publicReferralId } }));
+  }
+
+  async updateReward(reward: ReferralReward): Promise<ReferralReward> {
+    const record = await prisma.referralReward.update({
+      where: { id: reward.id },
+      data: {
+        rewardType: reward.rewardType,
+        rewardValue: reward.rewardValue,
+        currency: reward.currency,
+        status: reward.status,
+        isTransferable: reward.isTransferable,
+        transferCount: reward.transferCount,
+        transferredAt: toDate(reward.transferredAt),
+        ownerCustomerAccountId: reward.ownerCustomerAccountId ?? null,
+        ownerPhone: reward.ownerPhone ?? null,
+        giftedToCustomerAccountId: reward.giftedToCustomerAccountId ?? null,
+        giftedToPhone: reward.giftedToPhone ?? null,
+        giftedByReferrerPhone: reward.giftedByReferrerPhone ?? null,
+        minOrderValue: reward.minOrderValue ?? null,
+        expiresAt: new Date(reward.expiresAt),
+        redeemedAt: toDate(reward.redeemedAt),
+        redemptionOrderId: reward.redemptionOrderId ?? null,
+        updatedAt: new Date(reward.updatedAt),
+      },
+    });
+    return mapReferralReward(record)!;
+  }
+
+  async createRewardAudit(audit: ReferralRewardAudit): Promise<ReferralRewardAudit> {
+    const record = await prisma.referralRewardAudit.create({
+      data: {
+        id: audit.id,
+        rewardId: audit.rewardId,
+        action: audit.action,
+        actorType: audit.actorType,
+        actorId: audit.actorId ?? null,
+        notes: audit.notes ?? null,
+        createdAt: new Date(audit.createdAt),
+      },
+    });
+    return mapReferralRewardAudit(record)!;
+  }
+
+  async listRewardAuditsByRewardId(rewardId: string): Promise<ReferralRewardAudit[]> {
+    const records = await prisma.referralRewardAudit.findMany({
+      where: { rewardId },
+      orderBy: { createdAt: "asc" },
+    });
+    return records.map((record) => mapReferralRewardAudit(record)!);
+  }
+
+  async createMerchantOrder(order: MerchantOrder): Promise<MerchantOrder> {
+    const record = await (prisma as any).merchantOrder.create({
+      data: {
+        id: order.id,
+        merchantId: order.merchantId,
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        deliveryAddress: order.deliveryAddress,
+        pickupLocationId: order.pickupLocationId ?? null,
+        pickupAddressSnapshot: order.pickupAddressSnapshot ?? null,
+        itemDescription: order.itemDescription,
+        packageType: order.packageType,
+        paymentType: order.paymentType,
+        codAmount: order.codAmount ?? null,
+        internalNote: order.internalNote ?? null,
+        riderNote: order.riderNote ?? null,
+        requestedTiming: order.requestedTiming,
+        scheduledFor: toDate(order.scheduledFor),
+        status: order.status,
+        createdAt: new Date(order.createdAt),
+        updatedAt: new Date(order.updatedAt),
+      },
+    });
+    return mapMerchantOrder(record)!;
+  }
+
+  async updateMerchantOrder(order: MerchantOrder): Promise<MerchantOrder> {
+    const record = await (prisma as any).merchantOrder.update({
+      where: { id: order.id },
+      data: {
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        deliveryAddress: order.deliveryAddress,
+        pickupLocationId: order.pickupLocationId ?? null,
+        pickupAddressSnapshot: order.pickupAddressSnapshot ?? null,
+        itemDescription: order.itemDescription,
+        packageType: order.packageType,
+        paymentType: order.paymentType,
+        codAmount: order.codAmount ?? null,
+        internalNote: order.internalNote ?? null,
+        riderNote: order.riderNote ?? null,
+        requestedTiming: order.requestedTiming,
+        scheduledFor: toDate(order.scheduledFor),
+        status: order.status,
+        updatedAt: new Date(order.updatedAt),
+      },
+    });
+    return mapMerchantOrder(record)!;
+  }
+
+  async findMerchantOrderById(id: string): Promise<MerchantOrder | null> {
+    return mapMerchantOrder(await (prisma as any).merchantOrder.findUnique({ where: { id } }));
+  }
+
+  async listMerchantOrdersByMerchantId(merchantId: string): Promise<MerchantOrder[]> {
+    const records = await (prisma as any).merchantOrder.findMany({
+      where: { merchantId },
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map((record: any) => mapMerchantOrder(record)!);
+  }
+
+  async createMerchantDelivery(delivery: MerchantDelivery): Promise<MerchantDelivery> {
+    const record = await (prisma as any).merchantDelivery.create({
+      data: {
+        id: delivery.id,
+        merchantOrderId: delivery.merchantOrderId,
+        merchantId: delivery.merchantId,
+        dispatchMode: delivery.dispatchMode,
+        riderId: delivery.riderId ?? null,
+        quoteAmount: delivery.quoteAmount ?? null,
+        assignedAt: toDate(delivery.assignedAt),
+        pickedUpAt: toDate(delivery.pickedUpAt),
+        deliveredAt: toDate(delivery.deliveredAt),
+        failedAt: toDate(delivery.failedAt),
+        cancelledAt: toDate(delivery.cancelledAt),
+        status: delivery.status,
+        proofOfDeliveryUrl: delivery.proofOfDeliveryUrl ?? null,
+        createdAt: new Date(delivery.createdAt),
+        updatedAt: new Date(delivery.updatedAt),
+      },
+    });
+    return mapMerchantDelivery(record)!;
+  }
+
+  async updateMerchantDelivery(delivery: MerchantDelivery): Promise<MerchantDelivery> {
+    const record = await (prisma as any).merchantDelivery.update({
+      where: { id: delivery.id },
+      data: {
+        dispatchMode: delivery.dispatchMode,
+        riderId: delivery.riderId ?? null,
+        quoteAmount: delivery.quoteAmount ?? null,
+        assignedAt: toDate(delivery.assignedAt),
+        pickedUpAt: toDate(delivery.pickedUpAt),
+        deliveredAt: toDate(delivery.deliveredAt),
+        failedAt: toDate(delivery.failedAt),
+        cancelledAt: toDate(delivery.cancelledAt),
+        status: delivery.status,
+        proofOfDeliveryUrl: delivery.proofOfDeliveryUrl ?? null,
+        updatedAt: new Date(delivery.updatedAt),
+      },
+    });
+    return mapMerchantDelivery(record)!;
+  }
+
+  async findMerchantDeliveryById(id: string): Promise<MerchantDelivery | null> {
+    return mapMerchantDelivery(await (prisma as any).merchantDelivery.findUnique({ where: { id } }));
+  }
+
+  async listMerchantDeliveriesByMerchantId(merchantId: string): Promise<MerchantDelivery[]> {
+    const records = await (prisma as any).merchantDelivery.findMany({
+      where: { merchantId },
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map((record: any) => mapMerchantDelivery(record)!);
+  }
+
+  async createMerchantAddress(address: MerchantAddress): Promise<MerchantAddress> {
+    const record = await (prisma as any).merchantAddress.create({
+      data: {
+        id: address.id,
+        merchantId: address.merchantId,
+        type: address.type,
+        label: address.label,
+        contactName: address.contactName,
+        contactPhone: address.contactPhone,
+        addressLine: address.addressLine,
+        parish: address.parish,
+        town: address.town,
+        notes: address.notes ?? null,
+        isDefault: address.isDefault,
+        createdAt: new Date(address.createdAt),
+        updatedAt: new Date(address.updatedAt),
+      },
+    });
+    return mapMerchantAddress(record)!;
+  }
+
+  async updateMerchantAddress(address: MerchantAddress): Promise<MerchantAddress> {
+    const record = await (prisma as any).merchantAddress.update({
+      where: { id: address.id },
+      data: {
+        type: address.type,
+        label: address.label,
+        contactName: address.contactName,
+        contactPhone: address.contactPhone,
+        addressLine: address.addressLine,
+        parish: address.parish,
+        town: address.town,
+        notes: address.notes ?? null,
+        isDefault: address.isDefault,
+        updatedAt: new Date(address.updatedAt),
+      },
+    });
+    return mapMerchantAddress(record)!;
+  }
+
+  async deleteMerchantAddress(id: string): Promise<void> {
+    await (prisma as any).merchantAddress.deleteMany({ where: { id } });
+  }
+
+  async findMerchantAddressById(id: string): Promise<MerchantAddress | null> {
+    return mapMerchantAddress(await (prisma as any).merchantAddress.findUnique({ where: { id } }));
+  }
+
+  async listMerchantAddressesByMerchantId(merchantId: string): Promise<MerchantAddress[]> {
+    const records = await (prisma as any).merchantAddress.findMany({
+      where: { merchantId },
+      orderBy: [{ isDefault: "desc" }, { label: "asc" }],
+    });
+    return records.map((record: any) => mapMerchantAddress(record)!);
+  }
+
+  async createMerchantTeamMember(member: MerchantTeamMember): Promise<MerchantTeamMember> {
+    const record = await (prisma as any).merchantTeamMember.create({
+      data: {
+        id: member.id,
+        merchantId: member.merchantId,
+        userId: member.userId,
+        role: member.role,
+        status: member.status,
+        invitedAt: toDate(member.invitedAt),
+        joinedAt: toDate(member.joinedAt),
+        createdAt: new Date(member.createdAt),
+        updatedAt: new Date(member.updatedAt),
+      },
+    });
+    return mapMerchantTeamMember(record)!;
+  }
+
+  async updateMerchantTeamMember(member: MerchantTeamMember): Promise<MerchantTeamMember> {
+    const record = await (prisma as any).merchantTeamMember.update({
+      where: { id: member.id },
+      data: {
+        role: member.role,
+        status: member.status,
+        invitedAt: toDate(member.invitedAt),
+        joinedAt: toDate(member.joinedAt),
+        updatedAt: new Date(member.updatedAt),
+      },
+    });
+    return mapMerchantTeamMember(record)!;
+  }
+
+  async findMerchantTeamMemberByUserId(userId: string): Promise<MerchantTeamMember | null> {
+    return mapMerchantTeamMember(
+      await (prisma as any).merchantTeamMember.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+      }),
+    );
+  }
+
+  async listMerchantTeamMembersByMerchantId(merchantId: string): Promise<MerchantTeamMember[]> {
+    const records = await (prisma as any).merchantTeamMember.findMany({
+      where: { merchantId },
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map((record: any) => mapMerchantTeamMember(record)!);
+  }
+
+  async upsertMerchantNotificationPreference(
+    preference: MerchantNotificationPreference,
+  ): Promise<MerchantNotificationPreference> {
+    const record = await (prisma as any).merchantNotificationPreference.upsert({
+      where: { merchantId: preference.merchantId },
+      update: {
+        emailEnabled: preference.emailEnabled,
+        smsEnabled: preference.smsEnabled,
+        whatsappEnabled: preference.whatsappEnabled,
+        notifyOnAssigned: preference.notifyOnAssigned,
+        notifyOnDelivered: preference.notifyOnDelivered,
+        notifyOnFailed: preference.notifyOnFailed,
+        notifyOnBilling: preference.notifyOnBilling,
+        updatedAt: new Date(preference.updatedAt),
+      },
+      create: {
+        id: preference.id,
+        merchantId: preference.merchantId,
+        emailEnabled: preference.emailEnabled,
+        smsEnabled: preference.smsEnabled,
+        whatsappEnabled: preference.whatsappEnabled,
+        notifyOnAssigned: preference.notifyOnAssigned,
+        notifyOnDelivered: preference.notifyOnDelivered,
+        notifyOnFailed: preference.notifyOnFailed,
+        notifyOnBilling: preference.notifyOnBilling,
+        createdAt: new Date(preference.createdAt),
+        updatedAt: new Date(preference.updatedAt),
+      },
+    });
+    return mapMerchantNotificationPreference(record)!;
+  }
+
+  async findMerchantNotificationPreferenceByMerchantId(
+    merchantId: string,
+  ): Promise<MerchantNotificationPreference | null> {
+    return mapMerchantNotificationPreference(
+      await (prisma as any).merchantNotificationPreference.findUnique({ where: { merchantId } }),
+    );
+  }
+
+  async createMerchantDispatchEvent(event: MerchantDispatchEvent): Promise<MerchantDispatchEvent> {
+    const record = await (prisma as any).merchantDispatchEvent.create({
+      data: {
+        id: event.id,
+        merchantDeliveryId: event.merchantDeliveryId,
+        eventType: event.eventType,
+        actorType: event.actorType,
+        actorId: event.actorId ?? null,
+        notes: event.notes ?? null,
+        metadata: event.metadata ?? undefined,
+        createdAt: new Date(event.createdAt),
+      },
+    });
+    return mapMerchantDispatchEvent(record)!;
+  }
+
+  async listMerchantDispatchEventsByDeliveryId(merchantDeliveryId: string): Promise<MerchantDispatchEvent[]> {
+    const records = await (prisma as any).merchantDispatchEvent.findMany({
+      where: { merchantDeliveryId },
+      orderBy: { createdAt: "asc" },
+    });
+    return records.map((record: any) => mapMerchantDispatchEvent(record)!);
+  }
+
+  async createPartnerCarrier(carrier: PartnerCarrier): Promise<PartnerCarrier> {
+    const record = await (prisma as any).partnerCarrier.create({
+      data: {
+        id: carrier.id,
+        name: carrier.name,
+        slug: carrier.slug,
+        type: carrier.type,
+        supportsTracking: carrier.supportsTracking,
+        supportsApi: carrier.supportsApi,
+        supportsFinalDelivery: carrier.supportsFinalDelivery,
+        supportsBranchCollection: carrier.supportsBranchCollection,
+        active: carrier.active,
+        contactConfig: (carrier.contactConfig ?? undefined) as any,
+        trackingConfig: (carrier.trackingConfig ?? undefined) as any,
+        webhookConfig: (carrier.webhookConfig ?? undefined) as any,
+        createdAt: new Date(carrier.createdAt),
+        updatedAt: new Date(carrier.updatedAt),
+      },
+    });
+    return mapPartnerCarrier(record)!;
+  }
+
+  async updatePartnerCarrier(carrier: PartnerCarrier): Promise<PartnerCarrier> {
+    const record = await (prisma as any).partnerCarrier.update({
+      where: { id: carrier.id },
+      data: {
+        name: carrier.name,
+        slug: carrier.slug,
+        type: carrier.type,
+        supportsTracking: carrier.supportsTracking,
+        supportsApi: carrier.supportsApi,
+        supportsFinalDelivery: carrier.supportsFinalDelivery,
+        supportsBranchCollection: carrier.supportsBranchCollection,
+        active: carrier.active,
+        contactConfig: (carrier.contactConfig ?? undefined) as any,
+        trackingConfig: (carrier.trackingConfig ?? undefined) as any,
+        webhookConfig: (carrier.webhookConfig ?? undefined) as any,
+        updatedAt: new Date(carrier.updatedAt),
+      },
+    });
+    return mapPartnerCarrier(record)!;
+  }
+
+  async findPartnerCarrierById(id: string): Promise<PartnerCarrier | null> {
+    return mapPartnerCarrier(await (prisma as any).partnerCarrier.findUnique({ where: { id } }));
+  }
+
+  async listPartnerCarriers(): Promise<PartnerCarrier[]> {
+    const records = await (prisma as any).partnerCarrier.findMany({ orderBy: { name: "asc" } });
+    return records.map((record: any) => mapPartnerCarrier(record)!);
+  }
+
+  async createPartnerHandoffLocation(location: PartnerHandoffLocation): Promise<PartnerHandoffLocation> {
+    const record = await (prisma as any).partnerHandoffLocation.create({
+      data: {
+        id: location.id,
+        partnerCarrierId: location.partnerCarrierId,
+        name: location.name,
+        parish: location.parish,
+        town: location.town,
+        addressLine: location.addressLine,
+        openingHours: (location.openingHours ?? undefined) as any,
+        active: location.active,
+        createdAt: new Date(location.createdAt),
+        updatedAt: new Date(location.updatedAt),
+      },
+    });
+    return mapPartnerHandoffLocation(record)!;
+  }
+
+  async updatePartnerHandoffLocation(location: PartnerHandoffLocation): Promise<PartnerHandoffLocation> {
+    const record = await (prisma as any).partnerHandoffLocation.update({
+      where: { id: location.id },
+      data: {
+        name: location.name,
+        parish: location.parish,
+        town: location.town,
+        addressLine: location.addressLine,
+        openingHours: (location.openingHours ?? undefined) as any,
+        active: location.active,
+        updatedAt: new Date(location.updatedAt),
+      },
+    });
+    return mapPartnerHandoffLocation(record)!;
+  }
+
+  async listPartnerHandoffLocationsByCarrierId(partnerCarrierId: string): Promise<PartnerHandoffLocation[]> {
+    const records = await (prisma as any).partnerHandoffLocation.findMany({
+      where: { partnerCarrierId },
+      orderBy: { name: "asc" },
+    });
+    return records.map((record: any) => mapPartnerHandoffLocation(record)!);
+  }
+
+  async findPartnerHandoffLocationById(id: string): Promise<PartnerHandoffLocation | null> {
+    return mapPartnerHandoffLocation(await (prisma as any).partnerHandoffLocation.findUnique({ where: { id } }));
+  }
+
+  async createDeliveryTransferPlan(plan: DeliveryTransferPlan): Promise<DeliveryTransferPlan> {
+    const record = await (prisma as any).deliveryTransferPlan.create({
+      data: {
+        id: plan.id,
+        merchantDeliveryId: plan.merchantDeliveryId,
+        deliveryType: plan.deliveryType,
+        originParish: plan.originParish,
+        destinationParish: plan.destinationParish,
+        destinationTown: plan.destinationTown ?? null,
+        transferPartnerId: plan.transferPartnerId,
+        originHandoffLocationId: plan.originHandoffLocationId ?? null,
+        destinationHandoffLocationId: plan.destinationHandoffLocationId ?? null,
+        finalFulfillmentMethod: plan.finalFulfillmentMethod,
+        packageValue: plan.packageValue ?? null,
+        specialHandlingNotes: plan.specialHandlingNotes ?? null,
+        customerTrackingCode: plan.customerTrackingCode,
+        overallStatus: plan.overallStatus,
+        createdAt: new Date(plan.createdAt),
+        updatedAt: new Date(plan.updatedAt),
+      },
+    });
+    return mapDeliveryTransferPlan(record)!;
+  }
+
+  async updateDeliveryTransferPlan(plan: DeliveryTransferPlan): Promise<DeliveryTransferPlan> {
+    const record = await (prisma as any).deliveryTransferPlan.update({
+      where: { id: plan.id },
+      data: {
+        destinationParish: plan.destinationParish,
+        destinationTown: plan.destinationTown ?? null,
+        transferPartnerId: plan.transferPartnerId,
+        originHandoffLocationId: plan.originHandoffLocationId ?? null,
+        destinationHandoffLocationId: plan.destinationHandoffLocationId ?? null,
+        finalFulfillmentMethod: plan.finalFulfillmentMethod,
+        packageValue: plan.packageValue ?? null,
+        specialHandlingNotes: plan.specialHandlingNotes ?? null,
+        overallStatus: plan.overallStatus,
+        updatedAt: new Date(plan.updatedAt),
+      },
+    });
+    return mapDeliveryTransferPlan(record)!;
+  }
+
+  async findDeliveryTransferPlanByMerchantDeliveryId(merchantDeliveryId: string): Promise<DeliveryTransferPlan | null> {
+    return mapDeliveryTransferPlan(
+      await (prisma as any).deliveryTransferPlan.findUnique({ where: { merchantDeliveryId } }),
+    );
+  }
+
+  async createDeliveryLeg(leg: DeliveryLeg): Promise<DeliveryLeg> {
+    const record = await (prisma as any).deliveryLeg.create({
+      data: {
+        id: leg.id,
+        merchantDeliveryId: leg.merchantDeliveryId,
+        transferPlanId: leg.transferPlanId ?? null,
+        legSequence: leg.legSequence,
+        legType: leg.legType,
+        providerType: leg.providerType,
+        providerId: leg.providerId ?? null,
+        originLabel: leg.originLabel,
+        originAddress: leg.originAddress ?? null,
+        destinationLabel: leg.destinationLabel,
+        destinationAddress: leg.destinationAddress ?? null,
+        partnerTrackingReference: leg.partnerTrackingReference ?? null,
+        status: leg.status,
+        eta: toDate(leg.eta),
+        startedAt: toDate(leg.startedAt),
+        completedAt: toDate(leg.completedAt),
+        failedAt: toDate(leg.failedAt),
+        createdAt: new Date(leg.createdAt),
+        updatedAt: new Date(leg.updatedAt),
+      },
+    });
+    return mapDeliveryLeg(record)!;
+  }
+
+  async updateDeliveryLeg(leg: DeliveryLeg): Promise<DeliveryLeg> {
+    const record = await (prisma as any).deliveryLeg.update({
+      where: { id: leg.id },
+      data: {
+        providerId: leg.providerId ?? null,
+        partnerTrackingReference: leg.partnerTrackingReference ?? null,
+        status: leg.status,
+        eta: toDate(leg.eta),
+        startedAt: toDate(leg.startedAt),
+        completedAt: toDate(leg.completedAt),
+        failedAt: toDate(leg.failedAt),
+        updatedAt: new Date(leg.updatedAt),
+      },
+    });
+    return mapDeliveryLeg(record)!;
+  }
+
+  async findDeliveryLegById(id: string): Promise<DeliveryLeg | null> {
+    return mapDeliveryLeg(await (prisma as any).deliveryLeg.findUnique({ where: { id } }));
+  }
+
+  async listDeliveryLegsByMerchantDeliveryId(merchantDeliveryId: string): Promise<DeliveryLeg[]> {
+    const records = await (prisma as any).deliveryLeg.findMany({
+      where: { merchantDeliveryId },
+      orderBy: [{ legSequence: "asc" }, { createdAt: "asc" }],
+    });
+    return records.map((record: any) => mapDeliveryLeg(record)!);
+  }
+
+  async createPartnerTrackingEvent(event: PartnerTrackingEvent): Promise<PartnerTrackingEvent> {
+    const record = await (prisma as any).partnerTrackingEvent.create({
+      data: {
+        id: event.id,
+        deliveryLegId: event.deliveryLegId,
+        partnerCarrierId: event.partnerCarrierId,
+        externalTrackingReference: event.externalTrackingReference ?? null,
+        rawStatus: event.rawStatus,
+        normalizedStatus: event.normalizedStatus,
+        notes: event.notes ?? null,
+        eventTimestamp: new Date(event.eventTimestamp),
+        createdAt: new Date(event.createdAt),
+      },
+    });
+    return mapPartnerTrackingEvent(record)!;
+  }
+
+  async listPartnerTrackingEventsByDeliveryLegId(deliveryLegId: string): Promise<PartnerTrackingEvent[]> {
+    const records = await (prisma as any).partnerTrackingEvent.findMany({
+      where: { deliveryLegId },
+      orderBy: { eventTimestamp: "asc" },
+    });
+    return records.map((record: any) => mapPartnerTrackingEvent(record)!);
+  }
+
+  async createSupportConversation(conversation: SupportConversation): Promise<SupportConversation> {
+    const record = await (prisma as any).supportConversation.create({
+      data: {
+        id: conversation.id,
+        channel: conversation.channel,
+        domain: conversation.domain,
+        status: conversation.status,
+        priority: conversation.priority,
+        subject: conversation.subject,
+        externalProvider: conversation.externalProvider ?? null,
+        externalConversationId: conversation.externalConversationId ?? null,
+        externalTicketId: conversation.externalTicketId ?? null,
+        userId: conversation.userId ?? null,
+        merchantId: conversation.merchantId ?? null,
+        slyderProfileId: conversation.slyderProfileId ?? null,
+        employeeProfileId: conversation.employeeProfileId ?? null,
+        referrerAccountId: conversation.referrerAccountId ?? null,
+        assignedTeam: conversation.assignedTeam ?? null,
+        assignedAgentId: conversation.assignedAgentId ?? null,
+        lastMessageAt: toDate(conversation.lastMessageAt),
+        resolvedAt: toDate(conversation.resolvedAt),
+        closedAt: toDate(conversation.closedAt),
+        createdAt: new Date(conversation.createdAt),
+        updatedAt: new Date(conversation.updatedAt),
+      },
+    });
+    return mapSupportConversation(record)!;
+  }
+
+  async updateSupportConversation(conversation: SupportConversation): Promise<SupportConversation> {
+    const record = await (prisma as any).supportConversation.update({
+      where: { id: conversation.id },
+      data: {
+        channel: conversation.channel,
+        domain: conversation.domain,
+        status: conversation.status,
+        priority: conversation.priority,
+        subject: conversation.subject,
+        externalProvider: conversation.externalProvider ?? null,
+        externalConversationId: conversation.externalConversationId ?? null,
+        externalTicketId: conversation.externalTicketId ?? null,
+        userId: conversation.userId ?? null,
+        merchantId: conversation.merchantId ?? null,
+        slyderProfileId: conversation.slyderProfileId ?? null,
+        employeeProfileId: conversation.employeeProfileId ?? null,
+        referrerAccountId: conversation.referrerAccountId ?? null,
+        assignedTeam: conversation.assignedTeam ?? null,
+        assignedAgentId: conversation.assignedAgentId ?? null,
+        lastMessageAt: toDate(conversation.lastMessageAt),
+        resolvedAt: toDate(conversation.resolvedAt),
+        closedAt: toDate(conversation.closedAt),
+        updatedAt: new Date(conversation.updatedAt),
+      },
+    });
+    return mapSupportConversation(record)!;
+  }
+
+  async findSupportConversationById(id: string): Promise<SupportConversation | null> {
+    return mapSupportConversation(await (prisma as any).supportConversation.findUnique({ where: { id } }));
+  }
+
+  async listSupportConversations(): Promise<SupportConversation[]> {
+    const records = await (prisma as any).supportConversation.findMany({ orderBy: { createdAt: "desc" } });
+    return records.map((record: any) => mapSupportConversation(record)!);
+  }
+
+  async createSupportMessage(message: SupportMessage): Promise<SupportMessage> {
+    const record = await (prisma as any).supportMessage.create({
+      data: {
+        id: message.id,
+        conversationId: message.conversationId,
+        senderType: message.senderType,
+        senderId: message.senderId ?? null,
+        body: message.body,
+        messageFormat: message.messageFormat,
+        externalMessageId: message.externalMessageId ?? null,
+        aiGenerated: message.aiGenerated,
+        metadata: (message.metadata ?? undefined) as any,
+        createdAt: new Date(message.createdAt),
+      },
+    });
+    return mapSupportMessage(record)!;
+  }
+
+  async listSupportMessagesByConversationId(conversationId: string): Promise<SupportMessage[]> {
+    const records = await (prisma as any).supportMessage.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "asc" },
+    });
+    return records.map((record: any) => mapSupportMessage(record)!);
+  }
+
+  async createSupportContextSnapshot(snapshot: SupportContextSnapshot): Promise<SupportContextSnapshot> {
+    const record = await (prisma as any).supportContextSnapshot.create({
+      data: {
+        id: snapshot.id,
+        conversationId: snapshot.conversationId,
+        contextType: snapshot.contextType,
+        payload: snapshot.payload as any,
+        createdAt: new Date(snapshot.createdAt),
+      },
+    });
+    return mapSupportContextSnapshot(record)!;
+  }
+
+  async listSupportContextSnapshotsByConversationId(conversationId: string): Promise<SupportContextSnapshot[]> {
+    const records = await (prisma as any).supportContextSnapshot.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map((record: any) => mapSupportContextSnapshot(record)!);
+  }
+
+  async createSupportHandoff(handoff: SupportHandoff): Promise<SupportHandoff> {
+    const record = await (prisma as any).supportHandoff.create({
+      data: {
+        id: handoff.id,
+        conversationId: handoff.conversationId,
+        reason: handoff.reason,
+        summary: handoff.summary,
+        recommendedTeam: handoff.recommendedTeam,
+        confidenceScore: handoff.confidenceScore ?? null,
+        acceptedByAgentId: handoff.acceptedByAgentId ?? null,
+        createdAt: new Date(handoff.createdAt),
+      },
+    });
+    return mapSupportHandoff(record)!;
+  }
+
+  async listSupportHandoffsByConversationId(conversationId: string): Promise<SupportHandoff[]> {
+    const records = await (prisma as any).supportHandoff.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map((record: any) => mapSupportHandoff(record)!);
+  }
+
+  async createSupportEvent(event: SupportEvent): Promise<SupportEvent> {
+    const record = await (prisma as any).supportEvent.create({
+      data: {
+        id: event.id,
+        conversationId: event.conversationId,
+        eventType: event.eventType,
+        actorType: event.actorType,
+        actorId: event.actorId ?? null,
+        notes: event.notes ?? null,
+        metadata: (event.metadata ?? undefined) as any,
+        createdAt: new Date(event.createdAt),
+      },
+    });
+    return mapSupportEvent(record)!;
+  }
+
+  async listSupportEventsByConversationId(conversationId: string): Promise<SupportEvent[]> {
+    const records = await (prisma as any).supportEvent.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "asc" },
+    });
+    return records.map((record: any) => mapSupportEvent(record)!);
+  }
+
+  async createSupportKnowledgeArticle(article: SupportKnowledgeArticle): Promise<SupportKnowledgeArticle> {
+    const record = await (prisma as any).supportKnowledgeArticle.create({
+      data: {
+        id: article.id,
+        domain: article.domain,
+        audience: article.audience,
+        title: article.title,
+        slug: article.slug,
+        summary: article.summary ?? null,
+        content: article.content,
+        tags: article.tags,
+        published: article.published,
+        createdAt: new Date(article.createdAt),
+        updatedAt: new Date(article.updatedAt),
+      },
+    });
+    return mapSupportKnowledgeArticle(record)!;
+  }
+
+  async updateSupportKnowledgeArticle(article: SupportKnowledgeArticle): Promise<SupportKnowledgeArticle> {
+    const record = await (prisma as any).supportKnowledgeArticle.update({
+      where: { id: article.id },
+      data: {
+        domain: article.domain,
+        audience: article.audience,
+        title: article.title,
+        slug: article.slug,
+        summary: article.summary ?? null,
+        content: article.content,
+        tags: article.tags,
+        published: article.published,
+        updatedAt: new Date(article.updatedAt),
+      },
+    });
+    return mapSupportKnowledgeArticle(record)!;
+  }
+
+  async findSupportKnowledgeArticleById(id: string): Promise<SupportKnowledgeArticle | null> {
+    return mapSupportKnowledgeArticle(await (prisma as any).supportKnowledgeArticle.findUnique({ where: { id } }));
+  }
+
+  async findSupportKnowledgeArticleBySlug(slug: string): Promise<SupportKnowledgeArticle | null> {
+    return mapSupportKnowledgeArticle(await (prisma as any).supportKnowledgeArticle.findUnique({ where: { slug } }));
+  }
+
+  async listSupportKnowledgeArticles(): Promise<SupportKnowledgeArticle[]> {
+    const records = await (prisma as any).supportKnowledgeArticle.findMany({ orderBy: { updatedAt: "desc" } });
+    return records.map((record: any) => mapSupportKnowledgeArticle(record)!);
   }
 }
 

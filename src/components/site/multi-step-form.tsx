@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { courierTypes, deliveryPreferences, slyderApplicationSchema, type SlyderApplicationDraft } from "@/lib/forms";
 import { FileUploadField, type FileMeta } from "@/components/site/file-upload-field";
@@ -11,6 +11,45 @@ import { TurnstileWidget } from "@/components/site/turnstile-widget";
 
 const STORAGE_KEY = "slyde-slyder-application-draft";
 const serviceZones = ["Kingston", "New Kingston", "Half Way Tree", "Portmore", "Spanish Town", "Montego Bay"];
+const parishTownOptions = [
+  "Kingston",
+  "St. Andrew",
+  "St. Catherine",
+  "Clarendon",
+  "Manchester",
+  "St. Ann",
+  "St. James",
+  "Hanover",
+  "Westmoreland",
+  "Trelawny",
+  "Portland",
+  "St. Mary",
+  "St. Thomas",
+] as const;
+const availabilityOptions = [
+  "Weekdays (daytime)",
+  "Weekdays (evenings)",
+  "Weekends",
+  "Anytime / flexible",
+] as const;
+const peakHourOptions = ["Lunch rush", "Dinner rush", "Late evenings", "Weekend peak"] as const;
+const travelComfortOptions = ["Up to 5 km", "Up to 10 km", "Up to 15 km", "Cross-town", "Cross-parish"] as const;
+const smartphoneTypeOptions = ["Android", "iPhone"] as const;
+const vehicleColorOptions = ["Black", "White", "Silver", "Grey", "Blue", "Red", "Other"] as const;
+
+type DocumentAiExtraction = {
+  personal: {
+    fullName: string;
+    dateOfBirth: string;
+    trn: string;
+    address: string;
+  };
+  readiness: {
+    smartphoneType: string;
+  };
+  confidence: number;
+  extractedSummary: string;
+};
 
 const stepTitles = [
   "Personal",
@@ -186,6 +225,112 @@ function Field({
   );
 }
 
+function SelectField({
+  label,
+  name,
+  value,
+  error,
+  onChange,
+  options,
+  placeholder = "Select",
+}: {
+  label: string;
+  name: string;
+  value: string;
+  error?: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+  placeholder?: string;
+}) {
+  return (
+    <label className="field-shell">
+      <span className="field-label">{label}</span>
+      <select name={name} value={value} onChange={(event) => onChange(event.target.value)} className="field-input">
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+    </label>
+  );
+}
+
+function SearchableSelectField({
+  label,
+  name,
+  value,
+  error,
+  onChange,
+  options,
+  placeholder = "Search and select",
+}: {
+  label: string;
+  name: string;
+  value: string;
+  error?: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+  placeholder?: string;
+}) {
+  const listId = `${name}-options`;
+
+  return (
+    <label className="field-shell">
+      <span className="field-label">{label}</span>
+      <input
+        name={name}
+        value={value}
+        list={listId}
+        onChange={(event) => onChange(event.target.value)}
+        className="field-input"
+        placeholder={placeholder}
+      />
+      <datalist id={listId}>
+        {options.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+    </label>
+  );
+}
+
+function ChoiceChips({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="field-shell">
+      <span className="field-label">{label}</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              className={`rounded-full border px-3 py-2 text-sm font-medium transition ${active ? "border-slate-950 bg-slate-950 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}
+              onClick={() => onChange(option)}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function Toggle({
   label,
   checked,
@@ -210,6 +355,12 @@ export function MultiStepForm() {
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [aiAssistInput, setAiAssistInput] = useState("");
+  const [aiAssistMessage, setAiAssistMessage] = useState<string | null>(null);
+  const [zoneSearch, setZoneSearch] = useState("");
+  const [docExtractPending, setDocExtractPending] = useState(false);
+  const [docExtractError, setDocExtractError] = useState<string | null>(null);
+  const [docExtractResult, setDocExtractResult] = useState<DocumentAiExtraction | null>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -269,6 +420,169 @@ export function MultiStepForm() {
   function prevStep() {
     setErrors({});
     setStep((current) => Math.max(current - 1, 0));
+  }
+
+  function applyAiAssist() {
+    const text = aiAssistInput.trim().toLowerCase();
+    if (!text) {
+      setAiAssistMessage("Add a short summary first so AI Assist can suggest values.");
+      return;
+    }
+
+    const emailMatch = aiAssistInput.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+    const phoneMatch = aiAssistInput.match(/(?:\+?\d[\d\s()-]{7,}\d)/);
+    const kmMatch = aiAssistInput.match(/(\d{1,2})\s*km/i);
+
+    const inferredCourierType: SlyderApplicationDraft["courier"]["courierType"] =
+      text.includes("motorcycle") || text.includes("bike")
+        ? "motorcycle"
+        : text.includes("bicycle")
+          ? "bicycle"
+          : text.includes("van")
+            ? "van"
+            : text.includes("car")
+              ? "car"
+              : text.includes("walk") || text.includes("walker")
+                ? "walker"
+                : draft.courier.courierType;
+
+    const inferredZones = serviceZones.filter((zone) => text.includes(zone.toLowerCase()));
+    const inferredDeliveryTypes = deliveryPreferences.filter((item) => text.includes(item));
+
+    let inferredAvailability = draft.preferences.availability;
+    if (text.includes("weekend")) inferredAvailability = "Weekends";
+    if (text.includes("weekday")) inferredAvailability = "Weekdays (daytime)";
+    if (text.includes("evening") || text.includes("night")) inferredAvailability = "Weekdays (evenings)";
+    if (text.includes("flexible") || text.includes("anytime")) inferredAvailability = "Anytime / flexible";
+
+    let inferredCommitment = draft.preferences.commitment;
+    if (text.includes("full time") || text.includes("full-time")) inferredCommitment = "full-time";
+    if (text.includes("part time") || text.includes("part-time")) inferredCommitment = "part-time";
+    if (text.includes("flexible")) inferredCommitment = "flexible";
+
+    let inferredPeakHours = draft.preferences.peakHours;
+    if (text.includes("lunch")) inferredPeakHours = "Lunch rush";
+    if (text.includes("dinner") || text.includes("evening")) inferredPeakHours = inferredPeakHours ? `${inferredPeakHours}, Dinner rush` : "Dinner rush";
+    if (text.includes("weekend")) inferredPeakHours = inferredPeakHours ? `${inferredPeakHours}, Weekend peak` : "Weekend peak";
+
+    let inferredTravel = draft.preferences.maxTravelComfort;
+    if (kmMatch?.[1]) {
+      const km = Number(kmMatch[1]);
+      inferredTravel = km <= 5 ? "Up to 5 km" : km <= 10 ? "Up to 10 km" : km <= 15 ? "Up to 15 km" : "Cross-town";
+    } else if (text.includes("cross parish") || text.includes("cross-parish")) {
+      inferredTravel = "Cross-parish";
+    } else if (text.includes("cross town") || text.includes("cross-town")) {
+      inferredTravel = "Cross-town";
+    }
+
+    const inferredSmartphone = text.includes("iphone") || text.includes("ios")
+      ? "iPhone"
+      : text.includes("android")
+        ? "Android"
+        : draft.readiness.smartphoneType;
+
+    setDraft((current) => ({
+      ...current,
+      personal: {
+        ...current.personal,
+        email: current.personal.email || emailMatch?.[0] || "",
+        phone: current.personal.phone || phoneMatch?.[0]?.trim() || "",
+      },
+      courier: {
+        courierType: inferredCourierType,
+      },
+      preferences: {
+        ...current.preferences,
+        zones: Array.from(new Set([...current.preferences.zones, ...inferredZones])),
+        availability: inferredAvailability,
+        commitment: inferredCommitment,
+        peakHours: inferredPeakHours,
+        maxTravelComfort: inferredTravel,
+        deliveryTypes: Array.from(new Set([...current.preferences.deliveryTypes, ...inferredDeliveryTypes])) as SlyderApplicationDraft["preferences"]["deliveryTypes"],
+      },
+      readiness: {
+        ...current.readiness,
+        smartphoneType: inferredSmartphone,
+      },
+    }));
+
+    setAiAssistMessage("AI Assist applied suggestions. Review and edit anything before continuing.");
+  }
+
+  async function runDocumentAiExtraction() {
+    const candidateFiles = [
+      ...draft.documents.nationalId,
+      ...draft.documents.driversLicense,
+      ...draft.documents.vehicleRegistration,
+    ]
+      .filter((file) => Boolean(file.storageKey || file.fileUrl))
+      .slice(0, 4)
+      .map((file) => ({
+        name: file.name,
+        type: file.type,
+        fileUrl: file.fileUrl,
+        storageKey: file.storageKey,
+      }));
+
+    if (!candidateFiles.length) {
+      setDocExtractError("Upload at least one ID or license file before running AI extraction.");
+      return;
+    }
+
+    setDocExtractPending(true);
+    setDocExtractError(null);
+
+    try {
+      const response = await fetch("/api/public/slyder-intake-ai-extract", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(turnstileToken ? { "x-turnstile-token": turnstileToken } : {}),
+        },
+        body: JSON.stringify({ files: candidateFiles }),
+      });
+
+      const json = (await response.json().catch(() => null)) as
+        | { extracted?: DocumentAiExtraction; error?: string | { formErrors?: string[] } }
+        | null;
+
+      if (!response.ok || !json?.extracted) {
+        const message =
+          typeof json?.error === "string"
+            ? json.error
+            : json?.error?.formErrors?.[0] || "AI extraction failed. Please check your uploads and try again.";
+        setDocExtractError(message);
+        setDocExtractPending(false);
+        return;
+      }
+
+      setDocExtractResult(json.extracted);
+    } catch (error) {
+      setDocExtractError(error instanceof Error ? error.message : "AI extraction failed.");
+    } finally {
+      setDocExtractPending(false);
+    }
+  }
+
+  function applyDocumentExtraction() {
+    if (!docExtractResult) return;
+
+    setDraft((current) => ({
+      ...current,
+      personal: {
+        ...current.personal,
+        fullName: docExtractResult.personal.fullName || current.personal.fullName,
+        dateOfBirth: docExtractResult.personal.dateOfBirth || current.personal.dateOfBirth,
+        trn: docExtractResult.personal.trn || current.personal.trn,
+        address: docExtractResult.personal.address || current.personal.address,
+      },
+      readiness: {
+        ...current.readiness,
+        smartphoneType: docExtractResult.readiness.smartphoneType || current.readiness.smartphoneType,
+      },
+    }));
+
+    setDocExtractError(null);
   }
 
   async function submitApplication() {
@@ -339,6 +653,12 @@ export function MultiStepForm() {
 
   const vehicleRequired = requiresVehicle(draft.courier.courierType);
   const licenseRequired = requiresDriversLicense(draft.courier.courierType);
+  const filteredZones = serviceZones.filter((zone) => zone.toLowerCase().includes(zoneSearch.trim().toLowerCase()));
+  const shouldShowAvailability = draft.preferences.zones.length > 0;
+  const shouldShowScheduleDetails = shouldShowAvailability && Boolean(draft.preferences.availability);
+  const shouldShowDeliveryTypePreferences = draft.preferences.zones.length > 0;
+  const isHelmetRelevant = ["motorcycle", "bicycle"].includes(draft.courier.courierType);
+  const shouldShowInsulatedBag = draft.preferences.deliveryTypes.some((item) => ["food", "pharmacy"].includes(item));
 
   return (
     <div className="space-y-8">
@@ -359,20 +679,42 @@ export function MultiStepForm() {
           </div>
         </div>
 
+        <div className="mb-6 rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center gap-2 text-sky-800">
+            <Sparkles className="h-4 w-4" />
+            <p className="text-sm font-semibold">AI Assist (faster intake)</p>
+          </div>
+          <p className="mt-2 text-sm leading-7 text-sky-900/80">
+            Add a quick summary like your courier type, areas, availability, phone type, and preferred delivery categories. AI Assist will suggest values to reduce manual typing.
+          </p>
+          <textarea
+            className="field-input mt-3 min-h-24 bg-white"
+            value={aiAssistInput}
+            onChange={(event) => setAiAssistInput(event.target.value)}
+            placeholder="Example: I use a motorcycle in Kingston and Portmore, available weekdays evenings and weekends, Android phone, food and errands, comfortable up to 10 km."
+          />
+          <div className="mt-3 flex items-center gap-3">
+            <Button type="button" variant="secondary" onClick={applyAiAssist}>Apply AI suggestions</Button>
+            {aiAssistMessage ? <p className="text-sm text-sky-800">{aiAssistMessage}</p> : null}
+          </div>
+        </div>
+
         {step === 0 ? (
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Full name" name="fullName" value={draft.personal.fullName} error={errors.fullName} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, fullName: value } }))} />
             <Field label="Email" name="email" type="email" value={draft.personal.email} error={errors.email} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, email: value } }))} />
             <Field label="Phone number" name="phone" value={draft.personal.phone} error={errors.phone} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, phone: value } }))} />
             <Field label="Date of birth" name="dateOfBirth" type="date" value={draft.personal.dateOfBirth} error={errors.dateOfBirth} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, dateOfBirth: value } }))} />
-            <Field label="Parish / town" name="parishTown" value={draft.personal.parishTown} error={errors.parishTown} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, parishTown: value } }))} />
+            <SearchableSelectField label="Parish / town" name="parishTown" value={draft.personal.parishTown} error={errors.parishTown} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, parishTown: value } }))} options={parishTownOptions} placeholder="Start typing parish or town" />
             <Field label="TRN" name="trn" value={draft.personal.trn} error={errors.trn} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, trn: value } }))} />
             <label className="field-shell md:col-span-2">
               <span className="field-label">Address</span>
               <textarea value={draft.personal.address} onChange={(event) => setDraft((c) => ({ ...c, personal: { ...c.personal, address: event.target.value } }))} className="field-input min-h-28" />
               {errors.address ? <p className="text-sm text-rose-600">{errors.address}</p> : null}
             </label>
-            <Field label="Emergency contact" name="emergencyContact" value={draft.personal.emergencyContact} error={errors.emergencyContact} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, emergencyContact: value } }))} />
+            {draft.personal.phone.trim() ? (
+              <Field label="Emergency contact" name="emergencyContact" value={draft.personal.emergencyContact} error={errors.emergencyContact} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, emergencyContact: value } }))} />
+            ) : null}
             <Field
               label="Referral code (optional)"
               name="referralCode"
@@ -422,7 +764,7 @@ export function MultiStepForm() {
               <Field label="Make" name="make" value={draft.vehicle.make} error={errors.make} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, make: value } }))} />
               <Field label="Model" name="model" value={draft.vehicle.model} error={errors.model} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, model: value } }))} />
               <Field label="Year" name="year" value={draft.vehicle.year} error={errors.year} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, year: value } }))} />
-              <Field label="Color" name="color" value={draft.vehicle.color} error={errors.color} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, color: value } }))} />
+              <SelectField label="Color" name="color" value={draft.vehicle.color} error={errors.color} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, color: value } }))} options={vehicleColorOptions} placeholder="Select color" />
               <Field label="Plate number" name="plateNumber" value={draft.vehicle.plateNumber} error={errors.plateNumber} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, plateNumber: value } }))} />
               <Field label="Registration expiry" name="registrationExpiry" type="date" value={draft.vehicle.registrationExpiry} error={errors.registrationExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, registrationExpiry: value } }))} />
               <Field label="Insurance expiry" name="insuranceExpiry" type="date" value={draft.vehicle.insuranceExpiry} error={errors.insuranceExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, insuranceExpiry: value } }))} />
@@ -439,20 +781,59 @@ export function MultiStepForm() {
           <div className="grid gap-4 md:grid-cols-2">
             <FileUploadField label="Government-issued ID" required value={draft.documents.nationalId} error={errors.nationalId} onChange={(files) => updateDocument("nationalId", files)} />
             <FileUploadField label="Profile photo" required value={draft.documents.profilePhoto} error={errors.profilePhoto} onChange={(files) => updateDocument("profilePhoto", files)} />
-            <FileUploadField label="Driver's license" required={licenseRequired} value={draft.documents.driversLicense} error={errors.driversLicense} onChange={(files) => updateDocument("driversLicense", files)} />
-            <FileUploadField label="Vehicle registration" required={vehicleRequired} value={draft.documents.vehicleRegistration} error={errors.vehicleRegistration} onChange={(files) => updateDocument("vehicleRegistration", files)} />
-            <FileUploadField label="Insurance" required={vehicleRequired} value={draft.documents.insurance} error={errors.insurance} onChange={(files) => updateDocument("insurance", files)} />
-            <FileUploadField label="Fitness" required={vehicleRequired} value={draft.documents.fitness} error={errors.fitness} onChange={(files) => updateDocument("fitness", files)} />
+            {licenseRequired ? <FileUploadField label="Driver's license" required value={draft.documents.driversLicense} error={errors.driversLicense} onChange={(files) => updateDocument("driversLicense", files)} /> : null}
+            {vehicleRequired ? <FileUploadField label="Vehicle registration" required value={draft.documents.vehicleRegistration} error={errors.vehicleRegistration} onChange={(files) => updateDocument("vehicleRegistration", files)} /> : null}
+            {vehicleRequired ? <FileUploadField label="Insurance" required value={draft.documents.insurance} error={errors.insurance} onChange={(files) => updateDocument("insurance", files)} /> : null}
+            {vehicleRequired ? <FileUploadField label="Fitness" required value={draft.documents.fitness} error={errors.fitness} onChange={(files) => updateDocument("fitness", files)} /> : null}
             <div className="md:col-span-2">
               <FileUploadField label="Other supporting documents" value={draft.documents.supporting} error={errors.supporting} onChange={(files) => updateDocument("supporting", files)} />
+            </div>
+            <div className="md:col-span-2 rounded-[1.5rem] border border-slate-200 bg-surface-1 p-4 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">AI document extraction</p>
+                  <p className="mt-1 text-sm leading-7 text-slate-600">
+                    Pull candidate values from uploaded ID and license files with OCR + NLP, then confirm before applying.
+                  </p>
+                </div>
+                <Button type="button" variant="secondary" onClick={() => void runDocumentAiExtraction()} disabled={docExtractPending}>
+                  {docExtractPending ? "Extracting..." : "Extract from uploads"}
+                </Button>
+              </div>
+              {docExtractError ? <p className="mt-3 text-sm text-rose-600">{docExtractError}</p> : null}
+              {docExtractResult ? (
+                <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 p-4">
+                  <p className="text-sm font-semibold text-sky-900">Suggested values ({Math.round(docExtractResult.confidence * 100)}% confidence)</p>
+                  <div className="mt-3 grid gap-2 text-sm text-sky-900 md:grid-cols-2">
+                    <p><strong>Full name:</strong> {docExtractResult.personal.fullName || "Not detected"}</p>
+                    <p><strong>Date of birth:</strong> {docExtractResult.personal.dateOfBirth || "Not detected"}</p>
+                    <p><strong>TRN:</strong> {docExtractResult.personal.trn || "Not detected"}</p>
+                    <p><strong>Address:</strong> {docExtractResult.personal.address || "Not detected"}</p>
+                  </div>
+                  {docExtractResult.extractedSummary ? <p className="mt-3 text-sm leading-7 text-sky-900">{docExtractResult.extractedSummary}</p> : null}
+                  <div className="mt-3 flex items-center gap-3">
+                    <Button type="button" onClick={applyDocumentExtraction}>Apply extracted values</Button>
+                    <p className="text-xs text-sky-800">Review applied fields in Personal and Readiness before submitting.</p>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}
 
         {step === 4 ? (
           <div className="grid gap-5">
+            <label className="field-shell">
+              <span className="field-label">Search zones</span>
+              <input
+                className="field-input"
+                value={zoneSearch}
+                onChange={(event) => setZoneSearch(event.target.value)}
+                placeholder="Type Kingston, Portmore, Montego Bay..."
+              />
+            </label>
             <div className="grid gap-3 md:grid-cols-3">
-              {serviceZones.map((zone) => (
+              {filteredZones.map((zone) => (
                 <label key={zone} className="flex items-center gap-3 rounded-3xl border border-border bg-surface-1 px-4 py-4">
                   <input
                     type="checkbox"
@@ -474,43 +855,51 @@ export function MultiStepForm() {
                 </label>
               ))}
             </div>
+            {!filteredZones.length ? <p className="text-sm text-slate-500">No zones match your search.</p> : null}
             {errors.zones ? <p className="text-sm text-rose-600">{errors.zones}</p> : null}
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Availability" name="availability" value={draft.preferences.availability} error={errors.availability} onChange={(value) => setDraft((c) => ({ ...c, preferences: { ...c.preferences, availability: value } }))} placeholder="Weekdays, weekends, evenings..." />
-              <label className="field-shell">
-                <span className="field-label">Commitment</span>
-                <select className="field-input" value={draft.preferences.commitment} onChange={(event) => setDraft((c) => ({ ...c, preferences: { ...c.preferences, commitment: event.target.value as SlyderApplicationDraft["preferences"]["commitment"] } }))}>
-                  <option value="part-time">Part-time</option>
-                  <option value="full-time">Full-time</option>
-                  <option value="flexible">Flexible</option>
-                </select>
-              </label>
-              <Field label="Peak-hour availability" name="peakHours" value={draft.preferences.peakHours} error={errors.peakHours} onChange={(value) => setDraft((c) => ({ ...c, preferences: { ...c.preferences, peakHours: value } }))} />
-              <Field label="Max travel comfort" name="maxTravelComfort" value={draft.preferences.maxTravelComfort} error={errors.maxTravelComfort} onChange={(value) => setDraft((c) => ({ ...c, preferences: { ...c.preferences, maxTravelComfort: value } }))} placeholder="Example: 12 km or cross-parish only by van" />
-            </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              {deliveryPreferences.map((item) => (
-                <label key={item} className="flex items-center gap-3 rounded-3xl border border-border bg-surface-1 px-4 py-4">
-                  <input
-                    type="checkbox"
-                    className="field-checkbox"
-                    checked={draft.preferences.deliveryTypes.includes(item)}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        preferences: {
-                          ...current.preferences,
-                          deliveryTypes: event.target.checked
-                            ? [...current.preferences.deliveryTypes, item]
-                            : current.preferences.deliveryTypes.filter((type) => type !== item),
-                        },
-                      }))
-                    }
-                  />
-                  <span className="text-sm capitalize text-slate-700">{item}</span>
+            {shouldShowAvailability ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <SelectField label="Availability" name="availability" value={draft.preferences.availability} error={errors.availability} onChange={(value) => setDraft((c) => ({ ...c, preferences: { ...c.preferences, availability: value } }))} options={availabilityOptions} placeholder="Select availability" />
+                <label className="field-shell">
+                  <span className="field-label">Commitment</span>
+                  <select className="field-input" value={draft.preferences.commitment} onChange={(event) => setDraft((c) => ({ ...c, preferences: { ...c.preferences, commitment: event.target.value as SlyderApplicationDraft["preferences"]["commitment"] } }))}>
+                    <option value="part-time">Part-time</option>
+                    <option value="full-time">Full-time</option>
+                    <option value="flexible">Flexible</option>
+                  </select>
                 </label>
-              ))}
-            </div>
+                {shouldShowScheduleDetails ? <ChoiceChips label="Peak-hour availability" value={draft.preferences.peakHours} options={peakHourOptions} onChange={(value) => setDraft((c) => ({ ...c, preferences: { ...c.preferences, peakHours: value } }))} /> : null}
+                {shouldShowScheduleDetails ? <SelectField label="Max travel comfort" name="maxTravelComfort" value={draft.preferences.maxTravelComfort} error={errors.maxTravelComfort} onChange={(value) => setDraft((c) => ({ ...c, preferences: { ...c.preferences, maxTravelComfort: value } }))} options={travelComfortOptions} placeholder="Select travel comfort" /> : null}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Select at least one preferred zone to continue availability and schedule preferences.</p>
+            )}
+            {errors.peakHours ? <p className="text-sm text-rose-600">{errors.peakHours}</p> : null}
+            {shouldShowDeliveryTypePreferences ? (
+              <div className="grid gap-3 md:grid-cols-3">
+                {deliveryPreferences.map((item) => (
+                  <label key={item} className="flex items-center gap-3 rounded-3xl border border-border bg-surface-1 px-4 py-4">
+                    <input
+                      type="checkbox"
+                      className="field-checkbox"
+                      checked={draft.preferences.deliveryTypes.includes(item)}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          preferences: {
+                            ...current.preferences,
+                            deliveryTypes: event.target.checked
+                              ? [...current.preferences.deliveryTypes, item]
+                              : current.preferences.deliveryTypes.filter((type) => type !== item),
+                          },
+                        }))
+                      }
+                    />
+                    <span className="text-sm capitalize text-slate-700">{item}</span>
+                  </label>
+                ))}
+              </div>
+            ) : null}
             {errors.deliveryTypes ? <p className="text-sm text-rose-600">{errors.deliveryTypes}</p> : null}
           </div>
         ) : null}
@@ -518,15 +907,16 @@ export function MultiStepForm() {
         {step === 5 ? (
           <div className="grid gap-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Smartphone type" name="smartphoneType" value={draft.readiness.smartphoneType} error={errors.smartphoneType} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, smartphoneType: value } }))} placeholder="Android / iPhone" />
+              <ChoiceChips label="Smartphone type" value={draft.readiness.smartphoneType} options={smartphoneTypeOptions} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, smartphoneType: value } }))} />
               <Field label="WhatsApp number" name="whatsappNumber" value={draft.readiness.whatsappNumber} error={errors.whatsappNumber} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, whatsappNumber: value } }))} />
             </div>
+            {errors.smartphoneType ? <p className="text-sm text-rose-600">{errors.smartphoneType}</p> : null}
             <div className="grid gap-3 md:grid-cols-2">
               <Toggle label="GPS and location services can be enabled while working." checked={draft.readiness.gpsEnabled} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, gpsEnabled: value } }))} />
               <Toggle label="Reliable mobile data or internet access is available." checked={draft.readiness.dataAccess} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, dataAccess: value } }))} />
               <Toggle label="I have the required safety gear for my courier type." checked={draft.readiness.safetyGear} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, safetyGear: value } }))} />
-              <Toggle label="I have an insulated bag or can obtain one." checked={draft.readiness.insulatedBag} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, insulatedBag: value } }))} />
-              <Toggle label="I have a helmet if my courier type requires one." checked={draft.readiness.helmetReady} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, helmetReady: value } }))} />
+              {shouldShowInsulatedBag ? <Toggle label="I have an insulated bag or can obtain one." checked={draft.readiness.insulatedBag} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, insulatedBag: value } }))} /> : null}
+              {isHelmetRelevant ? <Toggle label="I have a helmet if my courier type requires one." checked={draft.readiness.helmetReady} onChange={(value) => setDraft((c) => ({ ...c, readiness: { ...c.readiness, helmetReady: value } }))} /> : null}
             </div>
             {errors.gpsEnabled ? <p className="text-sm text-rose-600">{errors.gpsEnabled}</p> : null}
             {errors.dataAccess ? <p className="text-sm text-rose-600">{errors.dataAccess}</p> : null}

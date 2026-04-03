@@ -20,6 +20,7 @@ export const navItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/become-a-slyder", label: "Become a Slyder" },
+  { href: "/refer-a-slyder", label: "Refer a Slyder" },
   { href: "/for-businesses", label: "For Businesses" },
   { href: "/api-integrations", label: "API / Integrations" },
   { href: "/safety", label: "Safety" },

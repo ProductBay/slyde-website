@@ -25,6 +25,7 @@ const groups = [
     links: [
       ["/become-a-slyder", "Become a Slyder"],
       ["/become-a-slyder/apply", "Apply"],
+      ["/refer-a-slyder", "Refer a Slyder"],
       ["/slyder-payouts", "Slyder Payouts"],
       ["/grow-your-area", "Area Builder Rewards"],
       ["/faq", "Applicant FAQ"],

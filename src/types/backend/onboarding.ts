@@ -87,6 +87,7 @@ export const notificationActorTypes = [
   "employee_user",
   "merchant_interest",
   "merchant_user",
+  "public_user",
   "admin_user",
   "system_internal",
 ] as const;
@@ -103,6 +104,25 @@ export const notificationTriggerStatuses = [
   "processed",
   "partially_processed",
   "failed",
+] as const;
+
+export const supportChannels = ["web_chat", "email", "whatsapp", "phone", "internal_note"] as const;
+export const supportDomains = ["public", "merchant", "slyder", "employee", "referrer", "admin"] as const;
+export const supportConversationStatuses = ["open", "waiting_on_user", "waiting_on_agent", "resolved", "closed"] as const;
+export const supportPriorities = ["low", "normal", "high", "urgent"] as const;
+export const supportSenderTypes = ["customer", "agent", "ai", "system"] as const;
+export const supportEventTypes = [
+  "conversation_created",
+  "message_received",
+  "message_sent",
+  "ai_response_generated",
+  "ai_handoff_requested",
+  "agent_assigned",
+  "status_changed",
+  "context_attached",
+  "webhook_received",
+  "resolved",
+  "closed",
 ] as const;
 
 export const launchStatuses = [
@@ -189,6 +209,12 @@ export type NotificationStatus = (typeof notificationStatuses)[number];
 export type NotificationActorType = (typeof notificationActorTypes)[number];
 export type NotificationChannel = (typeof notificationChannels)[number];
 export type NotificationTriggerStatus = (typeof notificationTriggerStatuses)[number];
+export type SupportChannel = (typeof supportChannels)[number];
+export type SupportDomain = (typeof supportDomains)[number];
+export type SupportConversationStatus = (typeof supportConversationStatuses)[number];
+export type SupportPriority = (typeof supportPriorities)[number];
+export type SupportSenderType = (typeof supportSenderTypes)[number];
+export type SupportEventType = (typeof supportEventTypes)[number];
 export type LaunchStatus = (typeof launchStatuses)[number];
 export type LegalDocumentType = (typeof legalDocumentTypes)[number];
 export type LegalDocumentCategoryKey = (typeof legalDocumentCategories)[number];
@@ -201,6 +227,11 @@ export type UserRoleCode =
   | "platform_admin"
   | "operations_admin"
   | "slyder"
+  | "merchant_owner"
+  | "merchant_manager"
+  | "merchant_dispatcher"
+  | "merchant_staff"
+  | "merchant_viewer"
   | "employee_staff"
   | "employee_logistics"
   | "employee_supervisor"
@@ -215,7 +246,7 @@ export type StoredUser = {
   fullName: string;
   passwordHash?: string;
   roles: UserRoleCode[];
-  userType: "platform" | "slyder" | "employee";
+  userType: "platform" | "slyder" | "merchant" | "employee";
   accountStatus: AccountStatus;
   isEnabled: boolean;
   activationIssuedAt?: string;
@@ -230,6 +261,214 @@ export type ReferralAttribution = {
   referralSource?: "code" | "invite_link" | "none";
   capturedAt?: string;
   landingPage?: string;
+};
+
+export const publicSlyderReferralStatuses = [
+  "submitted",
+  "duplicate_flagged",
+  "contact_pending",
+  "application_started",
+  "application_completed",
+  "approved",
+  "activated",
+  "ready",
+  "first_delivery_completed",
+  "reward_earned",
+  "reward_claimed",
+  "reward_gifted",
+  "reward_redeemed",
+  "expired",
+  "disqualified",
+] as const;
+
+export const referralRewardStatuses = [
+  "earned",
+  "claim_pending",
+  "claimed_by_referrer",
+  "gift_pending",
+  "gifted",
+  "redeemed",
+  "expired",
+  "cancelled",
+] as const;
+
+export const referralRewardTypes = [
+  "DELIVERY_CREDIT_FIXED",
+  "DELIVERY_PERCENT_DISCOUNT",
+] as const;
+
+export const referrerChallengeChannels = [
+  "email",
+  "sms",
+] as const;
+
+export const referrerInviteEmailStatuses = [
+  "pending",
+  "queued",
+  "sent",
+  "delivered",
+  "failed",
+  "skipped",
+] as const;
+
+export type PublicSlyderReferralStatus = (typeof publicSlyderReferralStatuses)[number];
+export type ReferralRewardStatus = (typeof referralRewardStatuses)[number];
+export type ReferralRewardType = (typeof referralRewardTypes)[number];
+export type ReferrerChallengeChannel = (typeof referrerChallengeChannels)[number];
+export type ReferrerInviteEmailStatus = (typeof referrerInviteEmailStatuses)[number];
+
+export type ReferrerAccount = {
+  id: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  emailVerifiedAt?: string;
+  phoneVerifiedAt?: string;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReferrerLoginChallenge = {
+  id: string;
+  referrerAccountId?: string;
+  channel: ReferrerChallengeChannel;
+  email?: string;
+  phone?: string;
+  codeHash: string;
+  expiresAt: string;
+  consumedAt?: string;
+  createdAt: string;
+};
+
+export type ReferrerSession = {
+  id: string;
+  referrerAccountId: string;
+  createdAt: string;
+  expiresAt: string;
+};
+
+export type ReferralEvent = {
+  id: string;
+  referralId: string;
+  eventType: string;
+  title: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type PublicSlyderReferral = {
+  id: string;
+  referralCode: string;
+  referrerName: string;
+  referrerPhone: string;
+  referrerEmail?: string;
+  referrerAccountId?: string;
+  referredName: string;
+  referredEmail?: string;
+  referredPhone: string;
+  referredParish?: string;
+  referredTown?: string;
+  referredVehicleType?: string;
+  notes?: string;
+  status: PublicSlyderReferralStatus;
+  statusReason?: string;
+  inviteEmailSentAt?: string;
+  inviteEmailStatus?: ReferrerInviteEmailStatus;
+  applicationStartedAt?: string;
+  applicationCompletedAt?: string;
+  approvedAt?: string;
+  activatedAt?: string;
+  readyAt?: string;
+  firstDeliveryCompletedAt?: string;
+  rewardEarnedAt?: string;
+  rewardClaimedAt?: string;
+  rewardGiftedAt?: string;
+  rewardRedeemedAt?: string;
+  linkedSlyderApplicationId?: string;
+  linkedSlyderProfileId?: string;
+  rewardId?: string;
+  duplicateOfReferralId?: string;
+  submittedIpHash?: string;
+  submittedUserAgent?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReferralReward = {
+  id: string;
+  publicReferralId: string;
+  rewardType: ReferralRewardType;
+  rewardValue: number;
+  currency: string;
+  status: ReferralRewardStatus;
+  isTransferable: boolean;
+  transferCount: number;
+  transferredAt?: string;
+  ownerCustomerAccountId?: string;
+  ownerPhone?: string;
+  giftedToCustomerAccountId?: string;
+  giftedToPhone?: string;
+  giftedByReferrerPhone?: string;
+  minOrderValue?: number;
+  expiresAt: string;
+  redeemedAt?: string;
+  redemptionOrderId?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReferralRewardAudit = {
+  id: string;
+  rewardId: string;
+  action: string;
+  actorType: string;
+  actorId?: string;
+  notes?: string;
+  createdAt: string;
+};
+
+export type PublicReferralSubmissionInput = {
+  referrerName: string;
+  referrerPhone: string;
+  referrerEmail?: string;
+  referredName: string;
+  referredEmail?: string;
+  referredPhone: string;
+  referredParish?: string;
+  referredTown?: string;
+  referredVehicleType?: string;
+  notes?: string;
+};
+
+export type RewardClaimInput = {
+  referralId?: string;
+  referralCode?: string;
+  customerAccountId: string;
+  phone: string;
+};
+
+export type RewardGiftInput = {
+  referralId?: string;
+  referralCode?: string;
+  recipientCustomerAccountId: string;
+  recipientPhone: string;
+};
+
+export type AdminReferralFilters = {
+  status?: PublicSlyderReferralStatus;
+  parish?: string;
+  rewardStatus?: ReferralRewardStatus;
+  duplicateFlagged?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+};
+
+export type AdminReferralStatusUpdateInput = {
+  status: PublicSlyderReferralStatus;
+  reason?: string;
 };
 
 export type SlyderApplication = {
@@ -476,6 +715,87 @@ export type NotificationTriggerEvent = {
   updatedAt: string;
 };
 
+export type SupportConversation = {
+  id: string;
+  channel: SupportChannel;
+  domain: SupportDomain;
+  status: SupportConversationStatus;
+  priority: SupportPriority;
+  subject: string;
+  externalProvider?: string;
+  externalConversationId?: string;
+  externalTicketId?: string;
+  userId?: string;
+  merchantId?: string;
+  slyderProfileId?: string;
+  employeeProfileId?: string;
+  referrerAccountId?: string;
+  assignedTeam?: string;
+  assignedAgentId?: string;
+  lastMessageAt?: string;
+  resolvedAt?: string;
+  closedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SupportMessage = {
+  id: string;
+  conversationId: string;
+  senderType: SupportSenderType;
+  senderId?: string;
+  body: string;
+  messageFormat: string;
+  externalMessageId?: string;
+  aiGenerated: boolean;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type SupportContextSnapshot = {
+  id: string;
+  conversationId: string;
+  contextType: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type SupportHandoff = {
+  id: string;
+  conversationId: string;
+  reason: string;
+  summary: string;
+  recommendedTeam: string;
+  confidenceScore?: number;
+  acceptedByAgentId?: string;
+  createdAt: string;
+};
+
+export type SupportEvent = {
+  id: string;
+  conversationId: string;
+  eventType: SupportEventType | string;
+  actorType: string;
+  actorId?: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type SupportKnowledgeArticle = {
+  id: string;
+  domain: SupportDomain;
+  audience: string[];
+  title: string;
+  slug: string;
+  summary?: string;
+  content: string;
+  tags: string[];
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CoverageZone = {
   id: string;
   name: string;
@@ -560,6 +880,628 @@ export type MerchantInterestRecord = {
   linkedMerchantUserId?: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type MerchantProductIntent = "grabquik" | "slyde_delivery" | "both";
+
+export type MerchantLeadStatus = "submitted" | "reviewing" | "qualified" | "rejected";
+
+export type MerchantOnboardingTrack = MerchantProductIntent;
+
+export type MerchantApplicationApprovalStatus = "pending" | "approved" | "rejected";
+
+export type MerchantApplicationActivationStatus = "pending" | "activated" | "live" | "paused";
+
+export type MerchantBusinessLicenseStatus = "missing" | "submitted" | "verified" | "overdue";
+
+export type MerchantDocumentStatus = "not_started" | "pending" | "submitted" | "approved" | "rejected";
+
+export type MerchantLegalStatus = "pending" | "accepted" | "rejected";
+
+export type MerchantDispatchMode = "manual_dashboard" | "whatsapp_assisted" | "api_later";
+
+export type MerchantIntegrationReadiness = "not_started" | "in_progress" | "ready";
+
+export type MerchantTeamRole =
+  | "merchant_owner"
+  | "merchant_manager"
+  | "merchant_dispatcher"
+  | "merchant_staff"
+  | "merchant_viewer";
+
+export type MerchantTeamMemberStatus = "invited" | "active" | "disabled";
+
+export type MerchantDeliveryStatus =
+  | "draft"
+  | "submitted"
+  | "quoted"
+  | "accepted"
+  | "rider_assigned"
+  | "picked_up"
+  | "in_transit"
+  | "arrived"
+  | "delivered"
+  | "failed"
+  | "cancelled";
+
+export type MerchantPaymentType = "prepaid" | "cash_on_delivery";
+
+export type MerchantAddressType = "pickup" | "customer" | "branch";
+
+export type MerchantRequestedTiming = "asap" | "scheduled";
+
+export type DeliveryType = "in_parish" | "out_of_parish";
+
+export type FinalFulfillmentMethod =
+  | "customer_collection"
+  | "partner_final_delivery"
+  | "slyde_final_mile";
+
+export type DeliveryLegType = "pickup" | "partner_transfer" | "final_mile" | "collection_ready";
+
+export type DeliveryLegProviderType = "slyde" | "partner";
+
+export type PartnerCarrierType = "branch_network" | "courier" | "express";
+
+export type OutOfParishOverallStatus =
+  | "submitted"
+  | "pickup_scheduled"
+  | "picked_up_by_slyde"
+  | "dropped_at_partner"
+  | "accepted_by_partner"
+  | "in_interparish_transit"
+  | "arrived_at_destination_hub"
+  | "ready_for_collection"
+  | "out_for_final_delivery"
+  | "delivered"
+  | "failed"
+  | "cancelled";
+
+export type DeliveryLegStatus =
+  | "pending"
+  | "scheduled"
+  | "in_progress"
+  | "handed_off"
+  | "accepted"
+  | "in_transit"
+  | "arrived"
+  | "ready_for_collection"
+  | "out_for_delivery"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+export type MerchantLead = {
+  id: string;
+  businessName: string;
+  contactName: string;
+  phone: string;
+  email: string;
+  parish: string;
+  town: string;
+  category: string;
+  instagramHandle?: string;
+  website?: string;
+  orderChannels: string[];
+  averageDailyOrders?: string;
+  currentDeliveryMethod?: string;
+  preferredStartTimeline?: string;
+  productIntent: MerchantProductIntent;
+  status: MerchantLeadStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MerchantApplication = {
+  id: string;
+  merchantLeadId: string;
+  onboardingTrack: MerchantOnboardingTrack;
+  storeName?: string;
+  logoUrl?: string;
+  heroBannerUrl?: string;
+  heroBannerPosition?: "left" | "center" | "right";
+  businessDescription?: string;
+  category?: string;
+  pickupAddress?: string;
+  serviceAreas: string[];
+  fulfillmentMode?: string;
+  catalogReady?: boolean;
+  payoutDetails?: Record<string, unknown>;
+  operatingHours?: Record<string, unknown>;
+  documentStatus: MerchantDocumentStatus;
+  legalStatus: MerchantLegalStatus;
+  approvalStatus: MerchantApplicationApprovalStatus;
+  activationStatus: MerchantApplicationActivationStatus;
+  businessLicenseStatus: MerchantBusinessLicenseStatus;
+  businessLicenseNumber?: string;
+  businessLicenseSubmittedAt?: string;
+  businessLicenseVerifiedAt?: string;
+  businessLicenseGraceEndsAt?: string;
+  businessLicenseRequiredAfterDeliveries: number;
+  businessLicenseDisabledAt?: string;
+  assignedAdminId?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MerchantIntegrationProfile = {
+  id: string;
+  merchantApplicationId: string;
+  dispatchMode: MerchantDispatchMode;
+  acceptsCOD: boolean;
+  averageBasketSize?: string;
+  packageTypes: string[];
+  operatingHours?: Record<string, unknown>;
+  orderSources: string[];
+  pickupLocations: string[];
+  deliveryRadius?: string;
+  sameDaySupported: boolean;
+  scheduledSupported: boolean;
+  integrationReadiness: MerchantIntegrationReadiness;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MerchantOnboardingEvent = {
+  id: string;
+  merchantApplicationId: string;
+  eventType: string;
+  actorType: string;
+  actorId?: string;
+  notes?: string;
+  createdAt: string;
+};
+
+export type MerchantLeadFilters = {
+  status?: MerchantLeadStatus;
+  parish?: string;
+  productIntent?: MerchantProductIntent;
+  search?: string;
+};
+
+export type MerchantApplicationFilters = {
+  approvalStatus?: MerchantApplicationApprovalStatus;
+  activationStatus?: MerchantApplicationActivationStatus;
+  onboardingTrack?: MerchantOnboardingTrack;
+  parish?: string;
+  assignedAdminId?: string;
+  search?: string;
+};
+
+export type MerchantOrder = {
+  id: string;
+  merchantId: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: string;
+  pickupLocationId?: string;
+  pickupAddressSnapshot?: string;
+  itemDescription: string;
+  packageType: string;
+  paymentType: MerchantPaymentType;
+  codAmount?: number;
+  internalNote?: string;
+  riderNote?: string;
+  requestedTiming: MerchantRequestedTiming;
+  scheduledFor?: string;
+  status: MerchantDeliveryStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MerchantDelivery = {
+  id: string;
+  merchantOrderId: string;
+  merchantId: string;
+  dispatchMode: MerchantDispatchMode;
+  deliveryType?: DeliveryType;
+  overallOutOfParishStatus?: OutOfParishOverallStatus;
+  riderId?: string;
+  quoteAmount?: number;
+  localPickupFee?: number;
+  partnerTransferFee?: number;
+  finalMileFee?: number;
+  totalFee?: number;
+  assignedAt?: string;
+  pickedUpAt?: string;
+  deliveredAt?: string;
+  failedAt?: string;
+  cancelledAt?: string;
+  status: MerchantDeliveryStatus;
+  proofOfDeliveryUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MerchantAddress = {
+  id: string;
+  merchantId: string;
+  type: MerchantAddressType;
+  label: string;
+  contactName: string;
+  contactPhone: string;
+  addressLine: string;
+  parish: string;
+  town: string;
+  notes?: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MerchantTeamMember = {
+  id: string;
+  merchantId: string;
+  userId: string;
+  role: MerchantTeamRole;
+  status: MerchantTeamMemberStatus;
+  invitedAt?: string;
+  joinedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MerchantNotificationPreference = {
+  id: string;
+  merchantId: string;
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+  whatsappEnabled: boolean;
+  notifyOnAssigned: boolean;
+  notifyOnDelivered: boolean;
+  notifyOnFailed: boolean;
+  notifyOnBilling: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MerchantDispatchEvent = {
+  id: string;
+  merchantDeliveryId: string;
+  eventType: string;
+  actorType: string;
+  actorId?: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type PartnerCarrier = {
+  id: string;
+  name: string;
+  slug: string;
+  type: PartnerCarrierType;
+  supportsTracking: boolean;
+  supportsApi: boolean;
+  supportsFinalDelivery: boolean;
+  supportsBranchCollection: boolean;
+  active: boolean;
+  contactConfig?: Record<string, unknown>;
+  trackingConfig?: Record<string, unknown>;
+  webhookConfig?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PartnerHandoffLocation = {
+  id: string;
+  partnerCarrierId: string;
+  name: string;
+  parish: string;
+  town: string;
+  addressLine: string;
+  openingHours?: Record<string, unknown>;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DeliveryTransferPlan = {
+  id: string;
+  merchantDeliveryId: string;
+  deliveryType: DeliveryType;
+  originParish: string;
+  destinationParish: string;
+  destinationTown?: string;
+  transferPartnerId: string;
+  originHandoffLocationId?: string;
+  destinationHandoffLocationId?: string;
+  finalFulfillmentMethod: FinalFulfillmentMethod;
+  packageValue?: number;
+  specialHandlingNotes?: string;
+  customerTrackingCode: string;
+  overallStatus: OutOfParishOverallStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DeliveryLeg = {
+  id: string;
+  merchantDeliveryId: string;
+  transferPlanId?: string;
+  legSequence: number;
+  legType: DeliveryLegType;
+  providerType: DeliveryLegProviderType;
+  providerId?: string;
+  originLabel: string;
+  originAddress?: string;
+  destinationLabel: string;
+  destinationAddress?: string;
+  partnerTrackingReference?: string;
+  status: DeliveryLegStatus;
+  eta?: string;
+  startedAt?: string;
+  completedAt?: string;
+  failedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PartnerTrackingEvent = {
+  id: string;
+  deliveryLegId: string;
+  partnerCarrierId: string;
+  externalTrackingReference?: string;
+  rawStatus: string;
+  normalizedStatus: DeliveryLegStatus | OutOfParishOverallStatus;
+  notes?: string;
+  eventTimestamp: string;
+  createdAt: string;
+};
+
+export type MerchantQuickDispatchInput = {
+  deliveryType?: DeliveryType;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: string;
+  pickupLocationId?: string;
+  pickupAddress?: string;
+  itemDescription: string;
+  packageType: string;
+  paymentType: MerchantPaymentType;
+  codAmount?: number;
+  deliveryTiming: MerchantRequestedTiming;
+  scheduledFor?: string;
+  destinationParish?: string;
+  destinationTown?: string;
+  transferPartnerId?: string;
+  partnerHandoffLocationId?: string;
+  finalFulfillmentMethod?: FinalFulfillmentMethod;
+  packageValue?: number;
+  specialHandlingNotes?: string;
+  riderNote?: string;
+  internalNote?: string;
+};
+
+export type MerchantStructuredDispatchInput = {
+  orderNumber?: string;
+  savedCustomerAddressId?: string;
+  savedPickupLocationId?: string;
+  packageCategory: string;
+  declaredValue?: number;
+  codAmount?: number;
+  internalNote?: string;
+  riderNote?: string;
+  deliveryTiming: MerchantRequestedTiming;
+  scheduledFor?: string;
+};
+
+export type MerchantOrderListFilters = {
+  status?: MerchantDeliveryStatus;
+  paymentType?: MerchantPaymentType;
+  pickupLocationId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+};
+
+export type MerchantDeliveriesListFilters = {
+  range?: "today" | "last_7_days" | "last_30_days";
+  status?: MerchantDeliveryStatus;
+  pickupLocationId?: string;
+  paymentType?: MerchantPaymentType;
+  search?: string;
+};
+
+export type MerchantAddressUpsertInput = {
+  type: MerchantAddressType;
+  label: string;
+  contactName: string;
+  contactPhone: string;
+  addressLine: string;
+  parish: string;
+  town: string;
+  notes?: string;
+  isDefault?: boolean;
+};
+
+export type MerchantSettingsUpdateInput = {
+  businessName?: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  parish?: string;
+  town?: string;
+  category?: string;
+  instagramHandle?: string;
+  website?: string;
+  orderChannels?: string[];
+  averageDailyOrders?: string;
+  currentDeliveryMethod?: string;
+  preferredStartTimeline?: string;
+  storeName?: string;
+  logoUrl?: string;
+  heroBannerUrl?: string;
+  heroBannerPosition?: "left" | "center" | "right";
+  businessDescription?: string;
+  pickupAddress?: string;
+  serviceAreas?: string[];
+  fulfillmentMode?: string;
+  operatingHours?: {
+    days?: string[];
+    openTime?: string;
+    closeTime?: string;
+    summary?: string;
+  };
+  businessLicenseNumber?: string;
+  defaultPickupLocationId?: string;
+  dispatchMode?: MerchantDispatchMode;
+  acceptsCOD?: boolean;
+  averageBasketSize?: string;
+  packageTypes?: string[];
+  orderSources?: string[];
+  pickupLocations?: string[];
+  deliveryRadius?: string;
+  sameDaySupported?: boolean;
+  scheduledSupported?: boolean;
+  defaultDeliveryInstruction?: string;
+  emailEnabled?: boolean;
+  smsEnabled?: boolean;
+  whatsappEnabled?: boolean;
+  notifyOnAssigned?: boolean;
+  notifyOnDelivered?: boolean;
+  notifyOnFailed?: boolean;
+  notifyOnBilling?: boolean;
+};
+
+export type MerchantSupportRequestInput = {
+  topic: string;
+  priority: "normal" | "urgent";
+  message: string;
+  relatedOrderId?: string;
+  relatedDeliveryId?: string;
+};
+
+export type SupportConversationCreateInput = {
+  channel: SupportChannel;
+  domain: SupportDomain;
+  priority?: SupportPriority;
+  subject: string;
+  externalProvider?: string;
+  externalConversationId?: string;
+  externalTicketId?: string;
+  userId?: string;
+  merchantId?: string;
+  slyderProfileId?: string;
+  employeeProfileId?: string;
+  referrerAccountId?: string;
+  assignedTeam?: string;
+  assignedAgentId?: string;
+};
+
+export type SupportReplyInput = {
+  conversationId: string;
+  senderType: SupportSenderType;
+  senderId?: string;
+  body: string;
+  messageFormat?: string;
+  externalMessageId?: string;
+  aiGenerated?: boolean;
+  metadata?: Record<string, unknown>;
+};
+
+export type SupportHandoffInput = {
+  conversationId: string;
+  reason: string;
+  summary: string;
+  recommendedTeam: string;
+  confidenceScore?: number;
+};
+
+export type SupportContextInput = {
+  conversationId: string;
+  contextType: string;
+  payload: Record<string, unknown>;
+};
+
+export type SupportWebhookPayload = {
+  provider: string;
+  eventType: string;
+  externalConversationId?: string;
+  externalTicketId?: string;
+  externalMessageId?: string;
+  status?: string;
+  priority?: string;
+  senderType?: SupportSenderType;
+  messageBody?: string;
+  occurredAt: string;
+  raw: Record<string, unknown>;
+};
+
+export type SupportAiRequestInput = {
+  conversationId: string;
+  domain: SupportDomain;
+  userMessage: string;
+  userProfile?: {
+    userId?: string;
+    role?: string;
+    fullName?: string;
+    email?: string;
+  };
+  linkedEntities?: {
+    merchantId?: string;
+    merchantApplicationId?: string;
+    deliveryId?: string;
+    orderId?: string;
+    referralId?: string;
+    slyderProfileId?: string;
+    employeeProfileId?: string;
+  };
+  contextSnapshots: Array<{
+    type: string;
+    payload: Record<string, unknown>;
+  }>;
+  knowledgeMatches: Array<{
+    title: string;
+    snippet: string;
+    sourceId: string;
+  }>;
+};
+
+export type SupportAiResponse = {
+  action: "answer" | "handoff" | "collect_info";
+  answer: string;
+  confidence: number;
+  missingFields?: string[];
+  handoffReason?: string;
+  recommendedTeam?: string;
+  agentSummary?: string;
+};
+
+export type PartnerCarrierInput = {
+  name: string;
+  slug: string;
+  type: PartnerCarrierType;
+  supportsTracking?: boolean;
+  supportsApi?: boolean;
+  supportsFinalDelivery?: boolean;
+  supportsBranchCollection?: boolean;
+  active?: boolean;
+  contactConfig?: Record<string, unknown>;
+  trackingConfig?: Record<string, unknown>;
+  webhookConfig?: Record<string, unknown>;
+};
+
+export type PartnerHandoffLocationInput = {
+  partnerCarrierId: string;
+  name: string;
+  parish: string;
+  town: string;
+  addressLine: string;
+  openingHours?: Record<string, unknown>;
+  active?: boolean;
+};
+
+export type ManualPartnerTrackingInput = {
+  deliveryLegId: string;
+  partnerCarrierId: string;
+  externalTrackingReference?: string;
+  rawStatus: string;
+  normalizedStatus: DeliveryLegStatus | OutOfParishOverallStatus;
+  notes?: string;
+  eventTimestamp?: string;
 };
 
 export type EmployeeDepartmentCode =
@@ -693,6 +1635,13 @@ export type OnboardingStore = {
   applications: SlyderApplication[];
   vehicles: SlyderApplicationVehicle[];
   documents: SlyderApplicationDocument[];
+  referrerAccounts: ReferrerAccount[];
+  referrerLoginChallenges: ReferrerLoginChallenge[];
+  referrerSessions: ReferrerSession[];
+  publicSlyderReferrals: PublicSlyderReferral[];
+  referralEvents: ReferralEvent[];
+  referralRewards: ReferralReward[];
+  referralRewardAudits: ReferralRewardAudit[];
   slyderProfiles: SlyderProfile[];
   history: SlyderStatusHistory[];
   activationTokens: ActivationToken[];
@@ -701,8 +1650,29 @@ export type OnboardingStore = {
   notifications: NotificationRecord[];
   notificationTemplates: NotificationTemplate[];
   notificationTriggers: NotificationTriggerEvent[];
+  supportConversations: SupportConversation[];
+  supportMessages: SupportMessage[];
+  supportContextSnapshots: SupportContextSnapshot[];
+  supportHandoffs: SupportHandoff[];
+  supportEvents: SupportEvent[];
+  supportKnowledgeArticles: SupportKnowledgeArticle[];
   coverageZones: CoverageZone[];
   merchantInterests: MerchantInterestRecord[];
+  merchantLeads: MerchantLead[];
+  merchantApplications: MerchantApplication[];
+  merchantIntegrationProfiles: MerchantIntegrationProfile[];
+  merchantOnboardingEvents: MerchantOnboardingEvent[];
+  merchantOrders: MerchantOrder[];
+  merchantDeliveries: MerchantDelivery[];
+  merchantAddresses: MerchantAddress[];
+  merchantTeamMembers: MerchantTeamMember[];
+  merchantNotificationPreferences: MerchantNotificationPreference[];
+  merchantDispatchEvents: MerchantDispatchEvent[];
+  partnerCarriers: PartnerCarrier[];
+  partnerHandoffLocations: PartnerHandoffLocation[];
+  deliveryTransferPlans: DeliveryTransferPlan[];
+  deliveryLegs: DeliveryLeg[];
+  partnerTrackingEvents: PartnerTrackingEvent[];
   legalDocuments: LegalDocument[];
   legalAcceptances: LegalAcceptance[];
   legalPublishHistory: LegalDocumentPublishHistory[];

@@ -2,11 +2,15 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type { UserRoleCode } from "@/types/backend/onboarding";
 import type { SessionContext } from "@/server/auth/session";
+import type { ReferrerSessionContext } from "@/server/auth/referrer-session";
 import { getSessionContext, hasRole } from "@/server/auth/session";
+import { getReferrerSessionContext } from "@/server/auth/referrer-session";
 import { readPersistenceStore } from "@/server/persistence";
+import { enforceMerchantBusinessLicenseCompliance } from "@/modules/merchant-ops/services/merchant-business-license.service";
 
 const devAdminKey = process.env.SLYDE_ADMIN_DEV_KEY || "dev-admin-key";
 type MinimalActorContext = { user: { id: string; fullName: string; roles: UserRoleCode[] } };
+type ReferrerActorContext = ReferrerSessionContext;
 
 function allowLocalAdminFallback() {
   return process.env.SLYDE_ADMIN_UI_DEV_FALLBACK !== "false";
@@ -83,4 +87,55 @@ export async function requireEmployeeContext() {
   }
 
   return NextResponse.json({ error: "Employee authentication required" }, { status: 401 });
+}
+
+export async function requireMerchantContext(options?: { allowRestricted?: boolean }) {
+  const sessionContext = await getSessionContext();
+  if (
+    sessionContext &&
+    sessionContext.user.isEnabled &&
+    sessionContext.user.accountStatus === "active" &&
+    sessionContext.user.userType === "merchant" &&
+    hasRole(sessionContext.user, [
+      "merchant_owner",
+      "merchant_manager",
+      "merchant_dispatcher",
+      "merchant_staff",
+      "merchant_viewer",
+    ])
+  ) {
+    const store = await readPersistenceStore();
+    const membership = store.merchantTeamMembers.find(
+      (item) => item.userId === sessionContext.user.id && item.status === "active",
+    );
+    if (membership) {
+      const compliance = await enforceMerchantBusinessLicenseCompliance(membership.merchantId);
+      if (compliance.isRestricted && !options?.allowRestricted) {
+        return NextResponse.json(
+          {
+            error:
+              "Merchant operations are restricted until COJ business license credentials are submitted in workspace settings.",
+          },
+          { status: 403 },
+        );
+      }
+
+      return {
+        ...sessionContext,
+        merchantMembership: membership,
+        merchantCompliance: compliance,
+      };
+    }
+  }
+
+  return NextResponse.json({ error: "Merchant authentication required" }, { status: 401 });
+}
+
+export async function requireReferrerContext(): Promise<ReferrerActorContext | NextResponse> {
+  const sessionContext = await getReferrerSessionContext();
+  if (sessionContext) {
+    return sessionContext;
+  }
+
+  return NextResponse.json({ error: "Referrer authentication required" }, { status: 401 });
 }
