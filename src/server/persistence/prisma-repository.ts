@@ -1311,7 +1311,7 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
     deliveryTransferPlans,
     deliveryLegs,
     partnerTrackingEvents,
-  ] = await prisma.$transaction([
+  ] = await Promise.all([
     prisma.user.findMany(),
     prisma.activationToken.findMany(),
     prisma.otpChallenge.findMany(),
@@ -1835,6 +1835,103 @@ async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<Onb
       partnerTrackingEvents
         .map((item: any) => mapPartnerTrackingEvent(item))
         .filter((item: PartnerTrackingEvent | null): item is PartnerTrackingEvent => Boolean(item)),
+    ),
+  };
+}
+
+async function overlayCriticalOnboardingPrismaSlices(store: OnboardingStore): Promise<OnboardingStore> {
+  const readSlice = async <T>(reader: () => Promise<T[]>) => {
+    try {
+      return await reader();
+    } catch (error) {
+      if (isMissingPrismaTableError(error)) {
+        return [] as T[];
+      }
+
+      throw error;
+    }
+  };
+
+  const [users, activationTokens, otpChallenges, sessions, applications, vehicles, documents, slyderProfiles, history] =
+    await Promise.all([
+      readSlice(() => prisma.user.findMany()),
+      readSlice(() => prisma.activationToken.findMany()),
+      readSlice(() => prisma.otpChallenge.findMany()),
+      readSlice(() => prisma.sessionRecord.findMany()),
+      readSlice(() =>
+        prisma.slyderApplication.findMany({
+          orderBy: {
+            createdAt: "desc",
+          },
+        }),
+      ),
+      readSlice(() => prisma.slyderApplicationVehicle.findMany()),
+      readSlice(() => prisma.slyderApplicationDocument.findMany()),
+      readSlice(() => prisma.slyderProfile.findMany()),
+      readSlice(() =>
+        prisma.statusHistory.findMany({
+          orderBy: {
+            createdAt: "desc",
+          },
+        }),
+      ),
+    ]);
+
+  return {
+    ...store,
+    users: mergeById(
+      store.users,
+      users
+        .map((item) => mapUser(item))
+        .filter((item): item is StoredUser => Boolean(item)),
+    ),
+    activationTokens: mergeById(
+      store.activationTokens,
+      activationTokens
+        .map((item) => mapActivationToken(item))
+        .filter((item): item is ActivationToken => Boolean(item)),
+    ),
+    otpChallenges: mergeById(
+      store.otpChallenges,
+      otpChallenges
+        .map((item) => mapOtpChallenge(item))
+        .filter((item): item is OtpChallenge => Boolean(item)),
+    ),
+    sessions: mergeById(
+      store.sessions,
+      sessions
+        .map((item) => mapSessionRecord(item))
+        .filter((item): item is SessionRecord => Boolean(item)),
+    ),
+    applications: mergeById(
+      store.applications,
+      applications
+        .map((item) => mapSlyderApplication(item))
+        .filter((item): item is SlyderApplication => Boolean(item)),
+    ),
+    vehicles: mergeById(
+      store.vehicles,
+      vehicles
+        .map((item) => mapSlyderApplicationVehicle(item))
+        .filter((item): item is SlyderApplicationVehicle => Boolean(item)),
+    ),
+    documents: mergeById(
+      store.documents,
+      documents
+        .map((item) => mapSlyderApplicationDocument(item))
+        .filter((item): item is SlyderApplicationDocument => Boolean(item)),
+    ),
+    slyderProfiles: mergeById(
+      store.slyderProfiles,
+      slyderProfiles
+        .map((item) => mapSlyderProfile(item))
+        .filter((item): item is SlyderProfile => Boolean(item)),
+    ),
+    history: mergeById(
+      store.history,
+      history
+        .map((item) => mapStatusHistory(item))
+        .filter((item): item is SlyderStatusHistory => Boolean(item)),
     ),
   };
 }
@@ -3865,21 +3962,313 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   }
 }
 
+async function persistCriticalOnboardingPrismaSlices(tx: PrismaTransactionClient, store: OnboardingStore) {
+  const persistSlice = async (writer: () => Promise<void>) => {
+    try {
+      await writer();
+    } catch (error) {
+      if (isMissingPrismaTableError(error)) {
+        return;
+      }
+
+      throw error;
+    }
+  };
+
+  await persistSlice(async () => {
+    for (const application of store.applications) {
+      await tx.slyderApplication.upsert({
+        where: { id: application.id },
+        update: {
+          applicationCode: application.applicationCode,
+          fullName: application.fullName,
+          email: application.email,
+          phone: application.phone,
+          dateOfBirth: toDateOnly(application.dateOfBirth) ?? new Date(application.dateOfBirth),
+          parish: application.parish,
+          address: application.address,
+          trn: application.trn,
+          emergencyContactName: application.emergencyContactName,
+          emergencyContactPhone: application.emergencyContactPhone,
+          courierType: application.courierType,
+          workTypePreference: application.workTypePreference,
+          availability: application.availability,
+          preferredZones: application.preferredZones,
+          deliveryTypePreferences: application.deliveryTypePreferences,
+          maxTravelComfort: application.maxTravelComfort,
+          peakHours: application.peakHours,
+          smartphoneType: application.smartphoneType,
+          whatsappNumber: application.whatsappNumber,
+          gpsConfirmed: application.gpsConfirmed,
+          internetConfirmed: application.internetConfirmed,
+          readinessAnswers: application.readinessAnswers as any,
+          agreementsAccepted: application.agreementsAccepted as any,
+          applicationStatus: application.applicationStatus,
+          accountStatus: application.accountStatus,
+          operationalStatus: application.operationalStatus,
+          readinessStatus: application.readinessStatus,
+          reviewNotes: application.reviewNotes ?? null,
+          rejectionReason: application.rejectionReason ?? null,
+          requestedDocumentNotes: application.requestedDocumentNotes ?? null,
+          requestedDocumentTypes: application.requestedDocumentTypes ?? [],
+          submittedAt: new Date(application.submittedAt),
+          reviewedAt: toDate(application.reviewedAt),
+          reviewedBy: application.reviewedBy ?? null,
+          linkedUserId: application.linkedUserId ?? null,
+          linkedSlyderProfileId: application.linkedSlyderProfileId ?? null,
+          updatedAt: new Date(application.updatedAt),
+        },
+        create: {
+          id: application.id,
+          applicationCode: application.applicationCode,
+          fullName: application.fullName,
+          email: application.email,
+          phone: application.phone,
+          dateOfBirth: toDateOnly(application.dateOfBirth) ?? new Date(application.dateOfBirth),
+          parish: application.parish,
+          address: application.address,
+          trn: application.trn,
+          emergencyContactName: application.emergencyContactName,
+          emergencyContactPhone: application.emergencyContactPhone,
+          courierType: application.courierType,
+          workTypePreference: application.workTypePreference,
+          availability: application.availability,
+          preferredZones: application.preferredZones,
+          deliveryTypePreferences: application.deliveryTypePreferences,
+          maxTravelComfort: application.maxTravelComfort,
+          peakHours: application.peakHours,
+          smartphoneType: application.smartphoneType,
+          whatsappNumber: application.whatsappNumber,
+          gpsConfirmed: application.gpsConfirmed,
+          internetConfirmed: application.internetConfirmed,
+          readinessAnswers: application.readinessAnswers as any,
+          agreementsAccepted: application.agreementsAccepted as any,
+          applicationStatus: application.applicationStatus,
+          accountStatus: application.accountStatus,
+          operationalStatus: application.operationalStatus,
+          readinessStatus: application.readinessStatus,
+          reviewNotes: application.reviewNotes ?? null,
+          rejectionReason: application.rejectionReason ?? null,
+          requestedDocumentNotes: application.requestedDocumentNotes ?? null,
+          requestedDocumentTypes: application.requestedDocumentTypes ?? [],
+          submittedAt: new Date(application.submittedAt),
+          reviewedAt: toDate(application.reviewedAt),
+          reviewedBy: application.reviewedBy ?? null,
+          linkedUserId: application.linkedUserId ?? null,
+          linkedSlyderProfileId: application.linkedSlyderProfileId ?? null,
+          createdAt: new Date(application.createdAt),
+          updatedAt: new Date(application.updatedAt),
+        },
+      });
+    }
+  });
+
+  await persistSlice(async () => {
+    for (const vehicle of store.vehicles) {
+      await tx.slyderApplicationVehicle.upsert({
+        where: { id: vehicle.id },
+        update: {
+          applicationId: vehicle.applicationId,
+          make: vehicle.make ?? null,
+          model: vehicle.model ?? null,
+          year: vehicle.year ?? null,
+          color: vehicle.color ?? null,
+          plateNumber: vehicle.plateNumber ?? null,
+          registrationExpiry: toDateOnly(vehicle.registrationExpiry),
+          insuranceExpiry: toDateOnly(vehicle.insuranceExpiry),
+          fitnessExpiry: toDateOnly(vehicle.fitnessExpiry),
+          updatedAt: new Date(vehicle.updatedAt),
+        },
+        create: {
+          id: vehicle.id,
+          applicationId: vehicle.applicationId,
+          make: vehicle.make ?? null,
+          model: vehicle.model ?? null,
+          year: vehicle.year ?? null,
+          color: vehicle.color ?? null,
+          plateNumber: vehicle.plateNumber ?? null,
+          registrationExpiry: toDateOnly(vehicle.registrationExpiry),
+          insuranceExpiry: toDateOnly(vehicle.insuranceExpiry),
+          fitnessExpiry: toDateOnly(vehicle.fitnessExpiry),
+          createdAt: new Date(vehicle.createdAt),
+          updatedAt: new Date(vehicle.updatedAt),
+        },
+      });
+    }
+  });
+
+  await persistSlice(async () => {
+    for (const document of store.documents) {
+      await tx.slyderApplicationDocument.upsert({
+        where: { id: document.id },
+        update: {
+          applicationId: document.applicationId,
+          type: document.type,
+          fileUrl: document.fileUrl,
+          storageKey: document.storageKey,
+          fileName: document.fileName,
+          mimeType: document.mimeType,
+          verificationStatus: document.verificationStatus,
+          rejectionReason: document.rejectionReason ?? null,
+          uploadedAt: new Date(document.uploadedAt),
+          reviewedAt: toDate(document.reviewedAt),
+          reviewedBy: document.reviewedBy ?? null,
+        },
+        create: {
+          id: document.id,
+          applicationId: document.applicationId,
+          type: document.type,
+          fileUrl: document.fileUrl,
+          storageKey: document.storageKey,
+          fileName: document.fileName,
+          mimeType: document.mimeType,
+          verificationStatus: document.verificationStatus,
+          rejectionReason: document.rejectionReason ?? null,
+          uploadedAt: new Date(document.uploadedAt),
+          reviewedAt: toDate(document.reviewedAt),
+          reviewedBy: document.reviewedBy ?? null,
+        },
+      });
+    }
+  });
+
+  await persistSlice(async () => {
+    for (const historyItem of store.history.filter(
+      (item) => item.entityType === "application" || item.entityType === "user" || item.entityType === "slyder_profile",
+    )) {
+      await tx.statusHistory.upsert({
+        where: { id: historyItem.id },
+        update: {
+          entityType: historyItem.entityType,
+          entityId: historyItem.entityId,
+          eventType: historyItem.eventType,
+          actorUserId: historyItem.actorUserId ?? null,
+          actorLabel: historyItem.actorLabel ?? null,
+          metadata: (historyItem.metadata ?? undefined) as any,
+          createdAt: new Date(historyItem.createdAt),
+        },
+        create: {
+          id: historyItem.id,
+          entityType: historyItem.entityType,
+          entityId: historyItem.entityId,
+          eventType: historyItem.eventType,
+          actorUserId: historyItem.actorUserId ?? null,
+          actorLabel: historyItem.actorLabel ?? null,
+          metadata: (historyItem.metadata ?? undefined) as any,
+          createdAt: new Date(historyItem.createdAt),
+        },
+      });
+    }
+  });
+
+  await persistSlice(async () => {
+    for (const acceptance of store.legalAcceptances) {
+      await tx.legalAcceptance.upsert({
+        where: { id: acceptance.id },
+        update: {
+          actorType: acceptance.actorType,
+          actorId: acceptance.actorId,
+          documentId: acceptance.documentId,
+          documentType: acceptance.documentType,
+          documentTitleSnapshot: acceptance.documentTitleSnapshot,
+          documentVersion: acceptance.documentVersion,
+          acceptedAt: new Date(acceptance.acceptedAt),
+          ipAddress: acceptance.ipAddress ?? null,
+          userAgent: acceptance.userAgent ?? null,
+          acceptanceSource: acceptance.acceptanceSource,
+          checkboxLabelSnapshot: acceptance.checkboxLabelSnapshot ?? null,
+          metadata: (acceptance.metadata ?? undefined) as any,
+          updatedAt: new Date(acceptance.updatedAt),
+        },
+        create: {
+          id: acceptance.id,
+          actorType: acceptance.actorType,
+          actorId: acceptance.actorId,
+          documentId: acceptance.documentId,
+          documentType: acceptance.documentType,
+          documentTitleSnapshot: acceptance.documentTitleSnapshot,
+          documentVersion: acceptance.documentVersion,
+          acceptedAt: new Date(acceptance.acceptedAt),
+          ipAddress: acceptance.ipAddress ?? null,
+          userAgent: acceptance.userAgent ?? null,
+          acceptanceSource: acceptance.acceptanceSource,
+          checkboxLabelSnapshot: acceptance.checkboxLabelSnapshot ?? null,
+          metadata: (acceptance.metadata ?? undefined) as any,
+          createdAt: new Date(acceptance.createdAt),
+          updatedAt: new Date(acceptance.updatedAt),
+        },
+      });
+    }
+  });
+}
+
+function isMissingPrismaTableError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  return (error as { code?: unknown }).code === "P2021";
+}
+
+function shouldFallbackToCriticalOnboardingPersist(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as {
+    code?: unknown;
+    meta?: { modelName?: unknown; cause?: unknown; driverAdapterError?: { cause?: { message?: unknown } } };
+  };
+
+  if (candidate.code === "P2021") {
+    return true;
+  }
+
+  if (candidate.code === "P2007" && candidate.meta?.modelName === "NotificationTemplate") {
+    return true;
+  }
+
+  const adapterMessage = candidate.meta?.driverAdapterError?.cause?.message;
+  if (typeof adapterMessage === "string" && adapterMessage.includes('enum "NotificationActorType"')) {
+    return true;
+  }
+
+  return false;
+}
+
 export class PrismaRepository implements PersistenceRepository {
   readonly driver = "prisma" as const;
 
   async readSnapshot(): Promise<OnboardingStore> {
     const store = await createSeedStore();
-    return overlaySupportedPrismaSlices(store);
+    try {
+      return await overlaySupportedPrismaSlices(store);
+    } catch (error) {
+      if (isMissingPrismaTableError(error)) {
+        return overlayCriticalOnboardingPrismaSlices(store);
+      }
+
+      throw error;
+    }
   }
 
   async transaction<T>(mutator: (store: OnboardingStore) => Promise<T> | T): Promise<T> {
     const store = await this.readSnapshot();
     const result = await mutator(store);
 
-    await prisma.$transaction(async (tx) => {
-      await persistSupportedPrismaSlices(tx as PrismaTransactionClient, store);
-    });
+    try {
+      await prisma.$transaction(async (tx) => {
+        await persistSupportedPrismaSlices(tx as PrismaTransactionClient, store);
+      });
+    } catch (error) {
+      if (!shouldFallbackToCriticalOnboardingPersist(error)) {
+        throw error;
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await persistCriticalOnboardingPrismaSlices(tx as PrismaTransactionClient, store);
+      });
+    }
 
     return result;
   }

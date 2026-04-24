@@ -14,7 +14,17 @@ import {
   Workflow,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { CtaLink, FaqCategory, InfoCard, NavItem, TimelineStep, ZoneStatusKey, ZoneStatusMessage } from "@/types/site";
+import type {
+  CoverageSummaryCard,
+  CtaLink,
+  FaqCategory,
+  InfoCard,
+  NavItem,
+  ParishCoverageGroup,
+  TimelineStep,
+  ZoneStatusKey,
+  ZoneStatusMessage,
+} from "@/types/site";
 
 export const navItems: NavItem[] = [
   { href: "/", label: "Home" },
@@ -100,22 +110,42 @@ export const slyderTypes = [
   { title: "Van and fleet support", icon: Truck, description: "Important for larger or more operationally demanding deliveries as the network grows." },
 ];
 
-export const coverageCards: InfoCard[] = [
+export const coverageCards: CoverageSummaryCard[] = [
   {
-    eyebrow: "Launching soon",
-    title: "Kingston - 92% ready",
-    description: "One of the strongest early launch areas, with Slyder onboarding moving toward final readiness.",
+    eyebrow: "Launch anchors",
+    title: "Dense first-wave operating zones",
+    description: "The first rollout stays concentrated around high-demand corridors where dispatch quality, courier density, and merchant support can stay tightly managed.",
+    highlights: ["Kingston", "New Kingston", "Half-Way Tree", "Spanish Town", "Portmore"],
   },
   {
-    eyebrow: "Building network",
-    title: "Mandeville - we need more Slyders",
-    description: "This area is in network-building phase, and early applicants help move it closer to launch.",
+    eyebrow: "Building next",
+    title: "Major city corridors preparing for scale",
+    description: "These cities strengthen the network beyond the capital and help shape the next phase of practical, parish-by-parish expansion.",
+    highlights: ["Montego Bay", "Mandeville", "May Pen", "Ocho Rios", "Savanna-la-Mar"],
   },
   {
-    eyebrow: "Final onboarding phase",
-    title: "Montego Bay - near ready",
-    description: "Courier strength is growing and the area is moving closer to launch readiness.",
+    eyebrow: "Nationwide horizon",
+    title: "A footprint that can widen without losing control",
+    description: "SLYDE is mapping growth across all 14 parishes so future coverage decisions can expand from a real operating base instead of a vague island-wide promise.",
+    highlights: ["Port Antonio", "Falmouth", "Santa Cruz", "Morant Bay", "Port Maria"],
   },
+];
+
+export const parishCoverageGroups: ParishCoverageGroup[] = [
+  { parish: "Kingston", towns: ["Kingston", "Downtown", "Cross Roads"], readiness: 34, signedUpSlyders: 18, status: "Strong early traction" },
+  { parish: "St. Andrew", towns: ["New Kingston", "Half-Way Tree", "Constant Spring", "Papine"], readiness: 31, signedUpSlyders: 16, status: "Building commuter density" },
+  { parish: "St. Catherine", towns: ["Spanish Town", "Portmore", "Old Harbour"], readiness: 27, signedUpSlyders: 14, status: "Growing launch corridor" },
+  { parish: "Clarendon", towns: ["May Pen", "Chapelton"], readiness: 18, signedUpSlyders: 8, status: "Early formation" },
+  { parish: "Manchester", towns: ["Mandeville", "Christiana"], readiness: 24, signedUpSlyders: 11, status: "Building steadily" },
+  { parish: "St. Elizabeth", towns: ["Santa Cruz", "Black River"], readiness: 14, signedUpSlyders: 6, status: "Needs more Slyders" },
+  { parish: "Westmoreland", towns: ["Savanna-la-Mar", "Negril"], readiness: 17, signedUpSlyders: 7, status: "Tourism corridor interest" },
+  { parish: "Hanover", towns: ["Lucea"], readiness: 12, signedUpSlyders: 5, status: "Early awareness" },
+  { parish: "St. James", towns: ["Montego Bay", "Ironshore"], readiness: 26, signedUpSlyders: 12, status: "Second-wave contender" },
+  { parish: "Trelawny", towns: ["Falmouth"], readiness: 15, signedUpSlyders: 6, status: "Expanding interest" },
+  { parish: "St. Ann", towns: ["Ocho Rios", "St. Ann's Bay", "Runaway Bay"], readiness: 21, signedUpSlyders: 9, status: "Tourist-town momentum" },
+  { parish: "St. Mary", towns: ["Port Maria", "Annotto Bay"], readiness: 11, signedUpSlyders: 4, status: "Foundational stage" },
+  { parish: "Portland", towns: ["Port Antonio"], readiness: 10, signedUpSlyders: 4, status: "Foundational stage" },
+  { parish: "St. Thomas", towns: ["Morant Bay", "Yallahs"], readiness: 13, signedUpSlyders: 5, status: "Early corridor mapping" },
 ];
 
 export const launchZoneCards: Array<InfoCard & { status: string }> = [

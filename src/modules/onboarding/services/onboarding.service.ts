@@ -32,6 +32,7 @@ import {
   sendSlyderRejectedNotification,
 } from "@/server/notifications/notification.service";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
+import { fileStoreRepository } from "@/server/persistence/file-store-repository";
 import { hashToken, generateOpaqueToken } from "@/server/auth/tokens";
 import type {
   ApproveApplicationInput,
@@ -61,6 +62,13 @@ function nowIso() {
 
 function applicationCode() {
   return `SLY-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+}
+
+function logNonBlockingFailure(scope: string, error: unknown, metadata?: Record<string, unknown>) {
+  console.error(`[onboarding.service] ${scope}`, {
+    ...(metadata ?? {}),
+    error: error instanceof Error ? error.message : String(error),
+  });
 }
 
 function documentTypeMap(): Record<string, DocumentType> {
@@ -116,7 +124,10 @@ export async function createPublicSlyderApplication(
   metadata?: { ipAddress?: string; userAgent?: string },
   syncResult?: SyncedSlydeAppApplication,
 ) {
-  const result = await withPersistenceTransaction(async (store) => {
+  const persistApplication = async (
+    transaction: typeof withPersistenceTransaction | typeof fileStoreRepository.transaction,
+  ) =>
+    transaction(async (store) => {
     const normalizedEmail = normalizeEmail(input.email);
     const normalizedPhone = normalizePhone(input.phone);
 
@@ -198,7 +209,13 @@ export async function createPublicSlyderApplication(
       eventType: "application_submitted",
       metadata: { applicationCode: code },
     });
-    await sendSlyderApplicationSubmittedNotification(store, applicationId);
+    try {
+      await sendSlyderApplicationSubmittedNotification(store, applicationId);
+    } catch (error) {
+      logNonBlockingFailure("sendSlyderApplicationSubmittedNotification failed", error, {
+        applicationId,
+      });
+    }
 
     await recordMultipleLegalAcceptancesInStore(store, {
       actorType: "slyder_applicant",
@@ -222,9 +239,26 @@ export async function createPublicSlyderApplication(
     };
   });
 
+  let result;
+  try {
+    result = await persistApplication(withPersistenceTransaction);
+  } catch (error) {
+    logNonBlockingFailure("withPersistenceTransaction createPublicSlyderApplication failed", error, {
+      email: input.email,
+      phone: input.phone,
+    });
+    result = await persistApplication(fileStoreRepository.transaction.bind(fileStoreRepository));
+  }
+
   const createdApplication = "application" in result ? result.application : undefined;
   if (createdApplication) {
-    await syncReferralForApplicationCreated(createdApplication);
+    try {
+      await syncReferralForApplicationCreated(createdApplication);
+    } catch (error) {
+      logNonBlockingFailure("syncReferralForApplicationCreated failed", error, {
+        applicationId: createdApplication.id,
+      });
+    }
   }
 
   return {

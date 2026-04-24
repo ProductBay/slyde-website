@@ -57,12 +57,11 @@ export async function protectPublicRoute(
     const token = request.headers.get("x-turnstile-token")?.trim();
 
     if (turnstile.mode === "enforce" && !turnstile.configured) {
-      return NextResponse.json(
-        {
-          error: "Bot protection is required but not configured on this server.",
-        },
-        { status: 503 },
-      );
+      console.warn("[public-route-protection] turnstile enforce mode requested without configuration", {
+        routeKey: input.routeKey,
+        ipAddress,
+      });
+      return null;
     }
 
     if (turnstile.mode !== "off") {

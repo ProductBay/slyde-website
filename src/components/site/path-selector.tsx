@@ -35,10 +35,10 @@ export function PathSelector() {
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">Primary conversion lane</p>
             <h2 className="mt-3 text-xl font-semibold tracking-tight text-slate-950 sm:text-[1.75rem]">
-              Keep the dominant action visible as the page scrolls
+              Choose the path that fits how you want to grow with SLYDE
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              SLYDE is actively building courier supply and launch coverage. The primary path stays centered on Slyder conversion, with coverage as the secondary operational check.
+              Whether you want to become a Slyder, prepare your business for delivery support, or explore platform integrations, start with the route built for you.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">

@@ -57,7 +57,7 @@ export function AdminLoginForm() {
       </div>
 
       <div className="mt-6 rounded-[1.5rem] border border-sky-100 bg-sky-50/80 p-4 text-sm leading-7 text-sky-900">
-        Default local admin access is seeded with <code>admin@slyde.local</code>. Default password: <code>Admin123!</code> unless overridden by <code>SLYDE_DEFAULT_ADMIN_PASSWORD</code>.
+        Admin access is restricted to authorized platform operators. If you do not have active credentials or your access has not been provisioned, contact the SLYDE platform owner before attempting to sign in.
       </div>
     </div>
   );

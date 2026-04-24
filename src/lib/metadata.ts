@@ -16,6 +16,11 @@ export function buildMetadata(
     title,
     description,
     metadataBase: new URL(baseUrl),
+    icons: {
+      icon: "/icon.svg",
+      shortcut: "/icon.svg",
+      apple: "/icon.svg",
+    },
     openGraph: {
       title,
       description,

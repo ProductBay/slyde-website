@@ -63,6 +63,24 @@ const postApplyItems = [
   "Follow-up guidance if you are approved for onboarding",
 ];
 
+const applicationSnapshot = [
+  {
+    eyebrow: "Apply",
+    title: "Start online in minutes",
+    description: "Submit your details first. Full onboarding guidance comes after approval, so you do not need every setup answer before applying.",
+  },
+  {
+    eyebrow: "Confirm",
+    title: "Get real follow-up",
+    description: "SLYDE confirms your application by WhatsApp and email so you know your submission was received and moving through review.",
+  },
+  {
+    eyebrow: "Launch",
+    title: "Get positioned in your area",
+    description: "Approval, setup, and readiness put you in the best position as your town or parish moves closer to live delivery activity.",
+  },
+];
+
 export default function BecomeASlyderPage() {
   return (
     <>
@@ -97,6 +115,35 @@ export default function BecomeASlyderPage() {
         }
       />
 
+      <section className="section-shell py-8">
+        <div className="surface-panel p-6 sm:p-8">
+          <div className="grid gap-5 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">Application snapshot</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.35rem]">
+                Everything important, before you start
+              </h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
+                This page is designed to answer the big questions first: what the role is, how onboarding works, what to have ready, and when you can expect to start.
+              </p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <LinkButton href="/become-a-slyder/apply">Start your application</LinkButton>
+                <LinkButton href="#slyder-requirements" variant="secondary">See requirements</LinkButton>
+              </div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {applicationSnapshot.map((item) => (
+                <div key={item.title} className="surface-card p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-700">{item.eyebrow}</p>
+                  <h3 className="mt-3 text-lg font-semibold text-slate-950">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="section-shell py-16">
         <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
           <SectionHeading
@@ -108,6 +155,75 @@ export default function BecomeASlyderPage() {
             <p className="text-base leading-8 text-slate-600">
               As SLYDE grows region by region, early Slyders will be among the first positioned in their area when operations begin.
             </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {[
+                "Flexible independent work with a more structured operating model.",
+                "Verified onboarding before activation and zone-based launch readiness.",
+                "Digital payout support and future-ready errand workflows.",
+                "A platform built for Jamaica first, with standards that can scale.",
+              ].map((item) => (
+                <div key={item} className="rounded-3xl border border-slate-200 bg-surface-1 px-4 py-4 text-sm leading-7 text-slate-600">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-shell py-16">
+        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+          <SectionHeading
+            eyebrow="How Onboarding Works"
+            title="Clear steps from application to launch readiness"
+            description="We’ve designed onboarding to feel predictable, structured, and easy to follow from the very first submission."
+          />
+          <ProcessTimeline steps={lifecycleTimeline} variant="workflow" compact />
+        </div>
+      </section>
+
+      <section className="section-shell py-16">
+        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <SectionHeading
+            eyebrow="What Happens After You Apply"
+            title="Real confirmation and structured follow-up"
+            description="Once you submit your application, SLYDE confirms that it was received and moves it through a clear review process."
+          />
+          <div className="surface-panel p-8">
+            <div className="grid gap-3">
+              {postApplyItems.map((item) => (
+                <div key={item} className="rounded-3xl border border-slate-200 bg-surface-1 px-4 py-4 text-sm leading-7 text-slate-600">
+                  {item}
+                </div>
+              ))}
+            </div>
+            <p className="mt-6 text-sm leading-7 text-slate-600">
+              We want every applicant to know their submission is real, received, and being handled through a structured review process.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-slate-500">
+              Your confirmation may also include area-specific launch context based on your town or parish.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="slyder-requirements" className="section-shell py-16">
+        <div className="grid gap-8 lg:grid-cols-[0.84fr_1.16fr] lg:items-start">
+          <div className="space-y-8">
+            <SectionHeading
+              eyebrow="Who Can Apply"
+              title="Multiple courier types can join the network"
+              description="SLYDE is designed to support different delivery capacity types across Jamaica, from bicycles and motorcycles to cars and vans."
+            />
+            <SectionHeading
+              eyebrow="Basic Requirements"
+              title="Most applicants should be ready with these core items"
+              description="Requirements can vary by vehicle type and area, but these are the essentials most applicants should expect."
+            />
+          </div>
+          <div className="space-y-6">
+            <InfoCardGrid items={slyderTypes} columns="four" />
+            <InfoCardGrid items={requirements} columns="three" />
           </div>
         </div>
       </section>
@@ -122,47 +238,6 @@ export default function BecomeASlyderPage() {
           <InfoCardGrid items={benefits} columns="four" />
         </div>
         <p className="mt-6 text-sm leading-7 text-slate-500">Early approved Slyders are best positioned as their zone approaches launch.</p>
-      </section>
-
-      <LynkBenefitsGrid
-        sectionId="become-slyder-digital-payouts"
-        title="Why digital payout support matters"
-        description="Being a Slyder is more than completing deliveries. It is about operating efficiently, receiving earnings with confidence, and being prepared for more advanced job types as the network grows. SLYDE is building a payout experience that supports stronger earnings visibility, smoother withdrawal setup, and safer operational workflows. Supported digital payout rails, including Lynk-ready workflows, help position Slyders for a more modern way to work."
-        items={[
-          {
-            id: "less-cash-dependence",
-            title: "Less dependence on cash",
-            body: "Digital payout support helps reduce the pressure of cash-heavy operations and gives Slyders a cleaner way to manage earnings and payment activity.",
-          },
-          {
-            id: "better-payout-visibility",
-            title: "Better payout visibility",
-            body: "Slyders should know when earnings are available, when payouts are pending, and how their payout method is configured.",
-          },
-          {
-            id: "future-ready-funded-errands",
-            title: "Future-ready for funded errands",
-            body: "Some errands may require approved in-person payments. Structured payment support can help Slyders handle these tasks more safely and with better accountability.",
-          },
-          {
-            id: "professional-operations",
-            title: "Built for professional operations",
-            body: "From onboarding to readiness, SLYDE is designed to help Slyders work inside a more trusted and organized system.",
-          },
-        ]}
-      />
-
-      <section className="section-shell pt-0">
-        <div className="surface-card p-6 text-sm leading-7 text-slate-600">
-          As SLYDE expands, supported payout options may include bank-based methods, mobile-friendly methods, and approved digital rails such as Lynk where operationally available. Setup details and eligibility are handled during onboarding and platform review.
-        </div>
-      </section>
-
-      <section className="section-shell py-16">
-        <SectionHeading eyebrow="Who Can Apply" title="Multiple courier types can join the network" description="SLYDE is designed to support different delivery capacity types across Jamaica." />
-        <div className="mt-10">
-          <InfoCardGrid items={slyderTypes} columns="four" />
-        </div>
       </section>
 
       <section className="section-shell py-16">
@@ -191,7 +266,7 @@ export default function BecomeASlyderPage() {
         </div>
       </section>
 
-      <section className="section-shell py-16">
+      <section className="section-shell py-10">
         <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
           <SectionHeading
             eyebrow="Your Area Matters"
@@ -210,49 +285,51 @@ export default function BecomeASlyderPage() {
       </section>
 
       <section className="section-shell py-16">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
-          <SectionHeading
-            eyebrow="How Onboarding Works"
-            title="Clear steps from application to launch readiness"
-            description="We've designed onboarding to be clear, structured, and easy to follow."
-          />
-          <ProcessTimeline steps={lifecycleTimeline} />
-        </div>
-      </section>
-
-      <section className="section-shell py-16">
-        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-          <SectionHeading
-            eyebrow="What Happens After You Apply"
-            title="Real confirmation and structured follow-up"
-            description="Once you submit your application, SLYDE will confirm that we received it."
-          />
-          <div className="surface-panel p-8">
-            <div className="grid gap-3">
-              {postApplyItems.map((item) => (
-                <div key={item} className="rounded-3xl border border-slate-200 bg-surface-1 px-4 py-4 text-sm leading-7 text-slate-600">
-                  {item}
-                </div>
-              ))}
-            </div>
-            <p className="mt-6 text-sm leading-7 text-slate-600">
-              We want every applicant to know their submission is real, received, and being handled through a structured review process.
-            </p>
-            <p className="mt-3 text-sm leading-7 text-slate-500">
-              Your confirmation message may also include area-specific launch information based on your town or parish.
-            </p>
+        <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+          <div className="space-y-5">
+            <SectionHeading
+              eyebrow="Digital payout support"
+              title="Work inside a more modern operating model"
+              description="Being a Slyder is more than completing deliveries. SLYDE is building payout support, earnings visibility, and safer errand workflows so couriers can operate with more confidence as the network grows."
+            />
+            <PaymentInfoCard
+              sectionId="become-slyder-setup-reassurance"
+              title="You do not need every setup detail before applying"
+              body="The application process is focused on helping us understand your fit, availability, and readiness. Full payout setup guidance and supported payment options are introduced during onboarding."
+            />
           </div>
-        </div>
-      </section>
-
-      <section className="section-shell py-16">
-        <SectionHeading
-          eyebrow="Basic Requirements"
-          title="Most applicants should be ready with the following"
-          description="Requirements may vary depending on your vehicle type and area, but most applicants should be ready with these core items."
-        />
-        <div className="mt-10">
-          <InfoCardGrid items={requirements} columns="three" />
+          <div className="space-y-6">
+            <LynkBenefitsGrid
+              sectionId="become-slyder-digital-payouts"
+              title="Why digital payout support matters"
+              description="Supported digital payout rails, including Lynk-ready workflows where available, help position Slyders for a cleaner and more professional way to work."
+              items={[
+                {
+                  id: "less-cash-dependence",
+                  title: "Less dependence on cash",
+                  body: "Digital payout support helps reduce the pressure of cash-heavy operations and gives Slyders a cleaner way to manage earnings and payment activity.",
+                },
+                {
+                  id: "better-payout-visibility",
+                  title: "Better payout visibility",
+                  body: "Slyders should know when earnings are available, when payouts are pending, and how their payout method is configured.",
+                },
+                {
+                  id: "future-ready-funded-errands",
+                  title: "Future-ready for funded errands",
+                  body: "Some errands may require approved in-person payments. Structured payment support can help Slyders handle these tasks more safely and with better accountability.",
+                },
+                {
+                  id: "professional-operations",
+                  title: "Built for professional operations",
+                  body: "From onboarding to readiness, SLYDE is designed to help Slyders work inside a more trusted and organized system.",
+                },
+              ]}
+            />
+            <div className="surface-card p-6 text-sm leading-7 text-slate-600">
+              As SLYDE expands, supported payout options may include bank-based methods, mobile-friendly methods, and approved digital rails such as Lynk where operationally available. Setup details and eligibility are handled during onboarding and platform review.
+            </div>
+          </div>
         </div>
       </section>
 
@@ -275,26 +352,6 @@ export default function BecomeASlyderPage() {
               >
                 Learn about Area Builder Rewards
               </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-shell py-10">
-        <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
-          <SectionHeading
-            eyebrow="Setup reassurance"
-            title="You do not need every setup detail before applying"
-            description="The application process is focused on helping us understand your fit, availability, and readiness. Full payout setup guidance and supported payment options are introduced during onboarding."
-          />
-          <div className="space-y-5">
-            <PaymentInfoCard
-              sectionId="become-slyder-setup-reassurance"
-              title="You do not need every setup detail before applying"
-              body="The application process is focused on helping us understand your fit, availability, and readiness. Full payout setup guidance and supported payment options are introduced during onboarding."
-            />
-            <div>
-              <LinkButton href="/become-a-slyder/apply">Start your application</LinkButton>
             </div>
           </div>
         </div>

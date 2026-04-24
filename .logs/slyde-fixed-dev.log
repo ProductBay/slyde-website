@@ -2,9 +2,51 @@
 > slyde-website@0.1.0 dev:fixed
 > next dev -p 4007
 
-Error: spawn EPERM
-    at new Promise (<anonymous>) {
-  errno: -4048,
-  code: 'EPERM',
-  syscall: 'spawn'
-}
+   ▲ Next.js 15.5.7
+   - Local:        http://localhost:4007
+   - Network:      http://10.93.27.245:4007
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 10.3s
+ ○ Compiling / ...
+ ✓ Compiled / in 11.4s (821 modules)
+ GET / 200 in 4000ms
+ GET / 200 in 805ms
+ ✓ Compiled in 1144ms (821 modules)
+ GET / 200 in 1606ms
+ GET / 200 in 2510ms
+ GET / 200 in 1606ms
+ ○ Compiling /icon.svg ...
+ ✓ Compiled /icon.svg in 924ms (529 modules)
+ GET /icon.svg 200 in 1312ms
+ ✓ Compiled in 1454ms (821 modules)
+ GET / 200 in 654ms
+ GET / 200 in 916ms
+ GET / 200 in 1238ms
+ ○ Compiling /icon.svg ...
+ ✓ Compiled /icon.svg in 551ms (529 modules)
+ GET /icon.svg 200 in 873ms
+ GET / 200 in 1715ms
+ GET /icon.svg 200 in 135ms
+ ✓ Compiled in 1381ms (823 modules)
+ GET / 200 in 647ms
+ ✓ Compiled /icon.svg in 242ms (530 modules)
+ GET /icon.svg 200 in 569ms
+ GET /icon.svg 200 in 97ms
+ GET /icon.svg 200 in 104ms
+ GET /icon.svg 200 in 201ms
+ GET / 200 in 1216ms
+ ○ Compiling /for-businesses/status ...
+ ✓ Compiled /for-businesses/status in 1701ms (825 modules)
+ GET /for-businesses/status 200 in 2289ms
+ GET / 200 in 1565ms
+ ○ Compiling /icon.svg ...
+ ✓ Compiled /icon.svg in 644ms (540 modules)
+ GET /icon.svg 200 in 1012ms
+ GET /for-businesses/status 200 in 581ms
+ GET / 200 in 455ms
+ ○ Compiling /become-a-slyder/apply ...
+ ✓ Compiled /become-a-slyder/apply in 4.2s (899 modules)
+ GET /become-a-slyder/apply 200 in 5378ms
+ GET /become-a-slyder/apply 200 in 305ms

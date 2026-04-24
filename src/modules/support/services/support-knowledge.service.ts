@@ -11,6 +11,15 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function isMissingSupportKnowledgeTableError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as { code?: unknown; meta?: { modelName?: unknown } };
+  return candidate.code === "P2021" && candidate.meta?.modelName === "SupportKnowledgeArticle";
+}
+
 export async function createDraftSupportKnowledgeArticle(input: {
   domain: SupportDomain;
   title: string;
@@ -47,8 +56,16 @@ export async function publishSupportKnowledgeArticle(slug: string) {
 }
 
 export async function listPublishedSupportKnowledgeArticles() {
-  const articles = await listSupportKnowledgeArticles();
-  return articles.filter((article) => article.published);
+  try {
+    const articles = await listSupportKnowledgeArticles();
+    return articles.filter((article) => article.published);
+  } catch (error) {
+    if (isMissingSupportKnowledgeTableError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export async function findRelevantSupportKnowledgeArticles(input: {

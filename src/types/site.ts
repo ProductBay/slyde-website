@@ -36,3 +36,18 @@ export type ZoneStatusMessage = {
   headline: string;
   body: string;
 };
+
+export type CoverageSummaryCard = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  highlights: string[];
+};
+
+export type ParishCoverageGroup = {
+  parish: string;
+  towns: string[];
+  readiness: number;
+  signedUpSlyders: number;
+  status: string;
+};

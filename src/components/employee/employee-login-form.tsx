@@ -66,7 +66,7 @@ export function EmployeeLoginForm() {
       </div>
 
       <div className="mt-6 rounded-[1.5rem] border border-cyan-100 bg-cyan-50/70 p-4 text-sm leading-7 text-cyan-900">
-        Dev access is seeded with `logistics@slyde.local` and `manager@slyde.local`. Default password: `Employee123!` unless overridden by `SLYDE_DEFAULT_EMPLOYEE_PASSWORD`.
+        Employee access is only available after your invite has been reviewed and activated. Use the same email or phone tied to your employee invite, or open activation help if you still need to finish setup.
       </div>
     </div>
   );

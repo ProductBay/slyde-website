@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { BrandMark } from "@/components/site/brand-mark";
 
 const groups = [
@@ -43,7 +44,7 @@ const groups = [
 
 export function Footer() {
   return (
-    <footer className="mt-24 bg-slate-950 text-white">
+    <footer className="mt-24 mb-28 bg-slate-950 text-white sm:mb-32">
       <div className="mx-auto max-w-shell px-4 pb-10 pt-16 sm:px-6 lg:px-8">
         <div className="mb-10 rounded-[2rem] border border-white/10 bg-white/5 p-6 sm:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -80,23 +81,42 @@ export function Footer() {
         ))}
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-shell flex-col gap-3 px-4 py-5 text-sm text-slate-400 sm:px-6 lg:px-8">
-          <p>&copy; 2026 SLYDE. Logistics infrastructure for modern commerce.</p>
-          <p>SLYDE is a company of A&apos;Dash Technologies, the parent company and sister brand of GrabQuik.</p>
-          <p>Developed by Ashandie Powell.</p>
-          <p>Located in Southfield, St. Elizabeth, Jamaica.</p>
-          <p>Phone: 8765947320</p>
-          <p>Email: info@slyde.app</p>
-          <p>
-            Legal links:{" "}
-            <Link href="/privacy" className="text-slate-300 transition hover:text-white">
-              Privacy
-            </Link>
-            {" / "}
-            <Link href="/terms" className="text-slate-300 transition hover:text-white">
-              Terms
-            </Link>
-          </p>
+        <div className="mx-auto grid max-w-shell gap-6 px-4 py-5 text-sm text-slate-400 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-8 lg:px-8">
+          <div className="flex flex-col gap-3">
+            <p>&copy; 2026 SLYDE. Logistics infrastructure for modern commerce.</p>
+            <p>
+              SLYDE is a company of{" "}
+              <Link href="https://adash.technology" className="text-slate-300 transition hover:text-white" target="_blank" rel="noreferrer">
+                A&apos;Dash Technologies
+              </Link>
+              {" "}Software eco-system, with GrabQuik, GrabCab, Refillit, Inventra, Carivo, A&apos;Dash Wallet and more.
+            </p>
+            <p>Located in Southfield, St. Elizabeth, Jamaica.</p>
+            <p>Phone: 8765947320</p>
+            <p>Email: info@slyde.app</p>
+            <p>
+              Legal links:{" "}
+              <Link href="/privacy" className="text-slate-300 transition hover:text-white">
+                Privacy
+              </Link>
+              {" / "}
+              <Link href="/terms" className="text-slate-300 transition hover:text-white">
+                Terms
+              </Link>
+            </p>
+          </div>
+
+          <div className="justify-self-start lg:justify-self-end">
+            <div className="overflow-hidden rounded-[1.2rem] border border-white/10 bg-white/[0.04] p-1.5 shadow-[0_18px_38px_-26px_rgba(15,23,42,0.65)]">
+              <Image
+                src="/images/footer-wallet-security.png"
+                alt="A'Dash Secure Wallet protection and verification banner"
+                width={300}
+                height={138}
+                className="h-auto w-[220px] rounded-[0.9rem] object-cover sm:w-[250px] lg:w-[280px]"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </footer>
