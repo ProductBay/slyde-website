@@ -22,7 +22,13 @@ export async function getLocalAdminFallbackContext(providedKey: string | null | 
   }
 
   const store = await readPersistenceStore();
-  const adminUser = store.users.find((user) => hasRole(user, ["platform_admin"]));
+  // Use the LAST platform_admin in the store. The seed store prepends an admin with a random UUID
+  // on every createSeedStore() call. The DB-persisted admin (with a stable UUID) is appended later
+  // by the Prisma overlay, so it sits at the end of the array. Using the last admin ensures the
+  // actor ID matches the user that survives dedupeUsersForPrisma during the write transaction,
+  // preventing SlyderApplication_reviewedBy_fkey FK constraint violations.
+  const platformAdmins = store.users.filter((user) => hasRole(user, ["platform_admin"]));
+  const adminUser = platformAdmins.at(-1);
   if (!adminUser) {
     return null;
   }
