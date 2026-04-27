@@ -1343,6 +1343,16 @@ function dedupeCoverageZonesForPrisma(zones: CoverageZone[]) {
   }, []);
 }
 
+function dedupePartnerCarriersForPrisma(carriers: PartnerCarrier[]) {
+  return carriers.reduce<PartnerCarrier[]>((selected, carrier) => {
+    const slug = carrier.slug.trim().toLowerCase();
+    return [
+      ...selected.filter((existing) => existing.id === carrier.id || existing.slug.trim().toLowerCase() !== slug),
+      carrier,
+    ];
+  }, []);
+}
+
 async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<OnboardingStore> {
   const [
     users,
@@ -2147,17 +2157,29 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   const supportedMerchantDispatchEvents = store.merchantDispatchEvents.filter((event) =>
     supportedMerchantDeliveryIds.has(event.merchantDeliveryId),
   );
-  const supportedPartnerCarriers = store.partnerCarriers;
+  const supportedPartnerCarriers = dedupePartnerCarriersForPrisma(store.partnerCarriers);
+  const partnerCarrierIdMap = new Map<string, string>();
+  for (const carrier of store.partnerCarriers) {
+    const canonicalCarrier = supportedPartnerCarriers.find(
+      (candidate) => candidate.slug.trim().toLowerCase() === carrier.slug.trim().toLowerCase(),
+    );
+    if (canonicalCarrier) {
+      partnerCarrierIdMap.set(carrier.id, canonicalCarrier.id);
+    }
+  }
   const supportedPartnerCarrierIds = new Set(supportedPartnerCarriers.map((carrier) => carrier.id));
-  const supportedPartnerHandoffLocations = store.partnerHandoffLocations.filter((location) =>
-    supportedPartnerCarrierIds.has(location.partnerCarrierId),
-  );
+  const supportedPartnerHandoffLocations = store.partnerHandoffLocations.filter((location) => {
+    const resolvedPartnerCarrierId = partnerCarrierIdMap.get(location.partnerCarrierId) ?? location.partnerCarrierId;
+    return supportedPartnerCarrierIds.has(resolvedPartnerCarrierId);
+  });
   const supportedPartnerHandoffLocationIds = new Set(supportedPartnerHandoffLocations.map((location) => location.id));
-  const supportedDeliveryTransferPlans = store.deliveryTransferPlans.filter(
-    (plan) =>
+  const supportedDeliveryTransferPlans = store.deliveryTransferPlans.filter((plan) => {
+    const resolvedTransferPartnerId = partnerCarrierIdMap.get(plan.transferPartnerId) ?? plan.transferPartnerId;
+    return (
       supportedMerchantDeliveryIds.has(plan.merchantDeliveryId) &&
-      supportedPartnerCarrierIds.has(plan.transferPartnerId),
-  );
+      supportedPartnerCarrierIds.has(resolvedTransferPartnerId)
+    );
+  });
   const supportedDeliveryTransferPlanIds = new Set(supportedDeliveryTransferPlans.map((plan) => plan.id));
   const supportedDeliveryLegs = store.deliveryLegs.filter(
     (leg) =>
@@ -2165,11 +2187,13 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
       (!leg.transferPlanId || supportedDeliveryTransferPlanIds.has(leg.transferPlanId)),
   );
   const supportedDeliveryLegIds = new Set(supportedDeliveryLegs.map((leg) => leg.id));
-  const supportedPartnerTrackingEvents = store.partnerTrackingEvents.filter(
-    (event) =>
+  const supportedPartnerTrackingEvents = store.partnerTrackingEvents.filter((event) => {
+    const resolvedPartnerCarrierId = partnerCarrierIdMap.get(event.partnerCarrierId) ?? event.partnerCarrierId;
+    return (
       supportedDeliveryLegIds.has(event.deliveryLegId) &&
-      supportedPartnerCarrierIds.has(event.partnerCarrierId),
-  );
+      supportedPartnerCarrierIds.has(resolvedPartnerCarrierId)
+    );
+  });
   const supportedSlyderProfileIds = new Set(supportedSlyderProfiles.map((profile) => profile.id));
   const supportedEmployeeProfileIds = new Set(supportedEmployeeProfiles.map((profile) => profile.id));
   const supportedSupportConversations = store.supportConversations.filter(
@@ -3752,7 +3776,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
 
   for (const carrier of supportedPartnerCarriers) {
     await (tx as any).partnerCarrier.upsert({
-      where: { id: carrier.id },
+      where: { slug: carrier.slug },
       update: {
         name: carrier.name,
         slug: carrier.slug,
@@ -3768,7 +3792,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         updatedAt: new Date(carrier.updatedAt),
       },
       create: {
-        id: carrier.id,
+        id: isUuid(carrier.id) ? carrier.id : crypto.randomUUID(),
         name: carrier.name,
         slug: carrier.slug,
         type: carrier.type,
@@ -3787,10 +3811,11 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   }
 
   for (const location of supportedPartnerHandoffLocations) {
+    const resolvedPartnerCarrierId = partnerCarrierIdMap.get(location.partnerCarrierId) ?? location.partnerCarrierId;
     await (tx as any).partnerHandoffLocation.upsert({
       where: { id: location.id },
       update: {
-        partnerCarrierId: location.partnerCarrierId,
+        partnerCarrierId: resolvedPartnerCarrierId,
         name: location.name,
         parish: location.parish,
         town: location.town,
@@ -3801,7 +3826,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
       },
       create: {
         id: location.id,
-        partnerCarrierId: location.partnerCarrierId,
+        partnerCarrierId: resolvedPartnerCarrierId,
         name: location.name,
         parish: location.parish,
         town: location.town,
@@ -3815,6 +3840,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   }
 
   for (const plan of supportedDeliveryTransferPlans) {
+    const resolvedTransferPartnerId = partnerCarrierIdMap.get(plan.transferPartnerId) ?? plan.transferPartnerId;
     await (tx as any).deliveryTransferPlan.upsert({
       where: { id: plan.id },
       update: {
@@ -3823,7 +3849,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         originParish: plan.originParish,
         destinationParish: plan.destinationParish,
         destinationTown: plan.destinationTown ?? null,
-        transferPartnerId: plan.transferPartnerId,
+        transferPartnerId: resolvedTransferPartnerId,
         originHandoffLocationId:
           plan.originHandoffLocationId && supportedPartnerHandoffLocationIds.has(plan.originHandoffLocationId)
             ? plan.originHandoffLocationId
@@ -3846,7 +3872,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         originParish: plan.originParish,
         destinationParish: plan.destinationParish,
         destinationTown: plan.destinationTown ?? null,
-        transferPartnerId: plan.transferPartnerId,
+        transferPartnerId: resolvedTransferPartnerId,
         originHandoffLocationId:
           plan.originHandoffLocationId && supportedPartnerHandoffLocationIds.has(plan.originHandoffLocationId)
             ? plan.originHandoffLocationId
@@ -3913,11 +3939,12 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   }
 
   for (const event of supportedPartnerTrackingEvents) {
+    const resolvedPartnerCarrierId = partnerCarrierIdMap.get(event.partnerCarrierId) ?? event.partnerCarrierId;
     await (tx as any).partnerTrackingEvent.upsert({
       where: { id: event.id },
       update: {
         deliveryLegId: event.deliveryLegId,
-        partnerCarrierId: event.partnerCarrierId,
+        partnerCarrierId: resolvedPartnerCarrierId,
         externalTrackingReference: event.externalTrackingReference ?? null,
         rawStatus: event.rawStatus,
         normalizedStatus: event.normalizedStatus,
@@ -3928,7 +3955,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
       create: {
         id: event.id,
         deliveryLegId: event.deliveryLegId,
-        partnerCarrierId: event.partnerCarrierId,
+        partnerCarrierId: resolvedPartnerCarrierId,
         externalTrackingReference: event.externalTrackingReference ?? null,
         rawStatus: event.rawStatus,
         normalizedStatus: event.normalizedStatus,
