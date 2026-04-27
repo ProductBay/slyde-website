@@ -2009,9 +2009,18 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
     (announcement) => !announcement.publishedByUserId || supportedUserIds.has(announcement.publishedByUserId),
   );
   const supportedEmployeeGuides = dedupeEmployeeGuidesForPrisma(store.employeeGuides);
-  const supportedEmployeeGuideAcknowledgements = store.employeeGuideAcknowledgements;
-  const supportedEmployeePayrollRecords = store.employeePayrollRecords;
-  const supportedEmployeePayoutRecords = store.employeePayoutRecords;
+  const supportedEmployeeGuideIds = new Set(supportedEmployeeGuides.map((guide) => guide.id));
+  const supportedEmployeeGuideAcknowledgements = store.employeeGuideAcknowledgements.filter(
+    (acknowledgement) =>
+      supportedEmployeeGuideIds.has(acknowledgement.guideId) &&
+      supportedEmployeeProfiles.some((profile) => profile.id === acknowledgement.employeeProfileId),
+  );
+  const supportedEmployeePayrollRecords = store.employeePayrollRecords.filter((record) =>
+    supportedEmployeeProfiles.some((profile) => profile.id === record.employeeProfileId),
+  );
+  const supportedEmployeePayoutRecords = store.employeePayoutRecords.filter((record) =>
+    supportedEmployeeProfiles.some((profile) => profile.id === record.employeeProfileId),
+  );
   const supportedPublicSlyderReferrals = store.publicSlyderReferrals;
   const supportedPublicReferralIds = new Set(supportedPublicSlyderReferrals.map((referral) => referral.id));
   const supportedReferralEvents = store.referralEvents.filter((event) => supportedPublicReferralIds.has(event.referralId));
