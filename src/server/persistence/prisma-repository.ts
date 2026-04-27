@@ -2780,7 +2780,13 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
 
   for (const template of supportedNotificationTemplates) {
     await tx.notificationTemplate.upsert({
-      where: { id: template.id },
+      where: {
+        key_version_channel: {
+          key: template.key,
+          version: template.version,
+          channel: template.channel,
+        },
+      },
       update: {
         key: template.key,
         name: template.name,
