@@ -1296,6 +1296,13 @@ function dedupeEmployeeProfilesForPrisma(profiles: EmployeeProfile[]) {
   }, []);
 }
 
+function dedupeEmployeeGuidesForPrisma(guides: EmployeeGuide[]) {
+  return guides.reduce<EmployeeGuide[]>((selected, guide) => {
+    const slug = guide.slug.trim().toLowerCase();
+    return [...selected.filter((existing) => existing.id === guide.id || existing.slug.trim().toLowerCase() !== slug), guide];
+  }, []);
+}
+
 async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<OnboardingStore> {
   const [
     users,
@@ -2001,7 +2008,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   const supportedEmployeeAnnouncements = store.employeeAnnouncements.filter(
     (announcement) => !announcement.publishedByUserId || supportedUserIds.has(announcement.publishedByUserId),
   );
-  const supportedEmployeeGuides = store.employeeGuides;
+  const supportedEmployeeGuides = dedupeEmployeeGuidesForPrisma(store.employeeGuides);
   const supportedEmployeeGuideAcknowledgements = store.employeeGuideAcknowledgements;
   const supportedEmployeePayrollRecords = store.employeePayrollRecords;
   const supportedEmployeePayoutRecords = store.employeePayoutRecords;
