@@ -1319,6 +1319,16 @@ function dedupeNotificationTemplatesForPrisma(templates: NotificationTemplate[])
   }, []);
 }
 
+function dedupeLegalDocumentsForPrisma(documents: LegalDocument[]) {
+  return documents.reduce<LegalDocument[]>((selected, document) => {
+    const slug = document.slug.trim().toLowerCase();
+    return [
+      ...selected.filter((existing) => existing.id === document.id || existing.slug.trim().toLowerCase() !== slug),
+      document,
+    ];
+  }, []);
+}
+
 async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<OnboardingStore> {
   const [
     users,
@@ -2058,9 +2068,25 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
     const resolvedTemplateId = notification.templateId ? notificationTemplateIdMap.get(notification.templateId) : undefined;
     return !resolvedTemplateId || supportedNotificationTemplateIds.has(resolvedTemplateId);
   });
-  const supportedLegalDocuments = store.legalDocuments;
-  const supportedLegalAcceptances = store.legalAcceptances;
-  const supportedLegalPublishHistory = store.legalPublishHistory;
+  const supportedLegalDocuments = dedupeLegalDocumentsForPrisma(store.legalDocuments);
+  const supportedLegalDocumentIds = new Set(supportedLegalDocuments.map((document) => document.id));
+  const legalDocumentIdMap = new Map<string, string>();
+  for (const document of store.legalDocuments) {
+    const canonicalDocument = supportedLegalDocuments.find(
+      (candidate) => candidate.slug.trim().toLowerCase() === document.slug.trim().toLowerCase(),
+    );
+    if (canonicalDocument) {
+      legalDocumentIdMap.set(document.id, canonicalDocument.id);
+    }
+  }
+  const supportedLegalAcceptances = store.legalAcceptances.filter((acceptance) => {
+    const resolvedDocumentId = legalDocumentIdMap.get(acceptance.documentId) ?? acceptance.documentId;
+    return supportedLegalDocumentIds.has(resolvedDocumentId);
+  });
+  const supportedLegalPublishHistory = store.legalPublishHistory.filter((historyItem) => {
+    const resolvedLegalDocumentId = legalDocumentIdMap.get(historyItem.legalDocumentId) ?? historyItem.legalDocumentId;
+    return supportedLegalDocumentIds.has(resolvedLegalDocumentId);
+  });
   const supportedCoverageZones = store.coverageZones;
   const supportedMerchantInterests = store.merchantInterests;
   const supportedMerchantLeads = store.merchantLeads;
@@ -3140,7 +3166,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
 
     for (const document of supportedLegalDocuments) {
     await tx.legalDocument.upsert({
-      where: { id: document.id },
+      where: { slug: document.slug },
       update: {
         documentType: document.documentType,
         categoryKey: document.categoryKey,
@@ -3187,12 +3213,13 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   }
 
   for (const acceptance of supportedLegalAcceptances) {
+    const resolvedDocumentId = legalDocumentIdMap.get(acceptance.documentId) ?? acceptance.documentId;
     await tx.legalAcceptance.upsert({
       where: { id: acceptance.id },
       update: {
         actorType: acceptance.actorType,
         actorId: acceptance.actorId,
-        documentId: acceptance.documentId,
+        documentId: resolvedDocumentId,
         documentType: acceptance.documentType,
         documentTitleSnapshot: acceptance.documentTitleSnapshot,
         documentVersion: acceptance.documentVersion,
@@ -3208,7 +3235,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         id: acceptance.id,
         actorType: acceptance.actorType,
         actorId: acceptance.actorId,
-        documentId: acceptance.documentId,
+        documentId: resolvedDocumentId,
         documentType: acceptance.documentType,
         documentTitleSnapshot: acceptance.documentTitleSnapshot,
         documentVersion: acceptance.documentVersion,
@@ -3225,10 +3252,11 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   }
 
   for (const historyItem of supportedLegalPublishHistory) {
+    const resolvedLegalDocumentId = legalDocumentIdMap.get(historyItem.legalDocumentId) ?? historyItem.legalDocumentId;
     await tx.legalDocumentPublishHistory.upsert({
       where: { id: historyItem.id },
       update: {
-        legalDocumentId: historyItem.legalDocumentId,
+        legalDocumentId: resolvedLegalDocumentId,
         action: historyItem.action,
         note: historyItem.note ?? null,
         actedBy: historyItem.actedBy ?? null,
@@ -3236,7 +3264,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
       },
       create: {
         id: historyItem.id,
-        legalDocumentId: historyItem.legalDocumentId,
+        legalDocumentId: resolvedLegalDocumentId,
         action: historyItem.action,
         note: historyItem.note ?? null,
         actedBy: historyItem.actedBy ?? null,
