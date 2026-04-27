@@ -1303,6 +1303,22 @@ function dedupeEmployeeGuidesForPrisma(guides: EmployeeGuide[]) {
   }, []);
 }
 
+function notificationTemplateCompositeKey(template: Pick<NotificationTemplate, "key" | "version" | "channel">) {
+  return `${template.key}::${template.version}::${template.channel}`;
+}
+
+function dedupeNotificationTemplatesForPrisma(templates: NotificationTemplate[]) {
+  return templates.reduce<NotificationTemplate[]>((selected, template) => {
+    const compositeKey = notificationTemplateCompositeKey(template);
+    return [
+      ...selected.filter(
+        (existing) => existing.id === template.id || notificationTemplateCompositeKey(existing) !== compositeKey,
+      ),
+      template,
+    ];
+  }, []);
+}
+
 async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<OnboardingStore> {
   const [
     users,
@@ -2026,9 +2042,22 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   const supportedReferralEvents = store.referralEvents.filter((event) => supportedPublicReferralIds.has(event.referralId));
   const supportedReferralRewards = store.referralRewards;
   const supportedReferralRewardAudits = store.referralRewardAudits;
-  const supportedNotificationTemplates = store.notificationTemplates;
+  const supportedNotificationTemplates = dedupeNotificationTemplatesForPrisma(store.notificationTemplates);
+  const supportedNotificationTemplateIds = new Set(supportedNotificationTemplates.map((template) => template.id));
+  const notificationTemplateIdMap = new Map<string, string>();
+  for (const template of store.notificationTemplates) {
+    const canonicalTemplate = supportedNotificationTemplates.find(
+      (candidate) => notificationTemplateCompositeKey(candidate) === notificationTemplateCompositeKey(template),
+    );
+    if (canonicalTemplate) {
+      notificationTemplateIdMap.set(template.id, canonicalTemplate.id);
+    }
+  }
   const supportedNotificationTriggers = store.notificationTriggers;
-  const supportedNotifications = store.notifications;
+  const supportedNotifications = store.notifications.filter((notification) => {
+    const resolvedTemplateId = notification.templateId ? notificationTemplateIdMap.get(notification.templateId) : undefined;
+    return !resolvedTemplateId || supportedNotificationTemplateIds.has(resolvedTemplateId);
+  });
   const supportedLegalDocuments = store.legalDocuments;
   const supportedLegalAcceptances = store.legalAcceptances;
   const supportedLegalPublishHistory = store.legalPublishHistory;
@@ -2853,10 +2882,11 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   }
 
   for (const notification of supportedNotifications) {
+    const resolvedTemplateId = notification.templateId ? notificationTemplateIdMap.get(notification.templateId) ?? null : null;
     await tx.notificationRecord.upsert({
       where: { id: notification.id },
       update: {
-        templateId: notification.templateId ?? null,
+        templateId: resolvedTemplateId,
         templateKey: notification.templateKey ?? null,
         triggerEventId: notification.triggerEventId ?? null,
         triggerEventKey: notification.triggerEventKey ?? null,
@@ -2892,7 +2922,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
       },
       create: {
         id: notification.id,
-        templateId: notification.templateId ?? null,
+        templateId: resolvedTemplateId,
         templateKey: notification.templateKey ?? null,
         triggerEventId: notification.triggerEventId ?? null,
         triggerEventKey: notification.triggerEventKey ?? null,
