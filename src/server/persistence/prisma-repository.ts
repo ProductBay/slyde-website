@@ -1329,6 +1329,20 @@ function dedupeLegalDocumentsForPrisma(documents: LegalDocument[]) {
   }, []);
 }
 
+function coverageZoneCompositeKey(zone: Pick<CoverageZone, "name" | "parish">) {
+  return `${zone.name.trim().toLowerCase()}::${zone.parish.trim().toLowerCase()}`;
+}
+
+function dedupeCoverageZonesForPrisma(zones: CoverageZone[]) {
+  return zones.reduce<CoverageZone[]>((selected, zone) => {
+    const compositeKey = coverageZoneCompositeKey(zone);
+    return [
+      ...selected.filter((existing) => existing.id === zone.id || coverageZoneCompositeKey(existing) !== compositeKey),
+      zone,
+    ];
+  }, []);
+}
+
 async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<OnboardingStore> {
   const [
     users,
@@ -2087,7 +2101,16 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
     const resolvedLegalDocumentId = legalDocumentIdMap.get(historyItem.legalDocumentId) ?? historyItem.legalDocumentId;
     return supportedLegalDocumentIds.has(resolvedLegalDocumentId);
   });
-  const supportedCoverageZones = store.coverageZones;
+  const supportedCoverageZones = dedupeCoverageZonesForPrisma(store.coverageZones);
+  const coverageZoneIdMap = new Map<string, string>();
+  for (const zone of store.coverageZones) {
+    const canonicalZone = supportedCoverageZones.find(
+      (candidate) => coverageZoneCompositeKey(candidate) === coverageZoneCompositeKey(zone),
+    );
+    if (canonicalZone) {
+      coverageZoneIdMap.set(zone.id, canonicalZone.id);
+    }
+  }
   const supportedMerchantInterests = store.merchantInterests;
   const supportedMerchantLeads = store.merchantLeads;
   const supportedMerchantLeadIds = new Set(supportedMerchantLeads.map((lead) => lead.id));
@@ -3275,7 +3298,12 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
 
   for (const zone of supportedCoverageZones) {
     await tx.coverageZone.upsert({
-      where: { id: zone.id },
+      where: {
+        name_parish: {
+          name: zone.name,
+          parish: zone.parish,
+        },
+      },
       update: {
         name: zone.name,
         parish: zone.parish,
@@ -3288,7 +3316,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         updatedAt: new Date(zone.updatedAt),
       },
       create: {
-        id: zone.id,
+        id: isUuid(zone.id) ? zone.id : crypto.randomUUID(),
         name: zone.name,
         parish: zone.parish,
         requiredReadySlyders: zone.requiredReadySlyders,
@@ -3304,6 +3332,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   }
 
   for (const merchant of supportedMerchantInterests) {
+    const resolvedZoneId = merchant.zoneId ? coverageZoneIdMap.get(merchant.zoneId) ?? merchant.zoneId : null;
     await tx.merchantInterest.upsert({
       where: { id: merchant.id },
       update: {
@@ -3318,7 +3347,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         goals: merchant.goals,
         parish: merchant.parish ?? null,
         town: merchant.town ?? null,
-        zoneId: merchant.zoneId ?? null,
+        zoneId: isUuid(resolvedZoneId) ? resolvedZoneId : null,
         zoneName: merchant.zoneName ?? null,
         operationalNotes: merchant.operationalNotes ?? null,
         lifecycleStatus: merchant.lifecycleStatus,
@@ -3338,7 +3367,7 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
         goals: merchant.goals,
         parish: merchant.parish ?? null,
         town: merchant.town ?? null,
-        zoneId: merchant.zoneId ?? null,
+        zoneId: isUuid(resolvedZoneId) ? resolvedZoneId : null,
         zoneName: merchant.zoneName ?? null,
         operationalNotes: merchant.operationalNotes ?? null,
         lifecycleStatus: merchant.lifecycleStatus,
