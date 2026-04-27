@@ -1257,6 +1257,45 @@ function mergeById<T extends { id: string }>(base: T[], overlay: T[]) {
   return Array.from(map.values());
 }
 
+function normalizeUniqueUserValue(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function dedupeUsersForPrisma(users: StoredUser[]) {
+  return users.reduce<StoredUser[]>((selected, user) => {
+    const email = normalizeUniqueUserValue(user.email);
+    const phone = normalizeUniqueUserValue(user.phone);
+    return [
+      ...selected.filter(
+        (existing) =>
+          existing.id === user.id ||
+          (
+            normalizeUniqueUserValue(existing.email) !== email &&
+            normalizeUniqueUserValue(existing.phone) !== phone
+          ),
+      ),
+      user,
+    ];
+  }, []);
+}
+
+function dedupeEmployeeProfilesForPrisma(profiles: EmployeeProfile[]) {
+  return profiles.reduce<EmployeeProfile[]>((selected, profile) => {
+    const employeeCode = normalizeUniqueUserValue(profile.employeeCode);
+    return [
+      ...selected.filter(
+        (existing) =>
+          existing.id === profile.id ||
+          (
+            existing.userId !== profile.userId &&
+            normalizeUniqueUserValue(existing.employeeCode) !== employeeCode
+          ),
+      ),
+      profile,
+    ];
+  }, []);
+}
+
 async function overlaySupportedPrismaSlices(store: OnboardingStore): Promise<OnboardingStore> {
   const [
     users,
@@ -1937,7 +1976,7 @@ async function overlayCriticalOnboardingPrismaSlices(store: OnboardingStore): Pr
 }
 
 async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: OnboardingStore) {
-  const supportedUsers = store.users;
+  const supportedUsers = dedupeUsersForPrisma(store.users);
   const supportedUserIds = new Set(supportedUsers.map((user) => user.id));
   const supportedActivationTokens = store.activationTokens.filter((token) => supportedUserIds.has(token.userId));
   const supportedOtpChallenges = store.otpChallenges.filter((challenge) => supportedUserIds.has(challenge.userId));
@@ -1957,9 +1996,11 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   const supportedHistory = store.history.filter(
     (item) => item.entityType === "application" || item.entityType === "user" || item.entityType === "slyder_profile",
   );
-  const supportedEmployeeProfiles = store.employeeProfiles;
+  const supportedEmployeeProfiles = dedupeEmployeeProfilesForPrisma(store.employeeProfiles);
   const supportedEmployeeApplications = store.employeeApplications;
-  const supportedEmployeeAnnouncements = store.employeeAnnouncements;
+  const supportedEmployeeAnnouncements = store.employeeAnnouncements.filter(
+    (announcement) => !announcement.publishedByUserId || supportedUserIds.has(announcement.publishedByUserId),
+  );
   const supportedEmployeeGuides = store.employeeGuides;
   const supportedEmployeeGuideAcknowledgements = store.employeeGuideAcknowledgements;
   const supportedEmployeePayrollRecords = store.employeePayrollRecords;
@@ -3974,6 +4015,82 @@ async function persistCriticalOnboardingPrismaSlices(tx: PrismaTransactionClient
       throw error;
     }
   };
+  const applicationIds = new Set(store.applications.map((application) => application.id));
+  const criticalNotificationTemplateKeys = new Set([
+    "slyder_application_received_email",
+    "slyder_application_received_whatsapp",
+  ]);
+  const criticalNotifications = store.notifications.filter(
+    (notification) =>
+      notification.applicationId &&
+      applicationIds.has(notification.applicationId) &&
+      criticalNotificationTemplateKeys.has(notification.templateKey || notification.template),
+  );
+  const criticalNotificationTriggerIds = new Set(
+    criticalNotifications.map((notification) => notification.triggerEventId).filter(Boolean),
+  );
+  const criticalNotificationTemplateIds = new Set(
+    criticalNotifications.map((notification) => notification.templateId).filter(Boolean),
+  );
+  const criticalNotificationTriggers = store.notificationTriggers.filter(
+    (trigger) =>
+      criticalNotificationTriggerIds.has(trigger.id) ||
+      (
+        trigger.relatedEntityType === "slyder_application" &&
+        Boolean(trigger.relatedEntityId) &&
+        applicationIds.has(trigger.relatedEntityId as string) &&
+        trigger.eventKey.startsWith("slyder_application_submitted:")
+      ),
+  );
+  const criticalNotificationTemplates = store.notificationTemplates.filter(
+    (template) =>
+      criticalNotificationTemplateIds.has(template.id) ||
+      criticalNotificationTemplateKeys.has(template.key),
+  );
+
+  // Persist users that are FK-referenced by applications (reviewedBy, linkedUserId) so that
+  // FK constraints are satisfied even when the full user sync did not run in this fallback path.
+  await persistSlice(async () => {
+    const referencedUserIds = new Set<string>();
+    for (const application of store.applications) {
+      if (application.reviewedBy) referencedUserIds.add(application.reviewedBy);
+      if (application.linkedUserId) referencedUserIds.add(application.linkedUserId);
+    }
+    const referencedUsers = store.users.filter((u) => referencedUserIds.has(u.id));
+    for (const user of referencedUsers) {
+      await tx.user.upsert({
+        where: { id: user.id },
+        update: {
+          email: user.email,
+          phone: user.phone,
+          fullName: user.fullName,
+          passwordHash: user.passwordHash ?? null,
+          roles: user.roles as any,
+          userType: user.userType as any,
+          accountStatus: user.accountStatus,
+          isEnabled: user.isEnabled,
+          activationIssuedAt: toDate(user.activationIssuedAt),
+          lastLoginAt: toDate(user.lastLoginAt),
+          updatedAt: new Date(user.updatedAt),
+        },
+        create: {
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          fullName: user.fullName,
+          passwordHash: user.passwordHash ?? null,
+          roles: user.roles as any,
+          userType: user.userType as any,
+          accountStatus: user.accountStatus,
+          isEnabled: user.isEnabled,
+          activationIssuedAt: toDate(user.activationIssuedAt),
+          lastLoginAt: toDate(user.lastLoginAt),
+          createdAt: new Date(user.createdAt),
+          updatedAt: new Date(user.updatedAt),
+        },
+      });
+    }
+  });
 
   await persistSlice(async () => {
     for (const application of store.applications) {
@@ -4162,44 +4279,159 @@ async function persistCriticalOnboardingPrismaSlices(tx: PrismaTransactionClient
   });
 
   await persistSlice(async () => {
-    for (const acceptance of store.legalAcceptances) {
-      await tx.legalAcceptance.upsert({
-        where: { id: acceptance.id },
+    for (const template of criticalNotificationTemplates) {
+      await tx.notificationTemplate.upsert({
+        where: {
+          key_version_channel: {
+            key: template.key,
+            version: template.version,
+            channel: template.channel,
+          },
+        },
         update: {
-          actorType: acceptance.actorType,
-          actorId: acceptance.actorId,
-          documentId: acceptance.documentId,
-          documentType: acceptance.documentType,
-          documentTitleSnapshot: acceptance.documentTitleSnapshot,
-          documentVersion: acceptance.documentVersion,
-          acceptedAt: new Date(acceptance.acceptedAt),
-          ipAddress: acceptance.ipAddress ?? null,
-          userAgent: acceptance.userAgent ?? null,
-          acceptanceSource: acceptance.acceptanceSource,
-          checkboxLabelSnapshot: acceptance.checkboxLabelSnapshot ?? null,
-          metadata: (acceptance.metadata ?? undefined) as any,
-          updatedAt: new Date(acceptance.updatedAt),
+          name: template.name,
+          actorType: template.actorType,
+          eventType: template.eventType,
+          subject: template.subject ?? null,
+          bodyTemplate: template.bodyTemplate,
+          plainTextTemplate: template.plainTextTemplate ?? null,
+          isActive: template.isActive,
+          locale: template.locale ?? null,
+          description: template.description ?? null,
+          updatedAt: new Date(template.updatedAt),
         },
         create: {
-          id: acceptance.id,
-          actorType: acceptance.actorType,
-          actorId: acceptance.actorId,
-          documentId: acceptance.documentId,
-          documentType: acceptance.documentType,
-          documentTitleSnapshot: acceptance.documentTitleSnapshot,
-          documentVersion: acceptance.documentVersion,
-          acceptedAt: new Date(acceptance.acceptedAt),
-          ipAddress: acceptance.ipAddress ?? null,
-          userAgent: acceptance.userAgent ?? null,
-          acceptanceSource: acceptance.acceptanceSource,
-          checkboxLabelSnapshot: acceptance.checkboxLabelSnapshot ?? null,
-          metadata: (acceptance.metadata ?? undefined) as any,
-          createdAt: new Date(acceptance.createdAt),
-          updatedAt: new Date(acceptance.updatedAt),
+          id: template.id,
+          key: template.key,
+          name: template.name,
+          actorType: template.actorType,
+          eventType: template.eventType,
+          channel: template.channel,
+          subject: template.subject ?? null,
+          bodyTemplate: template.bodyTemplate,
+          plainTextTemplate: template.plainTextTemplate ?? null,
+          isActive: template.isActive,
+          version: template.version,
+          locale: template.locale ?? null,
+          description: template.description ?? null,
+          createdAt: new Date(template.createdAt),
+          updatedAt: new Date(template.updatedAt),
         },
       });
     }
   });
+
+  await persistSlice(async () => {
+    for (const trigger of criticalNotificationTriggers) {
+      await tx.notificationTriggerEvent.upsert({
+        where: { eventKey: trigger.eventKey },
+        update: {
+          relatedEntityType: trigger.relatedEntityType ?? null,
+          relatedEntityId: trigger.relatedEntityId ?? null,
+          actorType: trigger.actorType ?? null,
+          actorId: trigger.actorId ?? null,
+          payload: (trigger.payload ?? undefined) as any,
+          status: trigger.status,
+          errorMessage: trigger.errorMessage ?? null,
+          updatedAt: new Date(trigger.updatedAt),
+        },
+        create: {
+          id: trigger.id,
+          eventKey: trigger.eventKey,
+          relatedEntityType: trigger.relatedEntityType ?? null,
+          relatedEntityId: trigger.relatedEntityId ?? null,
+          actorType: trigger.actorType ?? null,
+          actorId: trigger.actorId ?? null,
+          payload: (trigger.payload ?? undefined) as any,
+          status: trigger.status,
+          errorMessage: trigger.errorMessage ?? null,
+          createdAt: new Date(trigger.createdAt),
+          updatedAt: new Date(trigger.updatedAt),
+        },
+      });
+    }
+  });
+
+  await persistSlice(async () => {
+    for (const notification of criticalNotifications) {
+      await tx.notificationRecord.upsert({
+        where: { id: notification.id },
+        update: {
+          templateId: null,
+          templateKey: notification.templateKey ?? null,
+          triggerEventId: notification.triggerEventId ?? null,
+          triggerEventKey: notification.triggerEventKey ?? null,
+          dedupeKey: notification.dedupeKey ?? null,
+          actorType: notification.actorType ?? null,
+          actorId: notification.actorId ?? null,
+          relatedEntityType: notification.relatedEntityType ?? null,
+          relatedEntityId: notification.relatedEntityId ?? null,
+          userId: notification.userId ?? null,
+          applicationId: notification.applicationId ?? null,
+          slyderProfileId: notification.slyderProfileId ?? null,
+          channel: notification.channel,
+          template: notification.template,
+          recipient: notification.recipient ?? null,
+          recipientName: notification.recipientName ?? null,
+          status: notification.status ?? null,
+          providerName: notification.providerName ?? null,
+          providerMessageId: notification.providerMessageId ?? null,
+          subjectSnapshot: notification.subjectSnapshot ?? null,
+          bodySnapshot: notification.bodySnapshot ?? null,
+          variablesSnapshot: (notification.variablesSnapshot ?? undefined) as any,
+          failureReason: notification.failureReason ?? null,
+          resentFromId: notification.resentFromId ?? null,
+          retryCount: notification.retryCount ?? null,
+          lastAttemptAt: toDate(notification.lastAttemptAt),
+          sentAt: toDate(notification.sentAt),
+          deliveredAt: toDate(notification.deliveredAt),
+          createdBySystem: notification.createdBySystem ?? null,
+          triggeredByUserId: notification.triggeredByUserId ?? null,
+          metadata: (notification.metadata ?? undefined) as any,
+          payload: notification.payload as any,
+          updatedAt: toDate(notification.updatedAt),
+        },
+        create: {
+          id: notification.id,
+          templateId: null,
+          templateKey: notification.templateKey ?? null,
+          triggerEventId: notification.triggerEventId ?? null,
+          triggerEventKey: notification.triggerEventKey ?? null,
+          dedupeKey: notification.dedupeKey ?? null,
+          actorType: notification.actorType ?? null,
+          actorId: notification.actorId ?? null,
+          relatedEntityType: notification.relatedEntityType ?? null,
+          relatedEntityId: notification.relatedEntityId ?? null,
+          userId: notification.userId ?? null,
+          applicationId: notification.applicationId ?? null,
+          slyderProfileId: notification.slyderProfileId ?? null,
+          channel: notification.channel,
+          template: notification.template,
+          recipient: notification.recipient ?? null,
+          recipientName: notification.recipientName ?? null,
+          status: notification.status ?? null,
+          providerName: notification.providerName ?? null,
+          providerMessageId: notification.providerMessageId ?? null,
+          subjectSnapshot: notification.subjectSnapshot ?? null,
+          bodySnapshot: notification.bodySnapshot ?? null,
+          variablesSnapshot: (notification.variablesSnapshot ?? undefined) as any,
+          failureReason: notification.failureReason ?? null,
+          resentFromId: notification.resentFromId ?? null,
+          retryCount: notification.retryCount ?? null,
+          lastAttemptAt: toDate(notification.lastAttemptAt),
+          sentAt: toDate(notification.sentAt),
+          deliveredAt: toDate(notification.deliveredAt),
+          createdBySystem: notification.createdBySystem ?? null,
+          triggeredByUserId: notification.triggeredByUserId ?? null,
+          metadata: (notification.metadata ?? undefined) as any,
+          payload: notification.payload as any,
+          createdAt: new Date(notification.createdAt),
+          updatedAt: toDate(notification.updatedAt),
+        },
+      });
+    }
+  });
+
 }
 
 function isMissingPrismaTableError(error: unknown) {
@@ -4217,7 +4449,12 @@ function shouldFallbackToCriticalOnboardingPersist(error: unknown) {
 
   const candidate = error as {
     code?: unknown;
-    meta?: { modelName?: unknown; cause?: unknown; driverAdapterError?: { cause?: { message?: unknown } } };
+    meta?: {
+      modelName?: unknown;
+      cause?: unknown;
+      target?: unknown;
+      driverAdapterError?: { cause?: { message?: unknown } };
+    };
   };
 
   if (candidate.code === "P2021") {
@@ -4225,6 +4462,15 @@ function shouldFallbackToCriticalOnboardingPersist(error: unknown) {
   }
 
   if (candidate.code === "P2007" && candidate.meta?.modelName === "NotificationTemplate") {
+    return true;
+  }
+
+  if (
+    candidate.code === "P2002" &&
+    candidate.meta?.modelName === "User" &&
+    Array.isArray(candidate.meta.target) &&
+    candidate.meta.target.every((field) => field === "email" || field === "phone")
+  ) {
     return true;
   }
 
@@ -4269,6 +4515,17 @@ export class PrismaRepository implements PersistenceRepository {
         await persistCriticalOnboardingPrismaSlices(tx as PrismaTransactionClient, store);
       });
     }
+
+    return result;
+  }
+
+  async criticalOnboardingTransaction<T>(mutator: (store: OnboardingStore) => Promise<T> | T): Promise<T> {
+    const store = await this.readSnapshot();
+    const result = await mutator(store);
+
+    await prisma.$transaction(async (tx) => {
+      await persistCriticalOnboardingPrismaSlices(tx as PrismaTransactionClient, store);
+    });
 
     return result;
   }
