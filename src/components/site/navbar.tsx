@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
 import { navItems } from "@/content/site";
@@ -92,6 +92,7 @@ function hasActiveChild(pathname: string, href: string) {
 }
 
 export function Navbar() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mobileSubmenu, setMobileSubmenu] = useState<string | null>(null);
   const [dailyIndex, setDailyIndex] = useState(0);
@@ -174,6 +175,16 @@ export function Navbar() {
     .join("");
   const identityPath = authProfile?.accountPath || "/account";
   const showIdentityChip = Boolean(authProfile?.authenticated && authProfile.user);
+
+  const handleUserSignOut = async () => {
+    try {
+      await fetch("/api/auth/user/logout", { method: "POST" });
+    } finally {
+      setAuthProfile(null);
+      router.push("/login");
+      router.refresh();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,248,252,0.9))] shadow-[0_16px_44px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl">
@@ -391,31 +402,73 @@ export function Navbar() {
         <div className="hidden items-center gap-2 xl:flex">
           {showIdentityChip ? (
             <>
-              <Link
-                href={identityPath}
-                className="group relative flex h-11 items-center gap-2.5 overflow-hidden rounded-full border border-slate-200/90 bg-white/95 px-2.5 pr-4 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] transition hover:border-sky-200 hover:shadow-[0_22px_44px_-26px_rgba(14,116,144,0.35)]"
-              >
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(2,132,199,0.08),rgba(34,197,94,0.06)_45%,rgba(249,115,22,0.06))] opacity-0 transition duration-300 group-hover:opacity-100"
-                />
-                <span className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-900 text-[10px] font-semibold text-white">
-                  {authProfile?.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={authProfile.avatarUrl} alt={identityName} className="h-full w-full object-cover" />
-                  ) : (
-                    identityInitials || "SM"
-                  )}
-                </span>
-                <span className="relative min-w-0">
-                  <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700">
-                    Signed In
+              <div className="group relative">
+                <Link
+                  href={identityPath}
+                  className="group relative flex h-11 items-center gap-2.5 overflow-hidden rounded-full border border-slate-200/90 bg-white/95 px-2.5 pr-3.5 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] transition hover:border-sky-200 hover:shadow-[0_22px_44px_-26px_rgba(14,116,144,0.35)]"
+                >
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(2,132,199,0.08),rgba(34,197,94,0.06)_45%,rgba(249,115,22,0.06))] opacity-0 transition duration-300 group-hover:opacity-100"
+                  />
+                  <span className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-900 text-[10px] font-semibold text-white">
+                    {authProfile?.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={authProfile.avatarUrl} alt={identityName} className="h-full w-full object-cover" />
+                    ) : (
+                      identityInitials || "SM"
+                    )}
                   </span>
-                  <span className="block max-w-[11rem] truncate text-xs font-semibold text-slate-900">
-                    {identityName}
+                  <span className="relative min-w-0">
+                    <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+                      Signed In
+                    </span>
+                    <span className="block max-w-[11rem] truncate text-xs font-semibold text-slate-900">
+                      {identityName}
+                    </span>
                   </span>
-                </span>
-              </Link>
+                  <ChevronDown className="relative h-3.5 w-3.5 text-slate-400 transition group-hover:text-slate-700" />
+                </Link>
+
+                <div className="pointer-events-none absolute right-0 top-full z-50 w-[18.5rem] pt-2 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                  <div className="rounded-[1.1rem] border border-slate-200/80 bg-white/95 p-2 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.3)] backdrop-blur-xl">
+                    <div className="mb-1 flex items-center gap-2.5 rounded-[0.9rem] border border-slate-100 bg-slate-50 px-3 py-2">
+                      <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-900 text-[10px] font-semibold text-white">
+                        {authProfile?.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={authProfile.avatarUrl} alt={identityName} className="h-full w-full object-cover" />
+                        ) : (
+                          identityInitials || "SM"
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-xs font-semibold text-slate-900">{identityName}</span>
+                        <span className="block truncate text-[11px] text-slate-500">{authProfile?.user?.email}</span>
+                      </span>
+                    </div>
+
+                    <Link href={identityPath} className="block rounded-[0.8rem] px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-950">
+                      My account
+                    </Link>
+                    <Link href="/account" className="block rounded-[0.8rem] px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-950">
+                      Profile and settings
+                    </Link>
+                    <Link href="/support?topic=password-reset" className="block rounded-[0.8rem] px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-950">
+                      Help and password reset
+                    </Link>
+
+                    <div className="my-1 h-px bg-slate-100" />
+
+                    <button
+                      type="button"
+                      onClick={handleUserSignOut}
+                      className="block w-full rounded-[0.8rem] px-3 py-2 text-left text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              </div>
               <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
                 Partner with SLYDE <ArrowUpRight className="h-4 w-4" />
               </LinkButton>
