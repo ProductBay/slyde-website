@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { getLocalAdminFallbackContext, requireAdminContext } from "@/server/auth/guards";
+import { getSessionContext } from "@/server/auth/session";
 import { getUploadsRoot, normalizeUploadPathSegments, resolveUploadPath } from "@/server/uploads/storage";
 
 function contentTypeForFile(filePath: string) {
@@ -28,6 +29,37 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ path: string[] }> },
 ) {
+  const { path: pathSegments } = await context.params;
+  const safeSegments = normalizeUploadPathSegments(pathSegments);
+  const isUserAvatarPath = safeSegments[0] === "user-avatars";
+
+  if (isUserAvatarPath) {
+    const session = await getSessionContext();
+    const requestedUserId = safeSegments[1];
+
+    if (session?.user?.isEnabled && requestedUserId === session.user.id) {
+      try {
+        const absolutePath = resolveUploadPath(safeSegments);
+        const file = await readFile(absolutePath);
+
+        return new NextResponse(file, {
+          headers: {
+            "Content-Type": contentTypeForFile(absolutePath),
+            "Cache-Control": "private, max-age=60",
+          },
+        });
+      } catch {
+        return new NextResponse("Avatar file not available", {
+          status: 404,
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+    }
+  }
+
   let adminContext = await requireAdminContext();
 
   if (adminContext instanceof NextResponse) {
@@ -40,10 +72,7 @@ export async function GET(
 
   if (adminContext instanceof NextResponse) return adminContext;
 
-  const { path: pathSegments } = await context.params;
-
   try {
-    const safeSegments = normalizeUploadPathSegments(pathSegments);
     const absolutePath = resolveUploadPath(safeSegments);
     const file = await readFile(absolutePath);
 
