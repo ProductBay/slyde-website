@@ -148,9 +148,7 @@ export async function loginSlyder(identifier: string, password: string) {
 
 export async function resendSlyderOtp(challengeId: string) {
   return withPersistenceTransaction(async (store) => {
-    const challenge = store.otpChallenges.find(
-      (item) => item.id === challengeId && !item.consumedAt && new Date(item.expiresAt) > new Date(),
-    );
+    const challenge = store.otpChallenges.find((item) => item.id === challengeId);
     if (!challenge) {
       throw new Error("OTP challenge is invalid or expired. Start sign-in again.");
     }
@@ -160,13 +158,19 @@ export async function resendSlyderOtp(challengeId: string) {
       throw new Error("Linked Slyder account not found");
     }
 
-    challenge.consumedAt = nowIso();
+    const priorChallengeConsumed = Boolean(challenge.consumedAt);
+    const priorChallengeExpired = new Date(challenge.expiresAt) <= new Date();
+    challenge.consumedAt = challenge.consumedAt ?? nowIso();
 
     appendAuditEvent(store, {
       entityType: "user",
       entityId: user.id,
       eventType: "otp_challenge_resent",
-      metadata: { priorChallengeId: challengeId },
+      metadata: {
+        priorChallengeId: challengeId,
+        priorChallengeExpired,
+        priorChallengeConsumed,
+      },
     });
 
     return issueOtpChallenge(store, user.id);
