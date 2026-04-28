@@ -1,6 +1,6 @@
 import { findApplication, findLatestActivationTokenForUser, findProfileByUserId, findUserById, upsertSlyderProfile, upsertUser } from "@/modules/onboarding/repositories/onboarding.repository";
 import { evaluateSlyderOperationalEligibility } from "@/modules/onboarding/services/readiness.service";
-import type { LegalDocumentType, OnboardingStore } from "@/types/backend/onboarding";
+import type { LegalDocumentType, OnboardingStore, SetupStatusResponse } from "@/types/backend/onboarding";
 import type {
   CompleteSetupInput,
   SlyderActivationLegalAcceptanceInput,
@@ -95,6 +95,72 @@ function buildCompletionSummary(status: {
     headline: "Almost there",
     body: "You still have setup or readiness items to complete before SLYDE can enable your account for operations.",
   };
+}
+
+async function sendSlyderOnboardingCompletedEmailIfNeeded(
+  store: OnboardingStore,
+  userId: string,
+  status: SetupStatusResponse,
+) {
+  const user = findUserById(store, userId);
+  const profile = findProfileByUserId(store, userId);
+  if (!user || !profile) {
+    return;
+  }
+
+  const application = findApplication(store, profile.applicationId);
+  if (!application) {
+    return;
+  }
+
+  const userControlledCompletionReached =
+    Boolean(status.activationCompleted) &&
+    (status.pendingLegalDocuments?.length ?? 0) === 0 &&
+    Boolean(status.setupCompletedAt) &&
+    status.readinessChecklist.overallStatus === "passed";
+
+  if (!userControlledCompletionReached) {
+    return;
+  }
+
+  const websiteBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://slydenetwork.com";
+  const onboardingUrl = `${websiteBaseUrl}/slyder/onboarding/welcome`;
+  const completionSummary = buildCompletionSummary(status);
+
+  const result = await sendTemplateNotificationInStore(store, {
+    templateKey: "slyder_onboarding_completed_email",
+    actorType: "slyder_user",
+    actorId: user.id,
+    userId: user.id,
+    slyderProfileId: profile.id,
+    applicationId: application.id,
+    relatedEntityType: "slyder_profile",
+    relatedEntityId: profile.id,
+    recipient: user.email,
+    recipientName: profile.displayName,
+    variables: {
+      fullName: profile.displayName,
+      completionHeadline: completionSummary.headline,
+      completionBody: completionSummary.body,
+      zoneName: status.zoneName || application.preferredZones[0] || application.parish,
+      onboardingUrl,
+    },
+    payload: {
+      onboardingUrl,
+      completionHeadline: completionSummary.headline,
+      completionBody: completionSummary.body,
+      eligibilityState: status.eligibilityState,
+    },
+    dedupeKey: `slyder_onboarding_completed:email:${user.id}:${application.id}`,
+  });
+
+  appendAuditEvent(store, {
+    entityType: "slyder_profile",
+    entityId: profile.id,
+    eventType: "onboarding_completed_email_sent",
+    actorUserId: user.id,
+    metadata: { notificationId: result.id, applicationId: application.id },
+  });
 }
 
 export async function getSlyderOnboardingStatus(userId: string) {
@@ -266,7 +332,9 @@ export async function updateSlyderOnboardingSetup(userId: string, payload: Slyde
       metadata: payload as Record<string, unknown>,
     });
 
-    return evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
+    const status = evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
+    await sendSlyderOnboardingCompletedEmailIfNeeded(store, userId, status);
+    return status;
   });
 }
 
@@ -350,7 +418,9 @@ export async function updateSlyderReadiness(userId: string, payload: SlyderReadi
       metadata: payload as Record<string, unknown>,
     });
 
-    return evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
+    const status = evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
+    await sendSlyderOnboardingCompletedEmailIfNeeded(store, userId, status);
+    return status;
   });
 }
 
