@@ -43,13 +43,20 @@ const vehicleSchema = z.object({
 });
 
 const applicationDocumentsSchema = z.object({
-  nationalId: z.array(documentInputSchema).min(1, "National ID is required"),
+  nationalId: z.array(documentInputSchema).default([]),
   driversLicense: z.array(documentInputSchema).default([]),
   vehicleRegistration: z.array(documentInputSchema).default([]),
   insurance: z.array(documentInputSchema).default([]),
   fitness: z.array(documentInputSchema).default([]),
-  profilePhoto: z.array(documentInputSchema).min(1, "Profile photo is required"),
+  profilePhoto: z.array(documentInputSchema).default([]),
   supporting: z.array(documentInputSchema).default([]),
+});
+
+const documentDeclarationsSchema = z.object({
+  hasValidDriversLicense: z.boolean(),
+  hasValidVehicleRegistration: z.boolean(),
+  hasValidInsurance: z.boolean(),
+  hasValidFitness: z.boolean(),
 });
 
 const agreementsSchema = z.object({
@@ -86,6 +93,7 @@ export const publicSlyderApplicationSchema = z
       courierType: z.enum(courierTypes),
     }),
     vehicle: vehicleSchema,
+    documentDeclarations: documentDeclarationsSchema,
     documents: applicationDocumentsSchema,
     preferences: z.object({
       zones: z.array(z.string().trim()).min(1, "Select at least one preferred zone"),
@@ -110,23 +118,6 @@ export const publicSlyderApplicationSchema = z
   })
   .superRefine((input, ctx) => {
     const needsVehicle = ["motorcycle", "car", "van", "other"].includes(input.courier.courierType);
-    const needsLicense = ["motorcycle", "car", "van"].includes(input.courier.courierType);
-
-    if (needsLicense && input.documents.driversLicense.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["documents", "driversLicense"],
-        message: "Driver's license is required for this courier type",
-      });
-    }
-
-    if (needsVehicle && input.documents.vehicleRegistration.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["documents", "vehicleRegistration"],
-        message: "Vehicle registration is required for this courier type",
-      });
-    }
 
     if (needsVehicle && !Object.values(input.vehicle).some(Boolean)) {
       ctx.addIssue({
@@ -176,6 +167,7 @@ export const publicSlyderApplicationSchema = z
         insulatedBag: input.readiness.insulatedBag,
         helmetReady: input.readiness.helmetReady,
         readinessNotes: input.readiness.readinessNotes ?? "",
+        documentDeclarations: input.documentDeclarations,
       },
       agreementsAccepted: input.agreements,
       documents: input.documents,

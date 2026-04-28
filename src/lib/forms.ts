@@ -29,19 +29,6 @@ export const deliveryPreferences = [
 ] as const;
 
 const nonEmpty = (message: string) => z.string().trim().min(1, message);
-const relativeOrAbsoluteUrl = z.string().trim().refine(
-  (value) => value.startsWith("/") || /^https?:\/\//i.test(value),
-  "Invalid url",
-);
-
-const fileMetaSchema = z.object({
-  name: z.string(),
-  size: z.number(),
-  type: z.string(),
-  fileUrl: relativeOrAbsoluteUrl.optional(),
-  storageKey: z.string().trim().optional(),
-});
-
 const referralSchema = z.object({
   referralCode: z.string().trim().optional(),
   inviteToken: z.string().trim().optional(),
@@ -74,14 +61,28 @@ export const slyderApplicationSchema = z.object({
     insuranceExpiry: z.string().trim(),
     fitnessExpiry: z.string().trim(),
   }),
+  documentDeclarations: z.object({
+    hasValidDriversLicense: z.boolean(),
+    hasValidVehicleRegistration: z.boolean(),
+    hasValidInsurance: z.boolean(),
+    hasValidFitness: z.boolean(),
+  }),
   documents: z.object({
-    nationalId: z.array(fileMetaSchema).min(1, "Upload at least one ID file"),
-    driversLicense: z.array(fileMetaSchema).default([]),
-    vehicleRegistration: z.array(fileMetaSchema).default([]),
-    insurance: z.array(fileMetaSchema).default([]),
-    fitness: z.array(fileMetaSchema).default([]),
-    profilePhoto: z.array(fileMetaSchema).min(1, "Upload a profile photo"),
-    supporting: z.array(fileMetaSchema).default([]),
+    nationalId: z.array(z.unknown()).default([]),
+    driversLicense: z.array(z.unknown()).default([]),
+    vehicleRegistration: z.array(z.unknown()).default([]),
+    insurance: z.array(z.unknown()).default([]),
+    fitness: z.array(z.unknown()).default([]),
+    profilePhoto: z.array(z.unknown()).default([]),
+    supporting: z.array(z.unknown()).default([]),
+  }).default({
+    nationalId: [],
+    driversLicense: [],
+    vehicleRegistration: [],
+    insurance: [],
+    fitness: [],
+    profilePhoto: [],
+    supporting: [],
   }),
   preferences: z.object({
     zones: z.array(z.string()).min(1, "Select at least one zone"),

@@ -58,17 +58,13 @@ export function hasAllRequiredDocumentApprovals(store: OnboardingStore, applicat
   return requiredDocumentTypesForApplication(application).every((type) => approved.has(type));
 }
 
-export function canApproveApplication(store: OnboardingStore, application: SlyderApplication) {
+export function canApproveApplication(_store: OnboardingStore, application: SlyderApplication) {
   if (application.applicationStatus === "rejected") {
     return { ok: false as const, reason: "Rejected applications cannot be approved" };
   }
 
   if (!application.agreementsAccepted.platformTermsAcceptance || !application.agreementsAccepted.privacyConsent) {
     return { ok: false as const, reason: "Required agreements are missing" };
-  }
-
-  if (!hasAllRequiredDocumentRecords(store, application)) {
-    return { ok: false as const, reason: "Application is missing required documents" };
   }
 
   return { ok: true as const };

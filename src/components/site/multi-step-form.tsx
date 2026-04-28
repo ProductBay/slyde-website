@@ -5,7 +5,6 @@ import { startTransition, useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { courierTypes, deliveryPreferences, slyderApplicationSchema, type SlyderApplicationDraft } from "@/lib/forms";
-import { FileUploadField, type FileMeta } from "@/components/site/file-upload-field";
 import { StepIndicator } from "@/components/site/step-indicator";
 import { TurnstileWidget } from "@/components/site/turnstile-widget";
 
@@ -36,20 +35,6 @@ const peakHourOptions = ["Lunch rush", "Dinner rush", "Late evenings", "Weekend 
 const travelComfortOptions = ["Up to 5 km", "Up to 10 km", "Up to 15 km", "Cross-town", "Cross-parish"] as const;
 const smartphoneTypeOptions = ["Android", "iPhone"] as const;
 const vehicleColorOptions = ["Black", "White", "Silver", "Grey", "Blue", "Red", "Other"] as const;
-
-type DocumentAiExtraction = {
-  personal: {
-    fullName: string;
-    dateOfBirth: string;
-    trn: string;
-    address: string;
-  };
-  readiness: {
-    smartphoneType: string;
-  };
-  confidence: number;
-  extractedSummary: string;
-};
 
 const stepTitles = [
   "Personal",
@@ -85,6 +70,12 @@ const defaultDraft: SlyderApplicationDraft = {
     registrationExpiry: "",
     insuranceExpiry: "",
     fitnessExpiry: "",
+  },
+  documentDeclarations: {
+    hasValidDriversLicense: false,
+    hasValidVehicleRegistration: false,
+    hasValidInsurance: false,
+    hasValidFitness: false,
   },
   documents: {
     nationalId: [],
@@ -133,29 +124,6 @@ function requiresVehicle(courierType: SlyderApplicationDraft["courier"]["courier
   return courierType === "motorcycle" || courierType === "car" || courierType === "van" || courierType === "other";
 }
 
-function requiresDriversLicense(courierType: SlyderApplicationDraft["courier"]["courierType"]) {
-  return courierType === "motorcycle" || courierType === "car" || courierType === "van";
-}
-
-function sanitizeUploadedFiles(files: FileMeta[]) {
-  return files.filter((file) => Boolean(file.fileUrl && file.storageKey));
-}
-
-function sanitizeDraftDocuments(draft: SlyderApplicationDraft): SlyderApplicationDraft {
-  return {
-    ...draft,
-    documents: {
-      nationalId: sanitizeUploadedFiles(draft.documents.nationalId),
-      driversLicense: sanitizeUploadedFiles(draft.documents.driversLicense),
-      vehicleRegistration: sanitizeUploadedFiles(draft.documents.vehicleRegistration),
-      insurance: sanitizeUploadedFiles(draft.documents.insurance),
-      fitness: sanitizeUploadedFiles(draft.documents.fitness),
-      profilePhoto: sanitizeUploadedFiles(draft.documents.profilePhoto),
-      supporting: sanitizeUploadedFiles(draft.documents.supporting),
-    },
-  };
-}
-
 function validateStep(step: number, draft: SlyderApplicationDraft) {
   switch (step) {
     case 0:
@@ -165,17 +133,8 @@ function validateStep(step: number, draft: SlyderApplicationDraft) {
     case 2:
       if (!requiresVehicle(draft.courier.courierType)) return { success: true } as const;
       return slyderApplicationSchema.shape.vehicle.safeParse(draft.vehicle);
-    case 3: {
-      const base = slyderApplicationSchema.shape.documents.safeParse(draft.documents);
-      if (!base.success) return base;
-      if (requiresDriversLicense(draft.courier.courierType) && draft.documents.driversLicense.length === 0) {
-        return { success: false, error: { issues: [{ path: ["driversLicense"], message: "Driver's license is required" }] } };
-      }
-      if (requiresVehicle(draft.courier.courierType) && draft.documents.vehicleRegistration.length === 0) {
-        return { success: false, error: { issues: [{ path: ["vehicleRegistration"], message: "Vehicle registration is required" }] } };
-      }
-      return { success: true } as const;
-    }
+    case 3:
+      return slyderApplicationSchema.shape.documentDeclarations.safeParse(draft.documentDeclarations);
     case 4:
       return slyderApplicationSchema.shape.preferences.safeParse(draft.preferences);
     case 5:
@@ -358,16 +317,13 @@ export function MultiStepForm() {
   const [aiAssistInput, setAiAssistInput] = useState("");
   const [aiAssistMessage, setAiAssistMessage] = useState<string | null>(null);
   const [zoneSearch, setZoneSearch] = useState("");
-  const [docExtractPending, setDocExtractPending] = useState(false);
-  const [docExtractError, setDocExtractError] = useState<string | null>(null);
-  const [docExtractResult, setDocExtractResult] = useState<DocumentAiExtraction | null>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
     try {
-      setDraft(sanitizeDraftDocuments({ ...defaultDraft, ...JSON.parse(saved) }));
+      setDraft({ ...defaultDraft, ...JSON.parse(saved) });
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
     }
@@ -396,16 +352,6 @@ export function MultiStepForm() {
       },
     }));
   }, [draft.referral.landingPage, draft.referral.referralCode, draft.referral.inviteToken, draft.referral.capturedAt]);
-
-  function updateDocument(key: keyof SlyderApplicationDraft["documents"], files: FileMeta[]) {
-    setDraft((current) => ({
-      ...current,
-      documents: {
-        ...current.documents,
-        [key]: files,
-      },
-    }));
-  }
 
   function nextStep() {
     const result = validateStep(step, draft);
@@ -509,82 +455,6 @@ export function MultiStepForm() {
     setAiAssistMessage("AI Assist applied suggestions. Review and edit anything before continuing.");
   }
 
-  async function runDocumentAiExtraction() {
-    const candidateFiles = [
-      ...draft.documents.nationalId,
-      ...draft.documents.driversLicense,
-      ...draft.documents.vehicleRegistration,
-    ]
-      .filter((file) => Boolean(file.storageKey || file.fileUrl))
-      .slice(0, 4)
-      .map((file) => ({
-        name: file.name,
-        type: file.type,
-        fileUrl: file.fileUrl,
-        storageKey: file.storageKey,
-      }));
-
-    if (!candidateFiles.length) {
-      setDocExtractError("Upload at least one ID or license file before running AI extraction.");
-      return;
-    }
-
-    setDocExtractPending(true);
-    setDocExtractError(null);
-
-    try {
-      const response = await fetch("/api/public/slyder-intake-ai-extract", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(turnstileToken ? { "x-turnstile-token": turnstileToken } : {}),
-        },
-        body: JSON.stringify({ files: candidateFiles }),
-      });
-
-      const json = (await response.json().catch(() => null)) as
-        | { extracted?: DocumentAiExtraction; error?: string | { formErrors?: string[] } }
-        | null;
-
-      if (!response.ok || !json?.extracted) {
-        const message =
-          typeof json?.error === "string"
-            ? json.error
-            : json?.error?.formErrors?.[0] || "AI extraction failed. Please check your uploads and try again.";
-        setDocExtractError(message);
-        setDocExtractPending(false);
-        return;
-      }
-
-      setDocExtractResult(json.extracted);
-    } catch (error) {
-      setDocExtractError(error instanceof Error ? error.message : "AI extraction failed.");
-    } finally {
-      setDocExtractPending(false);
-    }
-  }
-
-  function applyDocumentExtraction() {
-    if (!docExtractResult) return;
-
-    setDraft((current) => ({
-      ...current,
-      personal: {
-        ...current.personal,
-        fullName: docExtractResult.personal.fullName || current.personal.fullName,
-        dateOfBirth: docExtractResult.personal.dateOfBirth || current.personal.dateOfBirth,
-        trn: docExtractResult.personal.trn || current.personal.trn,
-        address: docExtractResult.personal.address || current.personal.address,
-      },
-      readiness: {
-        ...current.readiness,
-        smartphoneType: docExtractResult.readiness.smartphoneType || current.readiness.smartphoneType,
-      },
-    }));
-
-    setDocExtractError(null);
-  }
-
   async function submitApplication() {
     if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !turnstileToken) {
       setSubmitError("Complete the bot protection check before submitting.");
@@ -652,7 +522,6 @@ export function MultiStepForm() {
   }
 
   const vehicleRequired = requiresVehicle(draft.courier.courierType);
-  const licenseRequired = requiresDriversLicense(draft.courier.courierType);
   const filteredZones = serviceZones.filter((zone) => zone.toLowerCase().includes(zoneSearch.trim().toLowerCase()));
   const shouldShowAvailability = draft.preferences.zones.length > 0;
   const shouldShowScheduleDetails = shouldShowAvailability && Boolean(draft.preferences.availability);
@@ -765,7 +634,16 @@ export function MultiStepForm() {
               <Field label="Model" name="model" value={draft.vehicle.model} error={errors.model} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, model: value } }))} />
               <Field label="Year" name="year" value={draft.vehicle.year} error={errors.year} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, year: value } }))} />
               <SelectField label="Color" name="color" value={draft.vehicle.color} error={errors.color} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, color: value } }))} options={vehicleColorOptions} placeholder="Select color" />
-              <Field label="Plate number" name="plateNumber" value={draft.vehicle.plateNumber} error={errors.plateNumber} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, plateNumber: value } }))} />
+              <label className="field-shell">
+                <span className="field-label">Plate number</span>
+                <input
+                  name="plateNumber"
+                  value={draft.vehicle.plateNumber}
+                  className="field-input"
+                  disabled
+                  placeholder="Collected during final app onboarding"
+                />
+              </label>
               <Field label="Registration expiry" name="registrationExpiry" type="date" value={draft.vehicle.registrationExpiry} error={errors.registrationExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, registrationExpiry: value } }))} />
               <Field label="Insurance expiry" name="insuranceExpiry" type="date" value={draft.vehicle.insuranceExpiry} error={errors.insuranceExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, insuranceExpiry: value } }))} />
               <Field label="Fitness expiry" name="fitnessExpiry" type="date" value={draft.vehicle.fitnessExpiry} error={errors.fitnessExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, fitnessExpiry: value } }))} />
@@ -778,46 +656,57 @@ export function MultiStepForm() {
         ) : null}
 
         {step === 3 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            <FileUploadField label="Government-issued ID" required value={draft.documents.nationalId} error={errors.nationalId} onChange={(files) => updateDocument("nationalId", files)} />
-            <FileUploadField label="Profile photo" required value={draft.documents.profilePhoto} error={errors.profilePhoto} onChange={(files) => updateDocument("profilePhoto", files)} />
-            {licenseRequired ? <FileUploadField label="Driver's license" required value={draft.documents.driversLicense} error={errors.driversLicense} onChange={(files) => updateDocument("driversLicense", files)} /> : null}
-            {vehicleRequired ? <FileUploadField label="Vehicle registration" required value={draft.documents.vehicleRegistration} error={errors.vehicleRegistration} onChange={(files) => updateDocument("vehicleRegistration", files)} /> : null}
-            {vehicleRequired ? <FileUploadField label="Insurance" required value={draft.documents.insurance} error={errors.insurance} onChange={(files) => updateDocument("insurance", files)} /> : null}
-            {vehicleRequired ? <FileUploadField label="Fitness" required value={draft.documents.fitness} error={errors.fitness} onChange={(files) => updateDocument("fitness", files)} /> : null}
-            <div className="md:col-span-2">
-              <FileUploadField label="Other supporting documents" value={draft.documents.supporting} error={errors.supporting} onChange={(files) => updateDocument("supporting", files)} />
+          <div className="grid gap-4">
+            <div className="rounded-[1.5rem] border border-slate-200 bg-surface-1 p-4 sm:p-5">
+              <p className="text-sm font-semibold text-slate-950">Document readiness declaration</p>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                To protect sensitive information before launch, SLYDE does not collect document uploads at this stage.
+                Final document upload and verification happen inside the Slyder app onboarding flow after approval.
+              </p>
             </div>
-            <div className="md:col-span-2 rounded-[1.5rem] border border-slate-200 bg-surface-1 p-4 sm:p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">AI document extraction</p>
-                  <p className="mt-1 text-sm leading-7 text-slate-600">
-                    Pull candidate values from uploaded ID and license files with OCR + NLP, then confirm before applying.
-                  </p>
-                </div>
-                <Button type="button" variant="secondary" onClick={() => void runDocumentAiExtraction()} disabled={docExtractPending}>
-                  {docExtractPending ? "Extracting..." : "Extract from uploads"}
-                </Button>
-              </div>
-              {docExtractError ? <p className="mt-3 text-sm text-rose-600">{docExtractError}</p> : null}
-              {docExtractResult ? (
-                <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 p-4">
-                  <p className="text-sm font-semibold text-sky-900">Suggested values ({Math.round(docExtractResult.confidence * 100)}% confidence)</p>
-                  <div className="mt-3 grid gap-2 text-sm text-sky-900 md:grid-cols-2">
-                    <p><strong>Full name:</strong> {docExtractResult.personal.fullName || "Not detected"}</p>
-                    <p><strong>Date of birth:</strong> {docExtractResult.personal.dateOfBirth || "Not detected"}</p>
-                    <p><strong>TRN:</strong> {docExtractResult.personal.trn || "Not detected"}</p>
-                    <p><strong>Address:</strong> {docExtractResult.personal.address || "Not detected"}</p>
-                  </div>
-                  {docExtractResult.extractedSummary ? <p className="mt-3 text-sm leading-7 text-sky-900">{docExtractResult.extractedSummary}</p> : null}
-                  <div className="mt-3 flex items-center gap-3">
-                    <Button type="button" onClick={applyDocumentExtraction}>Apply extracted values</Button>
-                    <p className="text-xs text-sky-800">Review applied fields in Personal and Readiness before submitting.</p>
-                  </div>
-                </div>
-              ) : null}
+            <div className="grid gap-3 md:grid-cols-2">
+              <Toggle
+                label="I currently have a valid driver's license."
+                checked={draft.documentDeclarations.hasValidDriversLicense}
+                onChange={(value) =>
+                  setDraft((c) => ({
+                    ...c,
+                    documentDeclarations: { ...c.documentDeclarations, hasValidDriversLicense: value },
+                  }))
+                }
+              />
+              <Toggle
+                label="I currently have a valid vehicle registration."
+                checked={draft.documentDeclarations.hasValidVehicleRegistration}
+                onChange={(value) =>
+                  setDraft((c) => ({
+                    ...c,
+                    documentDeclarations: { ...c.documentDeclarations, hasValidVehicleRegistration: value },
+                  }))
+                }
+              />
+              <Toggle
+                label="I currently have valid vehicle insurance."
+                checked={draft.documentDeclarations.hasValidInsurance}
+                onChange={(value) =>
+                  setDraft((c) => ({
+                    ...c,
+                    documentDeclarations: { ...c.documentDeclarations, hasValidInsurance: value },
+                  }))
+                }
+              />
+              <Toggle
+                label="I currently have a valid fitness certificate."
+                checked={draft.documentDeclarations.hasValidFitness}
+                onChange={(value) =>
+                  setDraft((c) => ({
+                    ...c,
+                    documentDeclarations: { ...c.documentDeclarations, hasValidFitness: value },
+                  }))
+                }
+              />
             </div>
+            {Object.values(errors).length ? <p className="text-sm text-rose-600">{Object.values(errors)[0]}</p> : null}
           </div>
         ) : null}
 
