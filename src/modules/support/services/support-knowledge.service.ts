@@ -2,9 +2,9 @@ import crypto from "node:crypto";
 import {
   createSupportKnowledgeArticle,
   findSupportKnowledgeArticleBySlug,
-  listSupportKnowledgeArticles,
   updateSupportKnowledgeArticle,
 } from "@/modules/support/repositories/support.repository";
+import { readPersistenceStore } from "@/server/persistence";
 import type { SupportKnowledgeArticle, SupportDomain } from "@/types/backend/onboarding";
 
 function nowIso() {
@@ -57,8 +57,8 @@ export async function publishSupportKnowledgeArticle(slug: string) {
 
 export async function listPublishedSupportKnowledgeArticles() {
   try {
-    const articles = await listSupportKnowledgeArticles();
-    return articles.filter((article) => article.published);
+    const store = await readPersistenceStore();
+    return store.supportKnowledgeArticles.filter((article) => article.published);
   } catch (error) {
     if (isMissingSupportKnowledgeTableError(error)) {
       return [];
