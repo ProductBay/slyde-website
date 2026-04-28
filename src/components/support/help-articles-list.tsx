@@ -69,17 +69,25 @@ export function HelpArticlesList({ articles }: Props) {
       </div>
 
       {selected && (
+        /* Backdrop — closes on click outside */
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-8"
+          className="fixed inset-0 z-50 flex flex-col items-stretch justify-end bg-slate-950/50 sm:items-center sm:justify-center sm:p-6"
           onClick={() => setSelected(null)}
         >
+          {/* Sheet / Dialog */}
           <div
-            className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl"
+            className="flex w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-2xl sm:max-h-[85vh] sm:max-w-2xl sm:rounded-[1.75rem]"
+            style={{ maxHeight: "90dvh" }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Drag handle (mobile only) */}
+            <div className="flex justify-center pt-3 sm:hidden">
+              <span className="h-1 w-10 rounded-full bg-slate-200" />
+            </div>
+
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
-              <div>
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
+              <div className="min-w-0">
                 {selected.tags.length > 0 && (
                   <div className="mb-2 flex flex-wrap gap-1.5">
                     {selected.tags.map((tag) => (
@@ -92,7 +100,7 @@ export function HelpArticlesList({ articles }: Props) {
                     ))}
                   </div>
                 )}
-                <h2 className="text-lg font-semibold leading-snug text-slate-950">{selected.title}</h2>
+                <h2 className="text-base font-semibold leading-snug text-slate-950 sm:text-lg">{selected.title}</h2>
                 {selected.summary && (
                   <p className="mt-1 text-sm text-slate-500">{selected.summary}</p>
                 )}
@@ -109,17 +117,17 @@ export function HelpArticlesList({ articles }: Props) {
               </button>
             </div>
 
-            {/* Body */}
-            <div className="overflow-y-auto px-6 py-5">
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
               {renderContent(selected.content)}
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
+            <div className="flex shrink-0 items-center justify-between border-t border-slate-100 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
               <p className="text-xs text-slate-400">
                 Need more help?{" "}
                 <a href="/support" className="text-sky-600 underline-offset-2 hover:underline">
-                  Submit a support request
+                  Submit a request
                 </a>
               </p>
               <button
