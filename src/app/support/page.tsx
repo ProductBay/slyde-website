@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { PublicSupportIntake } from "@/components/support/public-support-intake";
+import { HelpArticlesList } from "@/components/support/help-articles-list";
 import { listPublishedSupportKnowledgeArticles } from "@/modules/support/services/support-knowledge.service";
 
 export default async function SupportPage() {
@@ -19,24 +19,7 @@ export default async function SupportPage() {
         <PublicSupportIntake />
         <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-soft">
           <h2 className="text-xl font-semibold text-slate-950">Published help articles</h2>
-          <div className="mt-5 grid gap-3">
-            {articles.length ? (
-              articles.slice(0, 8).map((article) => (
-                <Link
-                  key={article.id}
-                  href={`/help/${article.slug}`}
-                  className="rounded-[1.35rem] border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300"
-                >
-                  <p className="text-sm font-semibold text-slate-950">{article.title}</p>
-                  <p className="mt-1 text-sm text-slate-600">{article.summary || "Knowledge article"}</p>
-                </Link>
-              ))
-            ) : (
-              <p className="rounded-[1.35rem] border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500">
-                Support knowledge articles have not been published yet.
-              </p>
-            )}
-          </div>
+          <HelpArticlesList articles={articles} />
         </section>
       </div>
     </div>
