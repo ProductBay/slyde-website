@@ -9,6 +9,16 @@ import { BrandMark } from "@/components/site/brand-mark";
 import { LinkButton } from "@/components/ui/link-button";
 import { cn } from "@/lib/utils";
 
+type HeaderAuthProfile = {
+  authenticated: boolean;
+  accountPath?: string;
+  user?: {
+    fullName: string;
+    email: string;
+  };
+  avatarUrl?: string;
+};
+
 const dailyWisdom = [
   {
     proverb: "Every mickle mek a muckle.",
@@ -86,6 +96,7 @@ export function Navbar() {
   const [mobileSubmenu, setMobileSubmenu] = useState<string | null>(null);
   const [dailyIndex, setDailyIndex] = useState(0);
   const [todayLabel, setTodayLabel] = useState("");
+  const [authProfile, setAuthProfile] = useState<HeaderAuthProfile | null>(null);
   const pathname = usePathname();
   const tabletDesktopNavItems = navItems.filter((item) =>
     ["/", "/about", "/become-a-slyder", "/refer-a-slyder", "/for-businesses", "/safety", "/contact"].includes(item.href),
@@ -126,6 +137,43 @@ export function Navbar() {
       if (dailyInterval) window.clearInterval(dailyInterval);
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch("/api/auth/user/profile", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) return;
+        const data = (await response.json()) as HeaderAuthProfile;
+        if (active) {
+          setAuthProfile(data);
+        }
+      } catch {
+        // Fail silently and keep navbar usable.
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const identityName = authProfile?.user?.fullName?.trim() || "SLYDE Member";
+  const identityInitials = identityName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+  const identityPath = authProfile?.accountPath || "/account";
+  const showIdentityChip = Boolean(authProfile?.authenticated && authProfile.user);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,248,252,0.9))] shadow-[0_16px_44px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl">
@@ -341,15 +389,50 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-2 xl:flex">
-          <LinkButton href="/employee/login" variant="secondary" className="hidden h-9 px-3.5 text-xs 2xl:inline-flex">
-            Employee Portal
-          </LinkButton>
-          <LinkButton href="/become-a-slyder/apply" variant="secondary" className="hidden h-9 px-3.5 text-xs 2xl:inline-flex">
-            Apply as a Slyder
-          </LinkButton>
-          <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
-            Partner with SLYDE <ArrowUpRight className="h-4 w-4" />
-          </LinkButton>
+          {showIdentityChip ? (
+            <>
+              <Link
+                href={identityPath}
+                className="group relative flex h-11 items-center gap-2.5 overflow-hidden rounded-full border border-slate-200/90 bg-white/95 px-2.5 pr-4 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] transition hover:border-sky-200 hover:shadow-[0_22px_44px_-26px_rgba(14,116,144,0.35)]"
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(2,132,199,0.08),rgba(34,197,94,0.06)_45%,rgba(249,115,22,0.06))] opacity-0 transition duration-300 group-hover:opacity-100"
+                />
+                <span className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-900 text-[10px] font-semibold text-white">
+                  {authProfile?.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={authProfile.avatarUrl} alt={identityName} className="h-full w-full object-cover" />
+                  ) : (
+                    identityInitials || "SM"
+                  )}
+                </span>
+                <span className="relative min-w-0">
+                  <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+                    Signed In
+                  </span>
+                  <span className="block max-w-[11rem] truncate text-xs font-semibold text-slate-900">
+                    {identityName}
+                  </span>
+                </span>
+              </Link>
+              <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
+                Partner with SLYDE <ArrowUpRight className="h-4 w-4" />
+              </LinkButton>
+            </>
+          ) : (
+            <>
+              <LinkButton href="/employee/login" variant="secondary" className="hidden h-9 px-3.5 text-xs 2xl:inline-flex">
+                Employee Portal
+              </LinkButton>
+              <LinkButton href="/become-a-slyder/apply" variant="secondary" className="hidden h-9 px-3.5 text-xs 2xl:inline-flex">
+                Apply as a Slyder
+              </LinkButton>
+              <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
+                Partner with SLYDE <ArrowUpRight className="h-4 w-4" />
+              </LinkButton>
+            </>
+          )}
         </div>
 
         <button
@@ -364,6 +447,28 @@ export function Navbar() {
 
       {open ? (
         <div className="max-h-[calc(100vh-5.5rem)] w-full overflow-y-auto overscroll-contain border-t border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,249,252,0.94))] px-4 py-4 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] backdrop-blur-xl sm:px-6 lg:hidden">
+          {showIdentityChip ? (
+            <Link
+              href={identityPath}
+              className="mb-4 flex items-center gap-3 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-3 shadow-[0_16px_32px_-26px_rgba(15,23,42,0.35)]"
+              onClick={() => setOpen(false)}
+            >
+              <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-900 text-xs font-semibold text-white">
+                {authProfile?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={authProfile.avatarUrl} alt={identityName} className="h-full w-full object-cover" />
+                ) : (
+                  identityInitials || "SM"
+                )}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">Signed In</span>
+                <span className="block truncate text-sm font-semibold text-slate-900">{identityName}</span>
+                <span className="block truncate text-xs text-slate-500">Tap to open your account</span>
+              </span>
+            </Link>
+          ) : null}
+
           <div className="mb-4 rounded-[1.4rem] border border-slate-200/80 bg-white/80 px-4 py-3">
             <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-sky-700">
               Jamaica-first
