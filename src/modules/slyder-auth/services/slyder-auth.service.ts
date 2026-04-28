@@ -6,7 +6,7 @@ import { normalizeEmail, normalizePhone, userCanAuthenticate } from "@/modules/o
 import { appendAuditEvent } from "@/server/audit/audit.service";
 import { verifyPassword, hashPassword } from "@/server/auth/passwords";
 import { SESSION_COOKIE } from "@/server/auth/session";
-import { generateOpaqueToken, generateOtpCode, hashToken } from "@/server/auth/tokens";
+import { generateOtpCode, hashToken } from "@/server/auth/tokens";
 import { sendSlyderActivationCompletedNotification, sendSlyderOtpNotification } from "@/server/notifications/notification.service";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { completeSlyderOnboardingSetup, getSlyderOnboardingStatus } from "@/modules/slyder-auth/services/slyder-onboarding.service";
@@ -186,7 +186,7 @@ export async function verifySlyderOtp(challengeId: string, code: string) {
     const user = findUserById(store, challenge.userId);
     if (!user) throw new Error("Linked user not found");
 
-    const sessionId = generateOpaqueToken(18);
+    const sessionId = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString();
     store.sessions.push({
       id: sessionId,

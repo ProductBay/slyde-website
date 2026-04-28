@@ -2037,7 +2037,9 @@ async function persistSupportedPrismaSlices(tx: PrismaTransactionClient, store: 
   const supportedUserIds = new Set(supportedUsers.map((user) => user.id));
   const supportedActivationTokens = store.activationTokens.filter((token) => supportedUserIds.has(token.userId));
   const supportedOtpChallenges = store.otpChallenges.filter((challenge) => supportedUserIds.has(challenge.userId));
-  const supportedSessions = store.sessions.filter((session) => supportedUserIds.has(session.userId));
+  const supportedSessions = store.sessions.filter(
+    (session) => supportedUserIds.has(session.userId) && isUuid(session.id),
+  );
   const supportedReferrerAccounts = store.referrerAccounts;
   const supportedReferrerAccountIds = new Set(supportedReferrerAccounts.map((account) => account.id));
   const supportedReferrerLoginChallenges = store.referrerLoginChallenges.filter(
