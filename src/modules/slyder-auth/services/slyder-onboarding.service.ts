@@ -125,6 +125,7 @@ async function sendSlyderOnboardingCompletedEmailIfNeeded(
 
   const websiteBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://slydenetwork.com";
   const onboardingUrl = `${websiteBaseUrl}/slyder/onboarding/welcome`;
+  const reviewUrl = `${websiteBaseUrl}/admin/slyder-applications/${application.id}`;
   const completionSummary = buildCompletionSummary(status);
 
   const result = await sendTemplateNotificationInStore(store, {
@@ -153,6 +154,40 @@ async function sendSlyderOnboardingCompletedEmailIfNeeded(
     },
     dedupeKey: `slyder_onboarding_completed:email:${user.id}:${application.id}`,
   });
+
+  const adminUsers = store.users.filter(
+    (candidate) => candidate.roles.includes("platform_admin") || candidate.roles.includes("operations_admin"),
+  );
+  for (const admin of adminUsers) {
+    await sendTemplateNotificationInStore(store, {
+      templateKey: "admin_slyder_onboarding_completed_email",
+      actorType: "admin_user",
+      actorId: admin.id,
+      relatedEntityType: "slyder_application",
+      relatedEntityId: application.id,
+      applicationId: application.id,
+      userId: user.id,
+      slyderProfileId: profile.id,
+      recipient: admin.email,
+      recipientName: admin.fullName,
+      variables: {
+        adminName: admin.fullName,
+        fullName: profile.displayName,
+        applicationCode: application.applicationCode,
+        completionHeadline: completionSummary.headline,
+        completionBody: completionSummary.body,
+        zoneName: status.zoneName || application.preferredZones[0] || application.parish,
+        reviewUrl,
+      },
+      payload: {
+        reviewUrl,
+        applicationId: application.id,
+        slyderProfileId: profile.id,
+        eligibilityState: status.eligibilityState,
+      },
+      dedupeKey: `admin_slyder_onboarding_completed:email:${application.id}:${admin.id}`,
+    });
+  }
 
   appendAuditEvent(store, {
     entityType: "slyder_profile",
