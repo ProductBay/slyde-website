@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { AccountDashboard } from "@/components/user/account-dashboard";
 import { buildMetadata } from "@/lib/metadata";
 import { getSessionContext, hasRole } from "@/server/auth/session";
@@ -12,6 +13,8 @@ export const metadata: Metadata = buildMetadata(
 
 export default async function AccountPage() {
   const session = await getSessionContext();
+  const cookieStore = await cookies();
+  const avatarUrl = cookieStore.get("slyde_user_avatar")?.value;
 
   if (!session?.user.isEnabled) {
     redirect("/login");
@@ -29,7 +32,7 @@ export default async function AccountPage() {
           <h1 className="text-2xl font-semibold tracking-[-0.02em] text-slate-950 sm:text-3xl">My Account</h1>
           <p className="text-sm text-slate-500">Welcome back, {session.user.fullName.split(" ")[0]}.</p>
         </div>
-        <AccountDashboard user={session.user} />
+        <AccountDashboard user={session.user} initialAvatarUrl={avatarUrl} />
       </div>
     </section>
   );
