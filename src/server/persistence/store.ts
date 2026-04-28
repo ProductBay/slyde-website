@@ -101,7 +101,7 @@ function seedNotificationTemplates(timestamp: string): NotificationTemplate[] {
 function seedSupportKnowledgeArticles(timestamp: string): SupportKnowledgeArticle[] {
   return [
     {
-      id: "aa000001-help-4000-8000-000000000001",
+      id: "8bba0e71-841e-4da8-9d17-60b31fbbe001",
       domain: "public",
       audience: ["slyder_applicant", "slyder"],
       title: "How do I apply to become a Slyder?",
@@ -120,7 +120,7 @@ function seedSupportKnowledgeArticles(timestamp: string): SupportKnowledgeArticl
       updatedAt: timestamp,
     },
     {
-      id: "aa000002-help-4000-8000-000000000002",
+      id: "8bba0e71-841e-4da8-9d17-60b31fbbe002",
       domain: "public",
       audience: ["slyder"],
       title: "What documents do I need to complete onboarding?",
@@ -143,7 +143,7 @@ function seedSupportKnowledgeArticles(timestamp: string): SupportKnowledgeArticl
       updatedAt: timestamp,
     },
     {
-      id: "aa000003-help-4000-8000-000000000003",
+      id: "8bba0e71-841e-4da8-9d17-60b31fbbe003",
       domain: "public",
       audience: ["slyder"],
       title: "How does Slyder activation work?",
@@ -165,7 +165,7 @@ function seedSupportKnowledgeArticles(timestamp: string): SupportKnowledgeArticl
       updatedAt: timestamp,
     },
     {
-      id: "aa000004-help-4000-8000-000000000004",
+      id: "8bba0e71-841e-4da8-9d17-60b31fbbe004",
       domain: "public",
       audience: ["slyder_applicant", "slyder"],
       title: "Which areas does SLYDE currently cover?",
@@ -196,7 +196,7 @@ function seedSupportKnowledgeArticles(timestamp: string): SupportKnowledgeArticl
       updatedAt: timestamp,
     },
     {
-      id: "aa000005-help-4000-8000-000000000005",
+      id: "8bba0e71-841e-4da8-9d17-60b31fbbe005",
       domain: "public",
       audience: ["merchant"],
       title: "How do I partner my business with SLYDE?",
@@ -217,7 +217,7 @@ function seedSupportKnowledgeArticles(timestamp: string): SupportKnowledgeArticl
       updatedAt: timestamp,
     },
     {
-      id: "aa000006-help-4000-8000-000000000006",
+      id: "8bba0e71-841e-4da8-9d17-60b31fbbe006",
       domain: "public",
       audience: ["slyder_applicant", "slyder", "merchant", "public"],
       title: "How do I contact SLYDE support?",
@@ -237,7 +237,7 @@ function seedSupportKnowledgeArticles(timestamp: string): SupportKnowledgeArticl
       updatedAt: timestamp,
     },
     {
-      id: "aa000007-help-4000-8000-000000000007",
+      id: "8bba0e71-841e-4da8-9d17-60b31fbbe007",
       domain: "public",
       audience: ["slyder"],
       title: "How does the referral programme work?",
@@ -261,7 +261,7 @@ function seedSupportKnowledgeArticles(timestamp: string): SupportKnowledgeArticl
       updatedAt: timestamp,
     },
     {
-      id: "aa000008-help-4000-8000-000000000008",
+      id: "8bba0e71-841e-4da8-9d17-60b31fbbe008",
       domain: "public",
       audience: ["slyder"],
       title: "What should I do if my document is rejected?",

@@ -13,6 +13,11 @@ export async function POST(request: Request) {
     const result = await registerUser(parsed.data);
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Registration failed" }, { status: 400 });
+    const message = error instanceof Error ? error.message : "Registration failed";
+    if (message.includes("already exists")) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+
+    return NextResponse.json({ error: "Unable to create your account right now. Please try again." }, { status: 400 });
   }
 }

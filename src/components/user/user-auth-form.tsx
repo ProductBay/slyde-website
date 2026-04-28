@@ -115,6 +115,15 @@ export function UserAuthForm({ defaultTab = "login" }: { defaultTab?: Tab }) {
           <Field label="Email address" id="login-email" type="email" placeholder="you@example.com" value={loginEmail} onChange={setLoginEmail} autoComplete="email" />
           <Field label="Password" id="login-password" type="password" placeholder="••••••••" value={loginPassword} onChange={setLoginPassword} autoComplete="current-password" />
 
+          <div className="-mt-1 text-right">
+            <a
+              href="/support?topic=password-reset"
+              className="text-xs font-medium text-sky-700 underline-offset-2 hover:underline"
+            >
+              Forgot password? Reset via support
+            </a>
+          </div>
+
           {error && <p className="rounded-[0.75rem] bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>}
 
           <button
