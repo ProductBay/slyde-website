@@ -578,6 +578,10 @@ model User {
   sessions                   SessionRecord[]
   activationTokens           ActivationToken[]
   otpChallenges              OtpChallenge[]
+  residentialLeads              ResidentialLead[]
+  residentialDispatchRequests   ResidentialDispatchRequest[]
+  residentialWallet             ResidentialWallet?
+  residentialWalletTransactions ResidentialWalletTransaction[]
 }
 
 model SlyderApplication {
@@ -1755,4 +1759,247 @@ model LegalDocumentPublishHistory {
   legalDocument LegalDocument @relation(fields: [legalDocumentId], references: [id], onDelete: Cascade)
 
   @@index([legalDocumentId, createdAt(sort: Desc)])
+}
+
+// ─── Residential Dispatch Intake ──────────────────────────────────────────────
+
+enum ResidentialIntakeStatus {
+  submitted
+  contacted
+  handed_off
+  failed
+}
+
+enum ResidentialHandoffState {
+  queued
+  sent
+  acknowledged
+  retrying
+  dead_letter
+}
+
+enum ResidentialParcelCategory {
+  documents
+  small_package
+  medium_package
+  large_package
+  fragile
+  food
+  other
+}
+
+enum ResidentialDispatchStatus {
+  submitted
+  payment_pending
+  confirmed
+  rider_assigned
+  picked_up
+  in_transit
+  delivered
+  failed
+  cancelled
+}
+
+enum ResidentialPaymentMethod {
+  wallet
+  card
+  slyde_gift_card
+  adash_scan_to_pay
+}
+
+model ResidentialLead {
+  id              String                  @id @db.Uuid
+  userId          String                  @db.Uuid
+  referenceCode   String                  @unique
+  fullName        String
+  phone           String
+  email           String?
+  parish          String
+  area            String
+  status          ResidentialIntakeStatus
+  sourceCampaign  String?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime                @db.Timestamptz(6)
+  updatedAt       DateTime                @db.Timestamptz(6)
+
+  user           User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dispatchIntent ResidentialDispatchIntent?
+  handoffJob     ResidentialHandoffJob?
+  dispatchRequest ResidentialDispatchRequest?
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([phone])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model ResidentialDispatchIntent {
+  id                String                    @id @db.Uuid
+  leadId            String                    @unique @db.Uuid
+  pickupAddress     String
+  dropoffParish     String
+  dropoffArea       String
+  dropoffAddress    String
+  parcelCategory    ResidentialParcelCategory
+  parcelNotes       String?
+  urgency           String
+  preferredWindow   String?
+  paymentPreference ResidentialPaymentMethod
+  privacyAccepted   Boolean
+  termsAccepted     Boolean
+  consentVersion    String
+  consentedAt       DateTime                  @db.Timestamptz(6)
+  estimatedFeeMin   Int?
+  estimatedFeeMax   Int?
+  createdAt         DateTime                  @db.Timestamptz(6)
+
+  lead ResidentialLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model ResidentialDispatchRequest {
+  id                String                    @id @db.Uuid
+  leadId            String                    @unique @db.Uuid
+  userId            String                    @db.Uuid
+  referenceCode     String                    @unique
+  status            ResidentialDispatchStatus
+  paymentMethod     ResidentialPaymentMethod
+  pickupAddress     String
+  pickupParish      String
+  pickupArea        String
+  dropoffAddress    String
+  dropoffParish     String
+  dropoffArea       String
+  parcelCategory    ResidentialParcelCategory
+  parcelNotes       String?
+  urgency           String
+  preferredWindow   String?
+  submittedAt       DateTime                  @db.Timestamptz(6)
+  confirmedAt       DateTime?                 @db.Timestamptz(6)
+  riderAssignedAt   DateTime?                 @db.Timestamptz(6)
+  pickedUpAt        DateTime?                 @db.Timestamptz(6)
+  deliveredAt       DateTime?                 @db.Timestamptz(6)
+  cancelledAt       DateTime?                 @db.Timestamptz(6)
+  failureReason     String?
+  paymentStatus     ResidentialPaymentStatus  @default(pending)
+  paymentReference  String?
+  authorizedAt      DateTime?                 @db.Timestamptz(6)
+  capturedAt        DateTime?                 @db.Timestamptz(6)
+  refundedAt        DateTime?                 @db.Timestamptz(6)
+  createdAt         DateTime                  @db.Timestamptz(6)
+  updatedAt         DateTime                  @db.Timestamptz(6)
+
+  lead   ResidentialLead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user   User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events ResidentialRequestEvent[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+}
+
+model ResidentialWallet {
+  id                String   @id @db.Uuid
+  userId            String   @unique @db.Uuid
+  currency          String
+  availableBalance  Int
+  heldBalance       Int
+  totalLifetimeTopUp Int
+  lastTopUpAt       DateTime? @db.Timestamptz(6)
+  createdAt         DateTime @db.Timestamptz(6)
+  updatedAt         DateTime @db.Timestamptz(6)
+
+  user         User                            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions ResidentialWalletTransaction[]
+}
+
+model ResidentialHandoffJob {
+  id             String                  @id @db.Uuid
+  leadId         String                  @unique @db.Uuid
+  payloadJson    Json
+  state          ResidentialHandoffState
+  attempts       Int                     @default(0)
+  lastError      String?
+  nextRetryAt    DateTime?               @db.Timestamptz(6)
+  acknowledgedAt DateTime?               @db.Timestamptz(6)
+  createdAt      DateTime                @db.Timestamptz(6)
+  updatedAt      DateTime                @db.Timestamptz(6)
+
+  lead ResidentialLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([state, nextRetryAt])
+}
+
+// ─── Residential Wallet Transaction Ledger ────────────────────────────────────
+
+enum ResidentialWalletTxType {
+  top_up
+  dispatch_hold
+  dispatch_charge
+  hold_release
+  refund
+  gift_card_redemption
+  scan_pay_charge
+  adjustment
+}
+
+model ResidentialWalletTransaction {
+  id               String                   @id @db.Uuid
+  walletId         String                   @db.Uuid
+  userId           String                   @db.Uuid
+  type             ResidentialWalletTxType
+  amountJMD        Int
+  balanceAfterJMD  Int
+  reference        String?
+  orderId          String?                  @db.Uuid
+  description      String?
+  createdAt        DateTime                 @db.Timestamptz(6)
+
+  wallet ResidentialWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+// ─── Residential Payment State Transitions ────────────────────────────────────
+
+enum ResidentialPaymentStatus {
+  pending
+  authorized
+  captured
+  failed
+  refunded
+  cancelled
+}
+
+// ─── Residential Request Event Audit Log ─────────────────────────────────────
+
+enum ResidentialRequestEventType {
+  submitted
+  payment_authorized
+  payment_captured
+  payment_failed
+  payment_refunded
+  rider_assigned
+  pickup_confirmed
+  in_transit
+  delivered
+  failed
+  cancelled
+  note_added
+}
+
+model ResidentialRequestEvent {
+  id          String                       @id @db.Uuid
+  requestId   String                       @db.Uuid
+  eventType   ResidentialRequestEventType
+  title       String
+  description String?
+  actorType   String
+  actorId     String?                      @db.Uuid
+  metadata    Json?
+  createdAt   DateTime                     @db.Timestamptz(6)
+
+  request ResidentialDispatchRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, createdAt(sort: Asc)])
 }

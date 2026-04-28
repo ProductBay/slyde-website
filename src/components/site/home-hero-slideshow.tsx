@@ -822,14 +822,14 @@ export function HomeHeroSlideshow() {
 
 export function HomeHeroFastAccessBar() {
   return (
-    <section className="relative z-10 mt-4 px-4 sm:mt-6 sm:px-6 lg:px-8">
+    <section className="relative z-10 mt-8 px-4 sm:mt-10 sm:px-6 lg:mt-12 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-3 text-center sm:mb-4">
+        <div className="mb-4 text-center sm:mb-5">
           <p className="text-lg font-semibold tracking-tight text-white sm:text-2xl lg:text-[1.9rem]">
             I am a:
           </p>
         </div>
-        <div className="mb-3 flex flex-wrap items-start justify-center gap-2.5 sm:mb-4 sm:gap-4">
+        <div className="mb-8 flex flex-wrap items-start justify-center gap-4 sm:mb-10 sm:gap-6 lg:mb-12 lg:gap-8">
           {loginShortcuts.map(({ label, href, tone, icon: Icon }) => (
             <Link key={label} href={href} className="hero-login-orb" data-tone={tone} aria-label={`${label} login`}>
               <span className="hero-login-orb-ring" aria-hidden />
@@ -924,8 +924,8 @@ export function HomeHeroFastAccessBar() {
           display: inline-flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.55rem;
-          min-width: 72px;
+          gap: 0.65rem;
+          min-width: 82px;
           color: rgba(255, 255, 255, 0.98);
           text-align: center;
         }

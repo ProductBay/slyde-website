@@ -1,12 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { EmployeeLoginForm } from "@/components/employee/employee-login-form";
 import { buildMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = buildMetadata(
-  "Employee Portal Login",
-  "Sign in to the dedicated SLYDE employee portal for onboarding, announcements, payroll visibility, and guides.",
-  "/employee/login",
-);
+export const metadata: Metadata = {
+  ...buildMetadata(
+    "Employee Portal Login",
+    "Sign in to the dedicated SLYDE employee portal for onboarding, announcements, payroll visibility, and guides.",
+    "/employee/login",
+  ),
+  manifest: "/employee/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "SLYDE Employee",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#081223",
+};
 
 export default function EmployeeLoginPage() {
   return (

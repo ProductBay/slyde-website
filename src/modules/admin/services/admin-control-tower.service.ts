@@ -25,7 +25,7 @@ import { zoneStatusMessages } from "@/content/site";
 const DEFAULT_ZONE_TARGET = 24;
 
 const DEFAULT_ZONE_SEEDS: Array<Pick<CoverageZone, "id" | "name" | "parish" | "requiredReadySlyders" | "merchantAvailability" | "estimatedLaunchLabel">> = [
-  { id: "kingston", name: "Kingston", parish: "Kingston", requiredReadySlyders: 50, merchantAvailability: "waitlist", estimatedLaunchLabel: "Launching Soon" },
+  { id: "11111111-1111-4111-8111-111111111111", name: "Kingston", parish: "Kingston", requiredReadySlyders: 50, merchantAvailability: "waitlist", estimatedLaunchLabel: "Launching Soon" },
   { id: "montego-bay", name: "Montego Bay", parish: "St James", requiredReadySlyders: 36, merchantAvailability: "waitlist", estimatedLaunchLabel: "Near Ready" },
   { id: "mandeville", name: "Mandeville", parish: "Manchester", requiredReadySlyders: 28, merchantAvailability: "closed", estimatedLaunchLabel: "Building Network" },
   { id: "spanish-town", name: "Spanish Town", parish: "St Catherine", requiredReadySlyders: 32, merchantAvailability: "closed", estimatedLaunchLabel: "Building Network" },

@@ -6,6 +6,7 @@ import {
   enqueueSlydeAppSync,
   processPendingSlydeAppSyncQueue,
 } from "@/modules/onboarding/services/slyde-app-sync-queue.service";
+import { shouldSyncToExternalSlydeApp } from "@/modules/onboarding/services/slyde-app-sync.service";
 import { protectPublicRoute } from "@/server/security/public-route-protection";
 
 export async function POST(request: Request) {
@@ -31,12 +32,15 @@ export async function POST(request: Request) {
       userAgent: headerStore.get("user-agent") ?? undefined,
     });
 
-    let syncStatus: "queued" | "queue_failed" = "queued";
-    try {
-      await enqueueSlydeAppSync(result.applicationId, parsed.data);
-      void processPendingSlydeAppSyncQueue();
-    } catch {
-      syncStatus = "queue_failed";
+    let syncStatus: "queued" | "queue_failed" | "skipped" = "skipped";
+    if (shouldSyncToExternalSlydeApp()) {
+      try {
+        await enqueueSlydeAppSync(result.applicationId, parsed.data);
+        void processPendingSlydeAppSyncQueue();
+        syncStatus = "queued";
+      } catch {
+        syncStatus = "queue_failed";
+      }
     }
 
     return NextResponse.json(

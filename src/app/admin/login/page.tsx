@@ -1,14 +1,26 @@
 import { redirect } from "next/navigation";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { AdminLoginForm } from "@/components/admin/admin-login-form";
 import { buildMetadata } from "@/lib/metadata";
 import { getSessionContext, hasRole } from "@/server/auth/session";
 
-export const metadata: Metadata = buildMetadata(
-  "Admin Login",
-  "Sign in to the SLYDE operations and platform control tower.",
-  "/admin/login",
-);
+export const metadata: Metadata = {
+  ...buildMetadata(
+    "Admin Login",
+    "Sign in to the SLYDE operations and platform control tower.",
+    "/admin/login",
+  ),
+  manifest: "/admin/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "SLYDE Admin",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#081223",
+};
 
 export default async function AdminLoginPage() {
   const session = await getSessionContext();

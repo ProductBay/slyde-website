@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { requireAdminContext } from "@/server/auth/guards";
 import { approveApplicationSchema } from "@/modules/onboarding/schemas/onboarding.schemas";
 import { approveApplication } from "@/modules/onboarding/services/onboarding.service";
-import { syncPublicSlyderReviewDecisionToSlydeApp } from "@/modules/onboarding/services/slyde-app-sync.service";
+import {
+  shouldSyncToExternalSlydeApp,
+  syncPublicSlyderReviewDecisionToSlydeApp,
+} from "@/modules/onboarding/services/slyde-app-sync.service";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const adminContext = await requireAdminContext();
@@ -21,6 +24,15 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       id: adminContext.user.id,
       fullName: adminContext.user.fullName,
     });
+
+    if (!shouldSyncToExternalSlydeApp()) {
+      return NextResponse.json({
+        ok: true,
+        result,
+        appSync: { status: "skipped" },
+        message: `Application approved on slydenetwork.com for ${result.email}.`,
+      });
+    }
 
     try {
       const appSync = await syncPublicSlyderReviewDecisionToSlydeApp({

@@ -27,6 +27,22 @@ function getAppSyncConfig() {
   };
 }
 
+function originFromUrl(value?: string) {
+  if (!value) return undefined;
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+export function shouldSyncToExternalSlydeApp() {
+  const appSyncOrigin = originFromUrl(getAppSyncConfig().baseUrl);
+  const websiteOrigin = originFromUrl(process.env.SLYDE_WEBSITE_BASE_URL);
+  return Boolean(appSyncOrigin && appSyncOrigin !== websiteOrigin);
+}
+
 async function buildFileDataUrl(file: {
   fileUrl?: string;
   type?: string;

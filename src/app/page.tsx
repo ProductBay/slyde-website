@@ -1,5 +1,5 @@
 ﻿import Image from "next/image";
-import { ArrowRight, Cable, Gift, MapPinned, ShieldCheck, Users, Workflow } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, Cable, Clock3, Gift, MapPinned, Network, ShieldCheck, Users, Workflow } from "lucide-react";
 import { AnimatedCount } from "@/components/site/animated-count";
 import { CTASection } from "@/components/site/cta-section";
 import { CoverageSection } from "@/components/site/coverage-section";
@@ -16,6 +16,9 @@ import { TrustStrip } from "@/components/site/trust-strip";
 import { WorkflowMap } from "@/components/site/workflow-map";
 import { homeSolutions, howSlydeWorks } from "@/content/site";
 import { LinkButton } from "@/components/ui/link-button";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const safetyCards = [
   {
@@ -86,6 +89,24 @@ const referralSignals = [
   },
 ];
 
+const slyderWorkSignals = [
+  {
+    title: "Work your own time",
+    description: "Operate as an independent contractor with flexible availability, not a fixed employee schedule.",
+    icon: Clock3,
+  },
+  {
+    title: "Not tied to one merchant",
+    description: "Delivery opportunities can come from the wider SLYDE network of businesses, companies, platforms, and residential requests.",
+    icon: Network,
+  },
+  {
+    title: "Build your own delivery lane",
+    description: "Choose the zones and courier type that fit how you move, then stay ready as your area launches.",
+    icon: BriefcaseBusiness,
+  },
+];
+
 function FacebookIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -122,6 +143,59 @@ export default function HomePage() {
       <HomeHeroSlideshow />
       <HomeHeroActionStrip />
       <HomeHeroFastAccessBar />
+
+      <section className="mx-auto max-w-shell px-4 py-10 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 shadow-[0_28px_80px_-48px_rgba(15,23,42,0.75)]">
+          <div className="grid lg:grid-cols-[0.92fr_1.08fr]">
+            <div className="relative min-h-[250px] overflow-hidden lg:min-h-[430px]">
+              <Image
+                src="/images/hero-slyders-earnings.jpg"
+                alt="Independent SLYDE Slyder courier opportunity with app-based delivery work"
+                fill
+                sizes="(max-width: 1024px) 100vw, 46vw"
+                className="object-cover object-[64%_35%]"
+                priority={false}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-slate-950/10 lg:to-slate-950/55" />
+              <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/15 bg-slate-950/72 p-4 backdrop-blur sm:left-6 sm:right-auto sm:max-w-[300px]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">For Slyders</p>
+                <p className="mt-2 text-lg font-semibold leading-6 text-white">Independent contractor delivery work through one growing network.</p>
+              </div>
+            </div>
+
+            <div className="p-6 sm:p-8 lg:p-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">Own your time</p>
+              <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-[2.45rem]">
+                Be your own boss with dispatches from more than one source
+              </h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                SLYDE is built for independent couriers who want flexible work without depending on a single store for delivery activity. As the network grows, dispatches can come from merchants, companies, social sellers, partner platforms, and residential delivery requests.
+              </p>
+              <div className="mt-7 grid gap-3">
+                {slyderWorkSignals.map(({ title, description, icon: Icon }) => (
+                  <div key={title} className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10 text-cyan-200">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-white">{title}</span>
+                      <span className="mt-1 block text-sm leading-6 text-slate-300">{description}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <LinkButton href="/become-a-slyder/apply" className="justify-center">
+                  Apply as a Slyder <ArrowRight className="h-4 w-4" />
+                </LinkButton>
+                <LinkButton href="/become-a-slyder" variant="secondary" className="justify-center">
+                  Learn how Slyder work works
+                </LinkButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── FULL-WIDTH BANNER ──────────────────────────────────────────── */}
       <section className="w-full mt-10">

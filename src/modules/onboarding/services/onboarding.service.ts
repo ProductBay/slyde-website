@@ -4,8 +4,6 @@ import {
   findProfileByApplicationId,
   findProfileByUserId,
   findLatestActivationTokenForUser,
-  findUserByEmailAndPhone,
-  findUserByEmailOrPhone,
   findUserById,
   getApplicationVehicle,
   upsertSlyderProfile,
@@ -31,8 +29,9 @@ import {
   sendSlyderDocumentsRequestedNotification,
   sendSlyderRejectedNotification,
 } from "@/server/notifications/notification.service";
-import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
+import { readPersistenceStore, withCriticalOnboardingTransaction, withPersistenceTransaction } from "@/server/persistence";
 import { fileStoreRepository } from "@/server/persistence/file-store-repository";
+import { getPersistenceDriver } from "@/server/persistence/repository";
 import { hashToken, generateOpaqueToken } from "@/server/auth/tokens";
 import type {
   ApproveApplicationInput,
@@ -241,12 +240,15 @@ export async function createPublicSlyderApplication(
 
   let result;
   try {
-    result = await persistApplication(withPersistenceTransaction);
+    result = await persistApplication(withCriticalOnboardingTransaction);
   } catch (error) {
     logNonBlockingFailure("withPersistenceTransaction createPublicSlyderApplication failed", error, {
       email: input.email,
       phone: input.phone,
     });
+    if (getPersistenceDriver() === "prisma") {
+      throw error;
+    }
     result = await persistApplication(fileStoreRepository.transaction.bind(fileStoreRepository));
   }
 
@@ -481,10 +483,16 @@ export async function rejectApplication(applicationId: string, reason: string, a
 }
 
 function provisionUserForApplication(store: OnboardingStore, application: SlyderApplication): StoredUser {
-  const existing =
-    findUserByEmailAndPhone(store, application.email, application.phone) ??
-    findUserByEmailOrPhone(store, application.email) ??
-    findUserByEmailOrPhone(store, application.phone);
+  const normalizedEmail = normalizeEmail(application.email);
+  const normalizedPhone = normalizePhone(application.phone);
+  const exactMatch = store.users.find(
+    (user) =>
+      normalizeEmail(user.email) === normalizedEmail &&
+      normalizePhone(user.phone) === normalizedPhone,
+  );
+  const emailMatch = store.users.find((user) => normalizeEmail(user.email) === normalizedEmail);
+  const phoneMatch = store.users.find((user) => normalizePhone(user.phone) === normalizedPhone);
+  const existing = exactMatch ?? emailMatch ?? phoneMatch;
   const timestamp = nowIso();
 
   if (existing) {
@@ -492,8 +500,12 @@ function provisionUserForApplication(store: OnboardingStore, application: Slyder
     existing.userType = "slyder";
     existing.accountStatus = existing.accountStatus === "active" ? "active" : "activation_pending";
     existing.isEnabled = true;
-    existing.email = normalizeEmail(application.email);
-    existing.phone = normalizePhone(application.phone);
+    if (!emailMatch || emailMatch.id === existing.id) {
+      existing.email = normalizedEmail;
+    }
+    if (!phoneMatch || phoneMatch.id === existing.id) {
+      existing.phone = normalizedPhone;
+    }
     existing.fullName = application.fullName;
     existing.updatedAt = timestamp;
     upsertUser(store, existing);
@@ -502,8 +514,8 @@ function provisionUserForApplication(store: OnboardingStore, application: Slyder
 
   const user: StoredUser = {
     id: crypto.randomUUID(),
-    email: normalizeEmail(application.email),
-    phone: normalizePhone(application.phone),
+    email: normalizedEmail,
+    phone: normalizedPhone,
     fullName: application.fullName,
     roles: ["slyder"],
     userType: "slyder",

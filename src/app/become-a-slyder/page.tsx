@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import { BriefcaseBusiness, Clock3, Network, Route } from "lucide-react";
 import { lifecycleTimeline, primaryCtas, slyderTypes, zoneStatusMessages } from "@/content/site";
 import { CTASection } from "@/components/site/cta-section";
 import { HeroSection } from "@/components/site/hero-section";
@@ -10,9 +12,12 @@ import { ProcessTimeline } from "@/components/site/process-timeline";
 import { SectionHeading } from "@/components/site/section-heading";
 import { buildMetadata } from "@/lib/metadata";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = buildMetadata(
   "Become a Slyder",
-  "Join the SLYDE delivery network through a structured recruitment and approval flow.",
+  "Apply as an independent SLYDE delivery partner with flexible hours and access to a growing network of business, company, and residential dispatches.",
   "/become-a-slyder",
 );
 
@@ -81,14 +86,37 @@ const applicationSnapshot = [
   },
 ];
 
+const independentWorkHighlights = [
+  {
+    title: "Independent contractor opportunity",
+    description: "A Slyder is not applying for a fixed employee shift. You operate independently, set your availability, and choose when you are ready to receive work as your zone becomes active.",
+    icon: BriefcaseBusiness,
+  },
+  {
+    title: "Own time, own hours",
+    description: "Use SLYDE around your real life. Work more when you are available, step back when you are not, and build a delivery rhythm that fits you.",
+    icon: Clock3,
+  },
+  {
+    title: "Dispatches from a wider network",
+    description: "You are not depending on one merchant. SLYDE can connect Slyders to requests from many businesses, companies, social sellers, platforms, and residential customers.",
+    icon: Network,
+  },
+  {
+    title: "Choose the way you move",
+    description: "Walkers, bicycles, motorcycles, cars, vans, and fleet support can all have a place as the network expands by town, parish, and delivery type.",
+    icon: Route,
+  },
+];
+
 export default function BecomeASlyderPage() {
   return (
     <>
       <HeroSection
         eyebrow="Become a Slyder"
-        title="Become a Slyder"
-        description="Join Jamaica's next delivery network and be part of the first wave powering a new era of logistics."
-        supportText="Flexible opportunity. Structured platform. Built for growth."
+        title="Work your own time as a Slyder"
+        description="Apply to become an independent delivery partner on the SLYDE network. Set your availability, move in your area, and receive delivery opportunities from a growing mix of businesses, companies, platforms, and residential customers."
+        supportText="Independent contractor opportunity. Flexible hours. Network-powered dispatch."
         actions={[
           { href: "/become-a-slyder/apply", label: "Apply Now" },
           { href: "/faq", label: "Read Slyder FAQ", variant: "secondary" },
@@ -96,14 +124,14 @@ export default function BecomeASlyderPage() {
         aside={
           <div className="dark-panel p-6 sm:p-8">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Founding network</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">Join early and prepare for launch in your area</h2>
+              <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Independent work</p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">Be your own boss inside a structured delivery network</h2>
             </div>
             <div className="mt-5 grid gap-3">
               {[
-                "SLYDE launches region by region, not all at once.",
-                "Early approved Slyders are best positioned as launch approaches.",
-                "After you apply, SLYDE sends a WhatsApp confirmation and email.",
+                "Choose your availability instead of working a fixed employee shift.",
+                "Receive dispatches from the SLYDE network, not just one merchant.",
+                "Businesses, companies, platforms, and residential customers can all create delivery demand.",
                 "Approval leads to app access, setup, and readiness before work eligibility.",
               ].map((item) => (
                 <div key={item} className="rounded-3xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
@@ -114,6 +142,52 @@ export default function BecomeASlyderPage() {
           </div>
         }
       />
+
+      <section className="section-shell py-8">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 shadow-[0_28px_80px_-48px_rgba(15,23,42,0.75)]">
+          <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="p-6 sm:p-8 lg:p-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">Why Slyders join</p>
+              <h2 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-[2.45rem]">
+                Flexible delivery work powered by many sources of demand
+              </h2>
+              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+                SLYDE is building one coordinated dispatch network. That means a Slyder can be positioned for delivery requests from restaurants, retail stores, pharmacies, offices, social media sellers, partner platforms, and residential customers as each zone opens.
+              </p>
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {independentWorkHighlights.map(({ title, description, icon: Icon }) => (
+                  <div key={title} className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10 text-cyan-200">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <h3 className="mt-4 text-base font-semibold text-white">{title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">{description}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <LinkButton href="/become-a-slyder/apply" className="justify-center">Start your application</LinkButton>
+                <LinkButton href="#slyder-requirements" variant="secondary" className="justify-center">Check requirements</LinkButton>
+              </div>
+            </div>
+            <div className="relative min-h-[290px] overflow-hidden lg:min-h-full">
+              <Image
+                src="/images/slyde-independent-slyder-boss.png"
+                alt="SLYDE independent contractor Slyders choosing their own time, zones, and delivery opportunities across Jamaica"
+                fill
+                sizes="(max-width: 1024px) 100vw, 46vw"
+                className="object-cover object-[62%_50%]"
+                priority={false}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent lg:bg-gradient-to-l lg:from-transparent lg:via-slate-950/10 lg:to-slate-950/60" />
+              <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/15 bg-slate-950/72 p-4 backdrop-blur sm:right-auto sm:max-w-[320px]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">Network dispatch</p>
+                <p className="mt-2 text-lg font-semibold leading-6 text-white">One SLYDE account can connect you to many types of delivery demand.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="section-shell py-8">
         <div className="surface-panel p-6 sm:p-8">
@@ -149,18 +223,18 @@ export default function BecomeASlyderPage() {
           <SectionHeading
             eyebrow="What Is A Slyder"
             title="A Slyder is an independent delivery partner on the SLYDE network"
-            description="You choose when you work, where you operate, and how you prepare for launch using a platform designed for efficiency, safety, accountability, and long-term opportunity."
+            description="You choose when you work, where you operate, and how you prepare for launch using a platform designed for independent contractor flexibility, safer dispatch, and long-term opportunity."
           />
           <div className="surface-panel p-8">
             <p className="text-base leading-8 text-slate-600">
-              As SLYDE grows region by region, early Slyders will be among the first positioned in their area when operations begin.
+              As SLYDE grows region by region, early Slyders will be among the first positioned in their area when operations begin. Delivery activity is designed to come from the full SLYDE network, not from one single merchant relationship.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {[
-                "Flexible independent work with a more structured operating model.",
+                "Flexible independent contractor work with a more structured operating model.",
+                "Dispatches can come from businesses, companies, social sellers, platforms, and residential customers.",
                 "Verified onboarding before activation and zone-based launch readiness.",
-                "Digital payout support and future-ready errand workflows.",
-                "A platform built for Jamaica first, with standards that can scale.",
+                "Digital payout support, delivery visibility, and future-ready errand workflows.",
               ].map((item) => (
                 <div key={item} className="rounded-3xl border border-slate-200 bg-surface-1 px-4 py-4 text-sm leading-7 text-slate-600">
                   {item}

@@ -14,3 +14,11 @@ export async function readPersistenceStore(): Promise<OnboardingStore> {
 export async function withPersistenceTransaction<T>(mutator: (store: OnboardingStore) => Promise<T> | T): Promise<T> {
   return getPersistenceRepository().transaction(mutator);
 }
+
+export async function withCriticalOnboardingTransaction<T>(
+  mutator: (store: OnboardingStore) => Promise<T> | T,
+): Promise<T> {
+  return getPersistenceDriver() === "prisma"
+    ? prismaRepository.criticalOnboardingTransaction(mutator)
+    : fileStoreRepository.transaction(mutator);
+}
