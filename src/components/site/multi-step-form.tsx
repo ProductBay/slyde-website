@@ -9,7 +9,11 @@ import { StepIndicator } from "@/components/site/step-indicator";
 import { TurnstileWidget } from "@/components/site/turnstile-widget";
 
 const STORAGE_KEY = "slyde-slyder-application-draft";
-const serviceZones = ["Kingston", "New Kingston", "Half Way Tree", "Portmore", "Spanish Town", "Montego Bay"];
+const zoneGroups = [
+  { label: "Newest Zones", zones: ["Kingston", "New Kingston", "Half Way Tree", "Portmore", "Spanish Town", "Montego Bay"] },
+  { label: "More Cities", zones: ["Mandeville", "Junction", "Santa Cruz", "Falmouth", "Ocho Rios", "May Pen", "Negril", "Sav-La-Mar", "Runaway Bay"] },
+];
+const serviceZones = zoneGroups.flatMap((g) => g.zones);
 const parishTownOptions = [
   "Kingston",
   "St. Andrew",
@@ -721,28 +725,39 @@ export function MultiStepForm() {
                 placeholder="Type Kingston, Portmore, Montego Bay..."
               />
             </label>
-            <div className="grid gap-3 md:grid-cols-3">
-              {filteredZones.map((zone) => (
-                <label key={zone} className="flex items-center gap-3 rounded-3xl border border-border bg-surface-1 px-4 py-4">
-                  <input
-                    type="checkbox"
-                    className="field-checkbox"
-                    checked={draft.preferences.zones.includes(zone)}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        preferences: {
-                          ...current.preferences,
-                          zones: event.target.checked
-                            ? [...current.preferences.zones, zone]
-                            : current.preferences.zones.filter((item) => item !== zone),
-                        },
-                      }))
-                    }
-                  />
-                  <span className="text-sm text-slate-700">{zone}</span>
-                </label>
-              ))}
+            <div className="grid gap-6">
+              {zoneGroups.map((group) => {
+                const groupFiltered = group.zones.filter((zone) => zone.toLowerCase().includes(zoneSearch.trim().toLowerCase()));
+                if (!groupFiltered.length) return null;
+                return (
+                  <div key={group.label}>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{group.label}</p>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      {groupFiltered.map((zone) => (
+                        <label key={zone} className="flex items-center gap-3 rounded-3xl border border-border bg-surface-1 px-4 py-4">
+                          <input
+                            type="checkbox"
+                            className="field-checkbox"
+                            checked={draft.preferences.zones.includes(zone)}
+                            onChange={(event) =>
+                              setDraft((current) => ({
+                                ...current,
+                                preferences: {
+                                  ...current.preferences,
+                                  zones: event.target.checked
+                                    ? [...current.preferences.zones, zone]
+                                    : current.preferences.zones.filter((item) => item !== zone),
+                                },
+                              }))
+                            }
+                          />
+                          <span className="text-sm text-slate-700">{zone}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             {!filteredZones.length ? <p className="text-sm text-slate-500">No zones match your search.</p> : null}
             {errors.zones ? <p className="text-sm text-rose-600">{errors.zones}</p> : null}
