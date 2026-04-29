@@ -217,14 +217,6 @@ export function Navbar() {
       <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 sm:px-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-3 lg:px-8 lg:py-3">
         <div className="flex min-w-0 items-center gap-3.5">
           <BrandMark compact />
-          <div className="hidden min-w-0 border-l border-slate-200/80 pl-3 2xl:block">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-sky-700">
-              Jamaica-first
-            </p>
-            <p className="truncate text-[13px] font-medium text-slate-500">
-              Delivery infrastructure for modern commerce
-            </p>
-          </div>
         </div>
 
         <nav className="hidden min-w-0 items-center justify-center lg:flex">
