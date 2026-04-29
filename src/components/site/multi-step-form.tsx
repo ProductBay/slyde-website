@@ -2,13 +2,30 @@
 
 import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { courierTypes, deliveryPreferences, slyderApplicationSchema, type SlyderApplicationDraft } from "@/lib/forms";
 import { StepIndicator } from "@/components/site/step-indicator";
 import { TurnstileWidget } from "@/components/site/turnstile-widget";
 
 const STORAGE_KEY = "slyde-slyder-application-draft";
+const zoneLocationInfo: Record<string, string> = {
+  "Kingston": "Kingston, Kingston & St. Andrew",
+  "New Kingston": "New Kingston, Kingston & St. Andrew",
+  "Half Way Tree": "Half Way Tree, St. Andrew",
+  "Portmore": "Portmore, St. Catherine",
+  "Spanish Town": "Spanish Town, St. Catherine",
+  "Montego Bay": "Montego Bay, St. James",
+  "Mandeville": "Mandeville, Manchester",
+  "Junction": "Junction, St. Elizabeth",
+  "Santa Cruz": "Santa Cruz, St. Elizabeth",
+  "Falmouth": "Falmouth, Trelawny",
+  "Ocho Rios": "Ocho Rios, St. Ann",
+  "May Pen": "May Pen, Clarendon",
+  "Negril": "Negril, Westmoreland",
+  "Sav-La-Mar": "Savanna-la-Mar, Westmoreland",
+  "Runaway Bay": "Runaway Bay, St. Ann",
+};
 const zoneGroups = [
   { label: "Newest Zones", zones: ["Kingston", "New Kingston", "Half Way Tree", "Portmore", "Spanish Town", "Montego Bay"] },
   { label: "More Cities", zones: ["Mandeville", "Junction", "Santa Cruz", "Falmouth", "Ocho Rios", "May Pen", "Negril", "Sav-La-Mar", "Runaway Bay"] },
@@ -307,6 +324,38 @@ function Toggle({
     <label className="flex items-center gap-3 rounded-3xl border border-border bg-surface-1 px-4 py-4">
       <input type="checkbox" className="field-checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
       <span className="text-sm text-slate-700">{label}</span>
+    </label>
+  );
+}
+
+function ZoneCard({ zone, locationInfo, checked, onChange }: { zone: string; locationInfo: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  return (
+    <label className="relative flex items-center gap-3 rounded-3xl border border-border bg-surface-1 px-4 py-4">
+      <input
+        type="checkbox"
+        className="field-checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className="flex-1 text-sm text-slate-700">{zone}</span>
+      <button
+        type="button"
+        aria-label={`Location info for ${zone}`}
+        className="ml-auto flex-shrink-0 text-slate-400 hover:text-slate-600 focus:outline-none"
+        onMouseEnter={() => setTooltipVisible(true)}
+        onMouseLeave={() => setTooltipVisible(false)}
+        onFocus={() => setTooltipVisible(true)}
+        onBlur={() => setTooltipVisible(false)}
+        onClick={(e) => { e.preventDefault(); setTooltipVisible((v) => !v); }}
+      >
+        <Info className="h-4 w-4" />
+      </button>
+      {tooltipVisible ? (
+        <div className="absolute bottom-full right-0 z-10 mb-2 w-max max-w-[200px] rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-md">
+          {locationInfo}
+        </div>
+      ) : null}
     </label>
   );
 }
@@ -734,25 +783,23 @@ export function MultiStepForm() {
                     <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{group.label}</p>
                     <div className="grid gap-3 md:grid-cols-3">
                       {groupFiltered.map((zone) => (
-                        <label key={zone} className="flex items-center gap-3 rounded-3xl border border-border bg-surface-1 px-4 py-4">
-                          <input
-                            type="checkbox"
-                            className="field-checkbox"
-                            checked={draft.preferences.zones.includes(zone)}
-                            onChange={(event) =>
-                              setDraft((current) => ({
-                                ...current,
-                                preferences: {
-                                  ...current.preferences,
-                                  zones: event.target.checked
-                                    ? [...current.preferences.zones, zone]
-                                    : current.preferences.zones.filter((item) => item !== zone),
-                                },
-                              }))
-                            }
-                          />
-                          <span className="text-sm text-slate-700">{zone}</span>
-                        </label>
+                        <ZoneCard
+                          key={zone}
+                          zone={zone}
+                          locationInfo={zoneLocationInfo[zone] ?? zone}
+                          checked={draft.preferences.zones.includes(zone)}
+                          onChange={(checked) =>
+                            setDraft((current) => ({
+                              ...current,
+                              preferences: {
+                                ...current.preferences,
+                                zones: checked
+                                  ? [...current.preferences.zones, zone]
+                                  : current.preferences.zones.filter((item) => item !== zone),
+                              },
+                            }))
+                          }
+                        />
                       ))}
                     </div>
                   </div>
