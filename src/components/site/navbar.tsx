@@ -228,7 +228,7 @@ export function Navbar() {
         </div>
 
         <nav className="hidden min-w-0 items-center justify-center lg:flex">
-          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-x-auto rounded-full border border-slate-200/80 bg-white/82 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_25px_-20px_rgba(15,23,42,0.35)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-visible rounded-full border border-slate-200/80 bg-white/82 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_25px_-20px_rgba(15,23,42,0.35)]">
             {navItems.map((item) => {
               const submenuItems = navSubmenus[item.href];
 
