@@ -391,10 +391,10 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <LinkButton href="/employee/login" variant="secondary" className="hidden h-9 px-3.5 text-xs 2xl:inline-flex">
+              <LinkButton href="/employee/login" variant="secondary" className="hidden h-9 px-3.5 text-xs xl:inline-flex">
                 Employee Portal
               </LinkButton>
-              <LinkButton href="/become-a-slyder/apply" variant="secondary" className="hidden h-9 px-3.5 text-xs 2xl:inline-flex">
+              <LinkButton href="/become-a-slyder/apply" variant="secondary" className="hidden h-9 px-3.5 text-xs xl:inline-flex">
                 Apply as a Slyder
               </LinkButton>
               <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
