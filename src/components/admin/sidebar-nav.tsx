@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Gauge, Gift, Headset, Layers3, MapPinned, RadioTower, ScrollText, Store, Users, UserSquare2, Waypoints, X } from "lucide-react";
+import { Bell, Gauge, Gift, Headset, Home, Layers3, MapPinned, RadioTower, ScrollText, Store, Users, UserSquare2, Waypoints, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/site/brand-mark";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: Gauge },
+  { href: "/admin/residential", label: "Residential", icon: Home },
   { href: "/admin/slyder-applications", label: "Slyder Applications", icon: UserSquare2 },
   { href: "/admin/employee-applications", label: "Employee Applications", icon: UserSquare2 },
   { href: "/admin/merchant-leads", label: "Merchant Leads", icon: Store },

@@ -1,226 +1,164 @@
-"use client";
-
-import { useCallback, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Search } from "lucide-react";
+import { AdminShell } from "@/components/admin/admin-shell";
+import { DataTable, TableCell, TableHeaderCell } from "@/components/admin/data-table";
+import { getAdminPageContext } from "@/server/admin/admin-page";
 import { getResidentialLeadsForAdmin } from "@/modules/admin/residential-management/residential-admin.repository";
-import { SectionHeading } from "@/components/site/section-heading";
-import { LinkButton } from "@/components/ui/link-button";
 import type { ResidentialIntakeStatus } from "@prisma/client";
 
-const STATUS_CONFIG: Record<ResidentialIntakeStatus, { label: string; color: string }> = {
-  submitted: { label: "Submitted", color: "bg-blue-100 text-blue-800" },
-  approved: { label: "Approved", color: "bg-green-100 text-green-800" },
-  rejected: { label: "Rejected", color: "bg-red-100 text-red-800" },
+const STATUS_BADGE: Record<ResidentialIntakeStatus, string> = {
+  submitted:   "bg-sky-100 text-sky-800",
+  contacted:   "bg-blue-100 text-blue-800",
+  approved:    "bg-green-100 text-green-800",
+  rejected:    "bg-red-100 text-red-800",
+  handed_off:  "bg-violet-100 text-violet-800",
+  failed:      "bg-slate-100 text-slate-600",
 };
 
-interface ResidentialLead {
-  id: string;
-  referenceCode: string;
-  fullName: string;
-  phone: string;
-  email?: string;
-  parish: string;
-  area: string;
-  status: ResidentialIntakeStatus;
-  createdAt: Date;
-  dispatchRequest?: {
-    id: string;
-    status: string;
-    createdAt: Date;
-  };
-}
+export default async function ResidentialLeadsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) || {};
+  const search = typeof params.search === "string" ? params.search : undefined;
+  const status = typeof params.status === "string" ? (params.status as ResidentialIntakeStatus) : undefined;
+  const page = typeof params.page === "string" ? Math.max(1, parseInt(params.page, 10)) : 1;
+  const limit = 20;
 
-export default function ResidentialLeadsPage() {
-  const [leads, setLeads] = useState<ResidentialLead[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ResidentialIntakeStatus | "all">("all");
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
-
-  const loadLeads = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await getResidentialLeadsForAdmin(20, (page - 1) * 20, {
-        status: statusFilter === "all" ? undefined : statusFilter,
-        searchQuery: searchQuery || undefined,
-      });
-      setLeads(result.leads as ResidentialLead[]);
-      setPagination({ total: result.total, pages: result.pages });
-    } catch (error) {
-      console.error("Error loading leads:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, statusFilter, searchQuery]);
-
-  // Load leads on component mount and when filters change
-  useState(() => {
-    loadLeads();
-  });
-
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setPage(1);
-    loadLeads();
-  };
+  const [{ user, mode }, { leads, total, pages }] = await Promise.all([
+    getAdminPageContext(),
+    getResidentialLeadsForAdmin(limit, (page - 1) * limit, {
+      status: status as ResidentialIntakeStatus | undefined,
+      searchQuery: search,
+    }),
+  ]);
 
   return (
-    <div className="space-y-8">
-      <SectionHeading
-        eyebrow="Admin Console"
-        title="Residential Dispatch Leads"
-        description="View and manage new resident signups for Home-Slyde dispatch."
-      />
-
+    <AdminShell
+      title="Resident Leads"
+      description="Review and manage Home-Slyde residential signup applications."
+      adminName={user.fullName}
+      mode={mode}
+    >
       {/* Filters */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <form onSubmit={handleSearch} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {/* Search */}
-            <div className="relative">
-              <label htmlFor="search" className="block text-sm font-medium text-slate-700 mb-2">
-                Search
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                <input
-                  id="search"
-                  type="text"
-                  placeholder="Name, phone, email, or reference code..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-sky-500 text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Status Filter */}
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-slate-700 mb-2">
-                Status
-              </label>
-              <select
-                id="status"
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value as any);
-                  setPage(1);
-                }}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-sky-500 text-sm"
-              >
-                <option value="all">All Statuses</option>
-                <option value="submitted">Submitted</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-
-            {/* Search Button */}
-            <div className="flex items-end">
-              <button
-                type="submit"
-                className="w-full px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition text-sm font-medium"
-              >
-                Search
-              </button>
-            </div>
+      <form method="get" className="mb-6">
+        <div className="surface-panel flex flex-col gap-4 p-4 lg:flex-row lg:items-center">
+          <div className="grid flex-1 gap-3 md:grid-cols-3">
+            <input
+              className="field-input"
+              name="search"
+              placeholder="Search name, phone, email, code"
+              defaultValue={search || ""}
+            />
+            <select className="field-input" name="status" defaultValue={status || ""}>
+              <option value="">All statuses</option>
+              <option value="submitted">Submitted</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
           </div>
-        </form>
-      </div>
+          <button className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white" type="submit">
+            Apply
+          </button>
+        </div>
+      </form>
 
-      {/* Table */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="p-6 text-center text-slate-500">Loading leads...</div>
-        ) : leads.length === 0 ? (
-          <div className="p-6 text-center text-slate-500">No leads found</div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left font-semibold text-slate-900">Name</th>
-                    <th className="px-6 py-3 text-left font-semibold text-slate-900">Contact</th>
-                    <th className="px-6 py-3 text-left font-semibold text-slate-900">Location</th>
-                    <th className="px-6 py-3 text-left font-semibold text-slate-900">Status</th>
-                    <th className="px-6 py-3 text-left font-semibold text-slate-900">Dispatch Request</th>
-                    <th className="px-6 py-3 text-left font-semibold text-slate-900">Signed Up</th>
-                    <th className="px-6 py-3 text-left font-semibold text-slate-900">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {leads.map((lead) => {
-                    const statusConfig = STATUS_CONFIG[lead.status];
-                    return (
-                      <tr key={lead.id} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-4 font-medium text-slate-900">{lead.fullName}</td>
-                        <td className="px-6 py-4 text-slate-600">
-                          <div className="text-xs">{lead.phone}</div>
-                          {lead.email && <div className="text-xs text-slate-500">{lead.email}</div>}
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 text-xs">
-                          {lead.area}, {lead.parish}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
-                            {statusConfig.label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-xs text-slate-600">
-                          {lead.dispatchRequest ? (
-                            <span className="font-mono text-sky-600">{lead.dispatchRequest.id.slice(0, 8)}</span>
-                          ) : (
-                            <span className="text-slate-400">—</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-xs text-slate-500">
-                          {new Date(lead.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4">
-                          <Link
-                            href={`/admin/residential/leads/${lead.id}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded transition"
-                          >
-                            View <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+      <p className="mb-4 text-sm text-slate-500">{total} resident{total !== 1 ? "s" : ""} found</p>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <div className="border-t border-slate-200 px-6 py-4 flex items-center justify-between text-sm">
-                <div className="text-slate-600">
-                  Showing page {page} of {pagination.pages} ({pagination.total} total)
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPage(Math.max(1, page - 1))}
-                    disabled={page === 1}
-                    className="px-3 py-1 rounded border border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setPage(Math.min(pagination.pages, page + 1))}
-                    disabled={page === pagination.pages}
-                    className="px-3 py-1 rounded border border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
+      <DataTable>
+        <table className="min-w-full divide-y divide-slate-200">
+          <thead className="bg-slate-50/90">
+            <tr>
+              <TableHeaderCell>Name</TableHeaderCell>
+              <TableHeaderCell>Contact</TableHeaderCell>
+              <TableHeaderCell>Location</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell>Dispatch Request</TableHeaderCell>
+              <TableHeaderCell>Signed Up</TableHeaderCell>
+              <TableHeaderCell> </TableHeaderCell>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {leads.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
+                  No leads found.
+                </td>
+              </tr>
+            ) : (
+              leads.map((lead) => (
+                <tr key={lead.id} className="hover:bg-slate-50">
+                  <TableCell className="font-medium text-slate-950">
+                    <div>{lead.fullName}</div>
+                    <div className="text-xs text-slate-400">{lead.referenceCode}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div>{lead.phone}</div>
+                    {lead.email && <div className="text-xs text-slate-400">{lead.email}</div>}
+                  </TableCell>
+                  <TableCell>
+                    <div>{lead.area}</div>
+                    <div className="text-xs text-slate-400">{lead.parish}</div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_BADGE[lead.status]}`}>
+                      {lead.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {lead.dispatchRequest ? (
+                      <Link
+                        href={`/admin/residential/requests/${lead.dispatchRequest.id}`}
+                        className="text-sky-600 hover:underline text-xs"
+                      >
+                        {lead.dispatchRequest.status}
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-slate-400">None</span>
+                    )}
+                  </TableCell>
+                  <TableCell>{new Date(lead.createdAt).toLocaleDateString("en-JM")}</TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/admin/residential/leads/${lead.id}`}
+                      className="text-sm font-medium text-sky-600 hover:text-sky-800"
+                    >
+                      Review →
+                    </Link>
+                  </TableCell>
+                </tr>
+              ))
             )}
-          </>
-        )}
-      </div>
-    </div>
+          </tbody>
+        </table>
+      </DataTable>
+
+      {/* Pagination */}
+      {pages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <p className="text-sm text-slate-500">
+            Page {page} of {pages}
+          </p>
+          <div className="flex gap-2">
+            {page > 1 && (
+              <Link
+                href={`?search=${search || ""}&status=${status || ""}&page=${page - 1}`}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50"
+              >
+                Previous
+              </Link>
+            )}
+            {page < pages && (
+              <Link
+                href={`?search=${search || ""}&status=${status || ""}&page=${page + 1}`}
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm text-white hover:bg-slate-800"
+              >
+                Next
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+    </AdminShell>
   );
 }

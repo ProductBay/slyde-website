@@ -1766,6 +1766,8 @@ model LegalDocumentPublishHistory {
 enum ResidentialIntakeStatus {
   submitted
   contacted
+  approved
+  rejected
   handed_off
   failed
 }

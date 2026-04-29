@@ -214,7 +214,8 @@ export async function updateResidentialLeadStatus(
  */
 export async function updateDispatchRequestStatus(
   requestId: string,
-  status: ResidentialDispatchStatus
+  status: ResidentialDispatchStatus,
+  failureReason?: string
 ) {
   const updateData: any = {
     status,
@@ -226,12 +227,13 @@ export async function updateDispatchRequestStatus(
     updateData.confirmedAt = new Date();
   } else if (status === "cancelled") {
     updateData.cancelledAt = new Date();
+    if (failureReason) updateData.failureReason = failureReason;
   } else if (status === "picked_up") {
     updateData.pickedUpAt = new Date();
   } else if (status === "delivered") {
     updateData.deliveredAt = new Date();
   } else if (status === "failed") {
-    updateData.failureReason = updateData.failureReason || "Admin cancelled";
+    updateData.failureReason = failureReason || "Marked failed by admin";
   }
 
   return prisma.residentialDispatchRequest.update({
@@ -261,7 +263,7 @@ export async function getResidentialStats() {
       where: { createdAt: { gte: thirtyDaysAgo } },
     }),
     prisma.residentialDispatchRequest.count(),
-    prisma.residentialDispatchRequest.count({ where: { status: "pending" } }),
+    prisma.residentialDispatchRequest.count({ where: { status: "submitted" } }),
     prisma.residentialDispatchRequest.count({ where: { status: "confirmed" } }),
     prisma.residentialDispatchRequest.count({ where: { status: "delivered" } }),
     prisma.residentialDispatchRequest.count({
