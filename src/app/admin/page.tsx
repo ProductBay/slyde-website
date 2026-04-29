@@ -176,6 +176,46 @@ export default async function AdminDashboardPage() {
           </div>
         )}
       </section>
+
+      <section className="mt-8">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">Home-Slyde Residential</p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950">Residential pickup & dispatch management</h2>
+          </div>
+          <Link href="/admin/residential" className="text-sm font-semibold text-sky-700">
+            Open residential console
+          </Link>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-600 mb-4">
+            Complete admin control center for Home-Slyde residential dispatch. Manage resident signups, approve applications, and monitor dispatch requests through delivery.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              href="/admin/residential"
+              className="p-4 rounded-lg border border-slate-200 hover:border-sky-300 hover:bg-sky-50 transition"
+            >
+              <p className="font-semibold text-slate-900 mb-1">Dashboard</p>
+              <p className="text-xs text-slate-600">Key metrics and quick actions</p>
+            </Link>
+            <Link
+              href="/admin/residential/leads"
+              className="p-4 rounded-lg border border-slate-200 hover:border-sky-300 hover:bg-sky-50 transition"
+            >
+              <p className="font-semibold text-slate-900 mb-1">Resident Leads</p>
+              <p className="text-xs text-slate-600">Manage signups and approvals</p>
+            </Link>
+            <Link
+              href="/admin/residential/requests"
+              className="p-4 rounded-lg border border-slate-200 hover:border-sky-300 hover:bg-sky-50 transition"
+            >
+              <p className="font-semibold text-slate-900 mb-1">Dispatch Requests</p>
+              <p className="text-xs text-slate-600">Monitor and control requests</p>
+            </Link>
+          </div>
+        </div>
+      </section>
     </AdminShell>
   );
 }
