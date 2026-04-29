@@ -222,14 +222,43 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
     setLocationMessage("Getting your live location...");
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
+        const latitude = Number(position.coords.latitude.toFixed(6));
+        const longitude = Number(position.coords.longitude.toFixed(6));
         update("liveLocationPing", {
-          latitude: Number(position.coords.latitude.toFixed(6)),
-          longitude: Number(position.coords.longitude.toFixed(6)),
+          latitude,
+          longitude,
           accuracyMeters: Math.round(position.coords.accuracy),
           capturedAt: new Date().toISOString(),
         });
-        setLocationMessage("Live location captured. Slyders will see this as your exact pickup pin.");
+
+        let resolvedAddress = "";
+        try {
+          const reverseResponse = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                Accept: "application/json",
+              },
+            },
+          );
+          if (reverseResponse.ok) {
+            const reverseData = (await reverseResponse.json()) as { display_name?: string };
+            resolvedAddress = reverseData.display_name?.trim() ?? "";
+          }
+        } catch {
+          // Keep flow usable even if reverse-geocoding fails.
+        }
+
+        if (resolvedAddress) {
+          update("pickupAddress", resolvedAddress);
+          setLocationMessage("Live location captured and pickup address auto-filled. You can edit it before submitting.");
+        } else {
+          const fallbackAddress = `Pinned location: ${latitude}, ${longitude}`;
+          update("pickupAddress", fallbackAddress);
+          setLocationMessage("Live location captured. Address lookup was unavailable, so coordinates were placed in the pickup address box.");
+        }
+
         setLocating(false);
       },
       () => {
