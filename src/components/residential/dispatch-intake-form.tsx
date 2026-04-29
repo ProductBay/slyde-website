@@ -219,23 +219,55 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
     }
 
     setLocating(true);
-    setLocationMessage("Getting your live location...");
+    setLocationMessage("Getting your most accurate live location...");
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const latitude = Number(position.coords.latitude.toFixed(6));
-        const longitude = Number(position.coords.longitude.toFixed(6));
+    const captureBestFix = () =>
+      new Promise<GeolocationPosition>((resolve, reject) => {
+        let best: GeolocationPosition | null = null;
+        const startedAt = Date.now();
+
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            if (!best || position.coords.accuracy < best.coords.accuracy) {
+              best = position;
+            }
+
+            const reachedTargetAccuracy = position.coords.accuracy <= 12;
+            const reachedSampleTimeout = Date.now() - startedAt >= 9000;
+            if (reachedTargetAccuracy || reachedSampleTimeout) {
+              navigator.geolocation.clearWatch(watchId);
+              if (best) resolve(best);
+              else reject(new Error("No location fix available"));
+            }
+          },
+          (error) => {
+            navigator.geolocation.clearWatch(watchId);
+            reject(error);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
+          },
+        );
+      });
+
+    captureBestFix()
+      .then(async (position) => {
+        const latitude = Number(position.coords.latitude.toFixed(7));
+        const longitude = Number(position.coords.longitude.toFixed(7));
+        const accuracyMeters = Math.round(position.coords.accuracy);
         update("liveLocationPing", {
           latitude,
           longitude,
-          accuracyMeters: Math.round(position.coords.accuracy),
+          accuracyMeters,
           capturedAt: new Date().toISOString(),
         });
 
         let resolvedAddress = "";
         try {
           const reverseResponse = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=20&addressdetails=1&namedetails=1`,
             {
               headers: {
                 Accept: "application/json",
@@ -252,25 +284,23 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
 
         if (resolvedAddress) {
           update("pickupAddress", resolvedAddress);
-          setLocationMessage("Live location captured and pickup address auto-filled. You can edit it before submitting.");
+          if (accuracyMeters <= 20) {
+            setLocationMessage("Precise live location captured and pickup address auto-filled. You can edit it before submitting.");
+          } else {
+            setLocationMessage(`Location captured (about ${accuracyMeters}m accuracy). For best precision, move near open sky and tap Ping Live Location again.`);
+          }
         } else {
           const fallbackAddress = `Pinned location: ${latitude}, ${longitude}`;
           update("pickupAddress", fallbackAddress);
-          setLocationMessage("Live location captured. Address lookup was unavailable, so coordinates were placed in the pickup address box.");
+          setLocationMessage(`Live location captured (~${accuracyMeters}m). Address lookup was unavailable, so coordinates were placed in the pickup address box.`);
         }
 
         setLocating(false);
-      },
-      () => {
+      })
+      .catch(() => {
         setLocationMessage("Could not capture your live location. Please allow location access and try again.");
         setLocating(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 0,
-      },
-    );
+      });
   }
 
   async function handleSubmit() {
