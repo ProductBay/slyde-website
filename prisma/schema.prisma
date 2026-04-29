@@ -582,6 +582,8 @@ model User {
   residentialDispatchRequests   ResidentialDispatchRequest[]
   residentialWallet             ResidentialWallet?
   residentialWalletTransactions ResidentialWalletTransaction[]
+  residentialAccountProfile     ResidentialAccountProfile?
+  reviewedKycProfiles           ResidentialAccountProfile[] @relation("KycReviewedBy")
 }
 
 model SlyderApplication {
@@ -2004,4 +2006,44 @@ model ResidentialRequestEvent {
   request ResidentialDispatchRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@index([requestId, createdAt(sort: Asc)])
+
+// ─── Residential Account KYC / Verification ──────────────────────────────────
+}
+
+
+enum ResidentIdType {
+  national_id
+  drivers_license
+  passport
+  voters_id
+  other
+}
+
+enum ResidentKycStatus {
+  not_submitted
+  pending_review
+  approved
+  rejected
+  resubmission_required
+}
+
+model ResidentialAccountProfile {
+  id                String            @id @db.Uuid
+  userId            String            @unique @db.Uuid
+  trn               String
+  idType            ResidentIdType
+  idDocumentPath    String
+  kycStatus         ResidentKycStatus @default(pending_review)
+  reviewNotes       String?
+  reviewedByAdminId String?           @db.Uuid
+  reviewedAt        DateTime?         @db.Timestamptz(6)
+  submittedAt       DateTime          @db.Timestamptz(6)
+  createdAt         DateTime          @db.Timestamptz(6)
+  updatedAt         DateTime          @db.Timestamptz(6)
+
+  user            User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedByAdmin User? @relation("KycReviewedBy", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([kycStatus, createdAt(sort: Desc)])
+  @@index([userId])
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
+import { ArrowUpRight, ChevronDown, LogIn, Menu, UserPlus, X } from "lucide-react";
 import { navItems } from "@/content/site";
 import { BrandMark } from "@/components/site/brand-mark";
 import { LinkButton } from "@/components/ui/link-button";
@@ -410,11 +410,13 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <LinkButton href="/employee/login" variant="secondary" className="hidden h-9 px-3.5 text-xs xl:inline-flex">
-                Employee Portal
+              <LinkButton href="/login" variant="secondary" className="h-9 px-3.5 text-xs">
+                <LogIn className="h-3.5 w-3.5" />
+                Log in
               </LinkButton>
-              <LinkButton href="/become-a-slyder/apply" variant="secondary" className="hidden h-9 px-3.5 text-xs xl:inline-flex">
-                Apply as a Slyder
+              <LinkButton href="/login?tab=register" variant="secondary" className="h-9 px-3.5 text-xs">
+                <UserPlus className="h-3.5 w-3.5" />
+                Register
               </LinkButton>
               <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
                 Partner with SLYDE <ArrowUpRight className="h-4 w-4" />
@@ -528,6 +530,18 @@ export function Navbar() {
             })}
 
             <div className="mt-2 grid gap-3">
+              {!showIdentityChip ? (
+                <>
+                  <LinkButton href="/login" variant="secondary" className="w-full">
+                    <LogIn className="h-4 w-4" />
+                    Log in
+                  </LinkButton>
+                  <LinkButton href="/login?tab=register" variant="secondary" className="w-full">
+                    <UserPlus className="h-4 w-4" />
+                    Create account
+                  </LinkButton>
+                </>
+              ) : null}
               <LinkButton href="/for-businesses" className="w-full">
                 Partner with SLYDE
               </LinkButton>

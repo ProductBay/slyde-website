@@ -75,6 +75,16 @@ export default async function ResidentialAdminDashboard() {
             </div>
             <ArrowRight className="h-5 w-5 text-slate-400 flex-shrink-0" />
           </Link>
+          <Link
+            href="/admin/residential/kyc"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-5 hover:bg-sky-50 hover:border-sky-200 transition"
+          >
+            <div>
+              <p className="font-semibold text-slate-900">Resident Verification</p>
+              <p className="text-sm text-slate-500 mt-1">Review TRN and ID uploads before approval</p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-slate-400 flex-shrink-0" />
+          </Link>
         </div>
       </div>
 

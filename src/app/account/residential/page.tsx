@@ -3,8 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ResidentialDashboard } from "@/components/residential/residential-dashboard";
+import { ResidentKycForm } from "@/components/residential/resident-kyc-form";
 import { buildMetadata } from "@/lib/metadata";
 import { getResidentialDashboardOverview } from "@/modules/residential-intake/services/residential-intake.service";
+import { getResidentialKycStatus } from "@/modules/residential-intake/services/residential-kyc.service";
 import { getSessionContext, hasRole } from "@/server/auth/session";
 
 export const metadata: Metadata = buildMetadata(
@@ -24,7 +26,10 @@ export default async function ResidentialAccountPage() {
     redirect("/admin");
   }
 
-  const overview = await getResidentialDashboardOverview(session.user.id);
+  const [overview, kyc] = await Promise.all([
+    getResidentialDashboardOverview(session.user.id),
+    getResidentialKycStatus(session.user.id),
+  ]);
 
   return (
     <section className="section-shell py-10 sm:py-12">
@@ -43,6 +48,12 @@ export default async function ResidentialAccountPage() {
             Dispatch securely with wallet, card, gift card, or A'Dash scan-to-pay. Cash is disabled for residential safety.
           </p>
         </div>
+
+        <ResidentKycForm
+          status={kyc.status}
+          reviewNotes={kyc.profile?.reviewNotes ?? null}
+          submittedAt={kyc.profile?.submittedAt?.toISOString() ?? null}
+        />
 
         <ResidentialDashboard wallet={overview.wallet} requests={overview.requests} transactions={overview.transactions} />
       </div>

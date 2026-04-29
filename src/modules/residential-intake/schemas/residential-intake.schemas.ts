@@ -96,3 +96,29 @@ export type ResidentialLeadInput = z.infer<typeof residentialLeadSchema>;
 export type ResidentialPickupInput = z.infer<typeof residentialPickupSchema>;
 export type ResidentialDeliveryInput = z.infer<typeof residentialDeliverySchema>;
 export type ResidentialPreferencesInput = z.infer<typeof residentialPreferencesSchema>;
+
+// ─── Resident KYC / Account Verification ──────────────────────────────────────
+
+export const residentIdTypes = [
+  "national_id",
+  "drivers_license",
+  "passport",
+  "voters_id",
+  "other",
+] as const;
+
+export const residentIdTypeLabels: Record<(typeof residentIdTypes)[number], string> = {
+  national_id: "National Identification Card",
+  drivers_license: "Driver's Licence",
+  passport: "Passport",
+  voters_id: "Voter's ID Card",
+  other: "Other Government-Issued ID",
+};
+
+export const residentialKycSchema = z.object({
+  trn: nonEmpty("TRN is required")
+    .regex(/^\d{9}$/, { message: "TRN must be exactly 9 digits" }),
+  idType: z.enum(residentIdTypes, { errorMap: () => ({ message: "Please select an ID type" }) }),
+});
+
+export type ResidentialKycInput = z.infer<typeof residentialKycSchema>;

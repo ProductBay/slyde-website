@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { residentialIntakeSchema } from "@/modules/residential-intake/schemas/residential-intake.schemas";
 import { submitResidentialIntake } from "@/modules/residential-intake/services/residential-intake.service";
 import { processPendingHandoffJobs, shouldHandoff } from "@/modules/residential-intake/services/residential-handoff.service";
+import { getResidentialKycStatus } from "@/modules/residential-intake/services/residential-kyc.service";
 import { getSessionContext } from "@/server/auth/session";
 import { protectPublicRoute } from "@/server/security/public-route-protection";
 
@@ -26,6 +27,17 @@ export async function POST(request: Request) {
     const session = await getSessionContext();
     if (!session?.user?.isEnabled) {
       return NextResponse.json({ error: "You must be signed in to submit a residential dispatch request." }, { status: 401 });
+    }
+
+    const kyc = await getResidentialKycStatus(session.user.id);
+    if (kyc.status !== "approved") {
+      return NextResponse.json(
+        {
+          error: "Residential account verification is required before submitting dispatch requests.",
+          kycStatus: kyc.status,
+        },
+        { status: 403 },
+      );
     }
 
     const headerStore = await headers();
