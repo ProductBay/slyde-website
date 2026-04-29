@@ -61,6 +61,11 @@ function getDailyWisdomIndex(date: Date) {
 }
 
 const navSubmenus: Record<string, Array<{ href: string; label: string; description: string }>> = {
+  "/dispatch-from-home": [
+    { href: "/dispatch-from-home", label: "Overview", description: "See how residential dispatching works with SLYDE." },
+    { href: "/dispatch-from-home/start", label: "Start Dispatch", description: "Submit a home pickup request now." },
+    { href: "/account/residential", label: "Residential Dashboard", description: "Track requests, payments, and wallet activity." },
+  ],
   "/about": [
     { href: "/about", label: "Our Story", description: "See the vision behind SLYDE." },
     { href: "/coverage", label: "Coverage", description: "Explore launch zones and rollout areas." },
@@ -99,9 +104,6 @@ export function Navbar() {
   const [todayLabel, setTodayLabel] = useState("");
   const [authProfile, setAuthProfile] = useState<HeaderAuthProfile | null>(null);
   const pathname = usePathname();
-  const tabletDesktopNavItems = navItems.filter((item) =>
-    ["/", "/about", "/become-a-slyder", "/refer-a-slyder", "/for-businesses", "/safety", "/contact"].includes(item.href),
-  );
   const wisdom = dailyWisdom[dailyIndex];
 
   const isActive = (href: string) =>
@@ -226,8 +228,8 @@ export function Navbar() {
         </div>
 
         <nav className="hidden min-w-0 items-center justify-center lg:flex">
-          <div className="flex min-w-0 max-w-full items-center gap-1 rounded-full border border-slate-200/80 bg-white/82 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_25px_-20px_rgba(15,23,42,0.35)] 2xl:hidden">
-            {tabletDesktopNavItems.map((item) => {
+          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-x-auto rounded-full border border-slate-200/80 bg-white/82 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_25px_-20px_rgba(15,23,42,0.35)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {navItems.map((item) => {
               const submenuItems = navSubmenus[item.href];
 
               if (!submenuItems) {
@@ -236,7 +238,7 @@ export function Navbar() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "group relative whitespace-nowrap rounded-full px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.01em] transition duration-200",
+                      "group relative whitespace-nowrap rounded-full px-2 py-1.5 text-[10px] font-semibold tracking-[0.01em] transition duration-200 xl:px-2.5 xl:text-[11px]",
                       isActive(item.href) ? "bg-slate-950 text-white shadow-soft" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
                     )}
                   >
@@ -256,7 +258,7 @@ export function Navbar() {
                   <Link
                     href={item.href}
                     className={cn(
-                      "group relative inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.01em] transition duration-200",
+                      "group relative inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-1.5 text-[10px] font-semibold tracking-[0.01em] transition duration-200 xl:px-2.5 xl:text-[11px]",
                       isActive(item.href) ? "bg-slate-950 text-white shadow-soft" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
                     )}
                   >
@@ -297,92 +299,6 @@ export function Navbar() {
                           />
                           <div className="relative z-10 transition duration-300 [transform:translate3d(0,0,0)_rotateX(0deg)] group-hover:[transform:translate3d(0,-2px,12px)_rotateX(4deg)]">
                             <p className="text-[11px] font-semibold text-slate-900 transition duration-300 group-hover:text-slate-950">
-                              {subitem.label}
-                            </p>
-                            <p className="mt-1 text-[11px] leading-5 text-slate-500 transition duration-300 group-hover:text-slate-700">
-                              {subitem.description}
-                            </p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="hidden min-w-0 max-w-full items-center gap-1 rounded-full border border-slate-200/80 bg-white/82 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_25px_-20px_rgba(15,23,42,0.35)] 2xl:flex">
-            {navItems.map((item) => {
-              const submenuItems = navSubmenus[item.href];
-
-              if (!submenuItems) {
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "group relative whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold tracking-[0.01em] transition duration-200",
-                      isActive(item.href) ? "bg-slate-950 text-white shadow-soft" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
-                    )}
-                  >
-                    <span className="relative z-10">{item.label}</span>
-                    <span
-                      className={cn(
-                        "absolute inset-x-3 bottom-1 h-px rounded-full bg-gradient-to-r from-transparent via-sky-300 to-transparent transition-opacity duration-200",
-                        isActive(item.href) ? "opacity-90" : "opacity-0 group-hover:opacity-70",
-                      )}
-                    />
-                  </Link>
-                );
-              }
-
-              return (
-                <div key={item.href} className="group relative">
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "group relative inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold tracking-[0.01em] transition duration-200",
-                      isActive(item.href) ? "bg-slate-950 text-white shadow-soft" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
-                    )}
-                  >
-                    <span className="relative z-10">{item.label}</span>
-                    <ChevronDown className="h-3.5 w-3.5 opacity-70 transition group-hover:opacity-100" />
-                    <span
-                      className={cn(
-                        "absolute inset-x-3 bottom-1 h-px rounded-full bg-gradient-to-r from-transparent via-sky-300 to-transparent transition-opacity duration-200",
-                        isActive(item.href) ? "opacity-90" : "opacity-0 group-hover:opacity-70",
-                      )}
-                    />
-                  </Link>
-
-                  <div className="pointer-events-none absolute left-1/2 top-full z-50 w-[18rem] -translate-x-1/2 pt-2 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
-                    <div className="absolute inset-x-0 top-0 h-3" aria-hidden />
-                    <div className="rounded-[1.2rem] border border-slate-200/80 bg-white/96 p-2 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.28)] backdrop-blur-xl">
-                      {submenuItems.map((subitem) => (
-                        <Link
-                          key={subitem.href}
-                          href={subitem.href}
-                          className="group relative block overflow-hidden rounded-[0.95rem] px-3 py-2.5 transition duration-300 [transform-style:preserve-3d] [perspective:900px] hover:shadow-[0_18px_34px_-24px_rgba(15,23,42,0.3)]"
-                        >
-                          <span
-                            aria-hidden
-                            className="absolute inset-0 rounded-[inherit] bg-[linear-gradient(115deg,rgba(14,165,233,0.14),rgba(34,211,238,0.12)_32%,rgba(249,115,22,0.14)_68%,rgba(132,204,22,0.12))] opacity-0 transition duration-300 group-hover:opacity-100 group-hover:[transform:translate3d(0,0,0)]"
-                          />
-                          <span
-                            aria-hidden
-                            className="absolute inset-y-0 left-[-35%] w-[42%] skew-x-[-22deg] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)] opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-hover:animate-[navbarSubmenuSheen_850ms_ease_forwards]"
-                          />
-                          <span
-                            aria-hidden
-                            className="pointer-events-none absolute left-0 top-1/2 h-[72%] w-1 -translate-y-1/2 rounded-r-full bg-[linear-gradient(180deg,#38bdf8,#22d3ee,#f97316)] opacity-0 shadow-[0_0_18px_rgba(34,211,238,0.32)] transition duration-300 group-hover:opacity-100"
-                          />
-                          <span
-                            aria-hidden
-                            className="absolute inset-x-3 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.72),transparent)] opacity-0 transition duration-300 group-hover:opacity-100"
-                          />
-                          <div className="relative z-10 transition duration-300 [transform:translate3d(0,0,0)_rotateX(0deg)] group-hover:[transform:translate3d(0,-2px,12px)_rotateX(4deg)]">
-                            <p className="text-xs font-semibold text-slate-900 transition duration-300 group-hover:text-slate-950">
                               {subitem.label}
                             </p>
                             <p className="mt-1 text-[11px] leading-5 text-slate-500 transition duration-300 group-hover:text-slate-700">
