@@ -231,6 +231,8 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
 
     setLocating(true);
     setLocationMessage("Getting live location...");
+    let bestAccuracySeen = Number.POSITIVE_INFINITY;
+    let firstFixShown = false;
 
     const resolvePlainAddress = async (latitude: number, longitude: number) => {
       try {
@@ -250,10 +252,18 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
       }
     };
 
-    const applyCapturedLocation = async (position: GeolocationPosition, options?: { refined?: boolean }) => {
+    const applyCapturedLocation = (position: GeolocationPosition, options?: { refined?: boolean }) => {
       const latitude = Number(position.coords.latitude.toFixed(7));
       const longitude = Number(position.coords.longitude.toFixed(7));
       const accuracyMeters = Math.round(position.coords.accuracy);
+
+      // Avoid overwriting a better fix with a weaker one.
+      const isBetterFix = accuracyMeters + 2 < bestAccuracySeen;
+      const shouldApply = !firstFixShown || isBetterFix;
+      if (!shouldApply) return;
+
+      bestAccuracySeen = Math.min(bestAccuracySeen, accuracyMeters);
+      firstFixShown = true;
 
       update("liveLocationPing", {
         latitude,
@@ -262,12 +272,14 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
         capturedAt: new Date().toISOString(),
       });
 
-      const resolvedAddress = await resolvePlainAddress(latitude, longitude);
-      if (resolvedAddress) {
-        update("pickupAddress", resolvedAddress);
-      } else {
-        update("pickupAddress", `Pinned location: ${latitude}, ${longitude}`);
-      }
+      // Reflect immediately in plain text while reverse geocoding completes.
+      update("pickupAddress", `Pinned location: ${latitude}, ${longitude}`);
+
+      void resolvePlainAddress(latitude, longitude).then((resolvedAddress) => {
+        if (resolvedAddress) {
+          update("pickupAddress", resolvedAddress);
+        }
+      });
 
       if (options?.refined) {
         setLocationMessage(`Location refined to ~${accuracyMeters}m accuracy.`);
@@ -286,37 +298,57 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
         navigator.geolocation.getCurrentPosition(resolve, reject, opts);
       });
 
-    // 1) Quick first fix for fast UI response.
-    getPosition({ enableHighAccuracy: false, timeout: 4500, maximumAge: 45000 })
-      .then(async (quickPosition) => {
-        await applyCapturedLocation(quickPosition);
-        setLocating(false);
+    const captureBestPreciseFix = () =>
+      new Promise<GeolocationPosition>((resolve, reject) => {
+        let best: GeolocationPosition | null = null;
+        const startedAt = Date.now();
 
-        // 2) Optional high-accuracy refinement after UI is already responsive.
-        getPosition({ enableHighAccuracy: true, timeout: 6500, maximumAge: 0 })
-          .then(async (precisePosition) => {
-            const currentAccuracy = form.liveLocationPing?.accuracyMeters ?? Number.MAX_SAFE_INTEGER;
-            const improvedAccuracy = Math.round(precisePosition.coords.accuracy);
-            if (improvedAccuracy + 5 < currentAccuracy) {
-              await applyCapturedLocation(precisePosition, { refined: true });
+        const settle = () => {
+          navigator.geolocation.clearWatch(watchId);
+          if (best) resolve(best);
+          else reject(new Error("No high-accuracy fix"));
+        };
+
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            if (!best || position.coords.accuracy < best.coords.accuracy) {
+              best = position;
             }
-          })
-          .catch(() => {
-            // Silent: quick fix is already available.
-          });
-      })
-      .catch(() => {
-        // If quick mode fails, attempt one high-accuracy fetch with strict timeout.
-        getPosition({ enableHighAccuracy: true, timeout: 7000, maximumAge: 0 })
-          .then(async (precisePosition) => {
-            await applyCapturedLocation(precisePosition);
-            setLocating(false);
-          })
-          .catch(() => {
-            setLocationMessage("Could not capture your live location quickly. Please allow location access and try again in an open area.");
-            setLocating(false);
-          });
+            const strongEnough = position.coords.accuracy <= 18;
+            const timedOut = Date.now() - startedAt >= 5500;
+            if (strongEnough || timedOut) {
+              settle();
+            }
+          },
+          () => {
+            settle();
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 7000,
+            maximumAge: 0,
+          },
+        );
       });
+
+    const quickTask = getPosition({ enableHighAccuracy: false, timeout: 2800, maximumAge: 12000 })
+      .then((quickPosition) => {
+        applyCapturedLocation(quickPosition);
+        setLocating(false);
+      });
+
+    const preciseTask = captureBestPreciseFix().then((precisePosition) => {
+      applyCapturedLocation(precisePosition, { refined: firstFixShown });
+      setLocating(false);
+    });
+
+    Promise.allSettled([quickTask, preciseTask]).then((results) => {
+      const allFailed = results.every((result) => result.status === "rejected");
+      if (allFailed) {
+        setLocationMessage("Could not capture your live location quickly. Please allow location access and try again in an open area.");
+        setLocating(false);
+      }
+    });
   }
 
   const accuracyBadge = getAccuracyBadge(form.liveLocationPing?.accuracyMeters);
