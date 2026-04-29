@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import {
   BadgeCheck,
   Clock3,
@@ -143,6 +144,25 @@ export default function DispatchFromHomePage() {
           { value: "Verified couriers", label: "Every Slyder passes identity and readiness review." },
         ]}
       />
+
+      {/* Delivery process visual */}
+      <section className="section-shell py-10 sm:py-14">
+        <div className="mx-auto max-w-5xl">
+          <p className="mb-6 text-center text-sm font-semibold uppercase tracking-widest text-sky-600">
+            The full delivery journey
+          </p>
+          <div className="overflow-hidden rounded-[2rem] shadow-panel ring-1 ring-slate-100">
+            <Image
+              src="/images/dispatch-how-it-works.png"
+              alt="Six-step delivery journey: Order Dispatched, Slyder Accepts, Picked Up, On the Way, Almost There, Delivered"
+              width={1200}
+              height={800}
+              className="w-full object-cover"
+              priority
+            />
+          </div>
+        </div>
+      </section>
 
       {/* How it works */}
       <section className="section-shell py-10 sm:py-14">
