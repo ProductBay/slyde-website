@@ -230,87 +230,92 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
     }
 
     setLocating(true);
-    setLocationMessage("Getting your most accurate live location...");
+    setLocationMessage("Getting live location...");
 
-    const captureBestFix = () =>
-      new Promise<GeolocationPosition>((resolve, reject) => {
-        let best: GeolocationPosition | null = null;
-        const startedAt = Date.now();
-
-        const watchId = navigator.geolocation.watchPosition(
-          (position) => {
-            if (!best || position.coords.accuracy < best.coords.accuracy) {
-              best = position;
-            }
-
-            const reachedTargetAccuracy = position.coords.accuracy <= 12;
-            const reachedSampleTimeout = Date.now() - startedAt >= 9000;
-            if (reachedTargetAccuracy || reachedSampleTimeout) {
-              navigator.geolocation.clearWatch(watchId);
-              if (best) resolve(best);
-              else reject(new Error("No location fix available"));
-            }
-          },
-          (error) => {
-            navigator.geolocation.clearWatch(watchId);
-            reject(error);
-          },
+    const resolvePlainAddress = async (latitude: number, longitude: number) => {
+      try {
+        const reverseResponse = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=20&addressdetails=1&namedetails=1`,
           {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0,
+            headers: {
+              Accept: "application/json",
+            },
           },
         );
+        if (!reverseResponse.ok) return "";
+        const reverseData = (await reverseResponse.json()) as { display_name?: string };
+        return reverseData.display_name?.trim() ?? "";
+      } catch {
+        return "";
+      }
+    };
+
+    const applyCapturedLocation = async (position: GeolocationPosition, options?: { refined?: boolean }) => {
+      const latitude = Number(position.coords.latitude.toFixed(7));
+      const longitude = Number(position.coords.longitude.toFixed(7));
+      const accuracyMeters = Math.round(position.coords.accuracy);
+
+      update("liveLocationPing", {
+        latitude,
+        longitude,
+        accuracyMeters,
+        capturedAt: new Date().toISOString(),
       });
 
-    captureBestFix()
-      .then(async (position) => {
-        const latitude = Number(position.coords.latitude.toFixed(7));
-        const longitude = Number(position.coords.longitude.toFixed(7));
-        const accuracyMeters = Math.round(position.coords.accuracy);
-        update("liveLocationPing", {
-          latitude,
-          longitude,
-          accuracyMeters,
-          capturedAt: new Date().toISOString(),
-        });
+      const resolvedAddress = await resolvePlainAddress(latitude, longitude);
+      if (resolvedAddress) {
+        update("pickupAddress", resolvedAddress);
+      } else {
+        update("pickupAddress", `Pinned location: ${latitude}, ${longitude}`);
+      }
 
-        let resolvedAddress = "";
-        try {
-          const reverseResponse = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=20&addressdetails=1&namedetails=1`,
-            {
-              headers: {
-                Accept: "application/json",
-              },
-            },
-          );
-          if (reverseResponse.ok) {
-            const reverseData = (await reverseResponse.json()) as { display_name?: string };
-            resolvedAddress = reverseData.display_name?.trim() ?? "";
-          }
-        } catch {
-          // Keep flow usable even if reverse-geocoding fails.
-        }
+      if (options?.refined) {
+        setLocationMessage(`Location refined to ~${accuracyMeters}m accuracy.`);
+        return;
+      }
 
-        if (resolvedAddress) {
-          update("pickupAddress", resolvedAddress);
-          if (accuracyMeters <= 20) {
-            setLocationMessage("Precise live location captured and pickup address auto-filled. You can edit it before submitting.");
-          } else {
-            setLocationMessage(`Location captured (about ${accuracyMeters}m accuracy). For best precision, move near open sky and tap Ping Live Location again.`);
-          }
-        } else {
-          const fallbackAddress = `Pinned location: ${latitude}, ${longitude}`;
-          update("pickupAddress", fallbackAddress);
-          setLocationMessage(`Live location captured (~${accuracyMeters}m). Address lookup was unavailable, so coordinates were placed in the pickup address box.`);
-        }
+      if (accuracyMeters <= 20) {
+        setLocationMessage("Precise live location captured and pickup address auto-filled.");
+      } else {
+        setLocationMessage(`Location captured (~${accuracyMeters}m). We are refining accuracy in the background.`);
+      }
+    };
 
+    const getPosition = (opts: PositionOptions) =>
+      new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, opts);
+      });
+
+    // 1) Quick first fix for fast UI response.
+    getPosition({ enableHighAccuracy: false, timeout: 4500, maximumAge: 45000 })
+      .then(async (quickPosition) => {
+        await applyCapturedLocation(quickPosition);
         setLocating(false);
+
+        // 2) Optional high-accuracy refinement after UI is already responsive.
+        getPosition({ enableHighAccuracy: true, timeout: 6500, maximumAge: 0 })
+          .then(async (precisePosition) => {
+            const currentAccuracy = form.liveLocationPing?.accuracyMeters ?? Number.MAX_SAFE_INTEGER;
+            const improvedAccuracy = Math.round(precisePosition.coords.accuracy);
+            if (improvedAccuracy + 5 < currentAccuracy) {
+              await applyCapturedLocation(precisePosition, { refined: true });
+            }
+          })
+          .catch(() => {
+            // Silent: quick fix is already available.
+          });
       })
       .catch(() => {
-        setLocationMessage("Could not capture your live location. Please allow location access and try again.");
-        setLocating(false);
+        // If quick mode fails, attempt one high-accuracy fetch with strict timeout.
+        getPosition({ enableHighAccuracy: true, timeout: 7000, maximumAge: 0 })
+          .then(async (precisePosition) => {
+            await applyCapturedLocation(precisePosition);
+            setLocating(false);
+          })
+          .catch(() => {
+            setLocationMessage("Could not capture your live location quickly. Please allow location access and try again in an open area.");
+            setLocating(false);
+          });
       });
   }
 
