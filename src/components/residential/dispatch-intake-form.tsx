@@ -171,6 +171,17 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
   const [locating, setLocating] = useState(false);
   const [locationMessage, setLocationMessage] = useState<string | null>(null);
 
+  function getAccuracyBadge(accuracyMeters?: number) {
+    if (accuracyMeters == null) return null;
+    if (accuracyMeters <= 20) {
+      return { label: "Excellent", className: "bg-emerald-100 text-emerald-800" };
+    }
+    if (accuracyMeters <= 60) {
+      return { label: "Good", className: "bg-sky-100 text-sky-800" };
+    }
+    return { label: "Low", className: "bg-amber-100 text-amber-800" };
+  }
+
   function update<K extends keyof FormState>(key: K, value: FormState[K] | string | boolean | undefined) {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => {
@@ -302,6 +313,8 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
         setLocating(false);
       });
   }
+
+  const accuracyBadge = getAccuracyBadge(form.liveLocationPing?.accuracyMeters);
 
   async function handleSubmit() {
     if (!validateStep(3)) return;
@@ -436,9 +449,16 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
                   </Button>
                   {form.liveLocationPing ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
                   {form.liveLocationPing ? (
-                    <span className="text-xs text-slate-600">
-                      {form.liveLocationPing.latitude}, {form.liveLocationPing.longitude}
-                    </span>
+                    <>
+                      <span className="text-xs text-slate-600">
+                        {form.liveLocationPing.latitude}, {form.liveLocationPing.longitude}
+                      </span>
+                      {accuracyBadge ? (
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${accuracyBadge.className}`}>
+                          {accuracyBadge.label}
+                        </span>
+                      ) : null}
+                    </>
                   ) : null}
                 </div>
                 <p className="mt-2 text-xs text-slate-500">
