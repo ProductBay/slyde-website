@@ -3,7 +3,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { buildMetadata } from "@/lib/metadata";
-import { getDispatchRequestDetail } from "@/modules/residential-intake/repositories/residential-intake.repository";
+import {
+  getDispatchRequestDetail,
+  getDispatchRequestLivePickupPing,
+} from "@/modules/residential-intake/repositories/residential-intake.repository";
 import { getSessionContext, hasRole } from "@/server/auth/session";
 import { RequestDetailView } from "@/components/residential/request-detail-view";
 
@@ -29,7 +32,10 @@ export default async function ResidentialRequestDetailPage({
   }
 
   const { requestNumber } = await params;
-  const request = await getDispatchRequestDetail(requestNumber, session.user.id);
+  const [request, livePickupPin] = await Promise.all([
+    getDispatchRequestDetail(requestNumber, session.user.id),
+    getDispatchRequestLivePickupPing(requestNumber, session.user.id),
+  ]);
 
   if (!request) {
     notFound();
@@ -55,7 +61,7 @@ export default async function ResidentialRequestDetailPage({
           </p>
         </div>
 
-        <RequestDetailView request={request} />
+        <RequestDetailView request={request} livePickupPin={livePickupPin} />
       </div>
     </section>
   );

@@ -255,3 +255,54 @@ export async function getDispatchRequestDetail(
     },
   });
 }
+
+export async function getDispatchRequestLivePickupPing(
+  referenceCode: string,
+  userId: string,
+) {
+  const request = await prisma.residentialDispatchRequest.findFirst({
+    where: { referenceCode, userId },
+    select: {
+      pickupAddress: true,
+      pickupArea: true,
+      pickupParish: true,
+      lead: {
+        select: {
+          handoffJob: {
+            select: {
+              payloadJson: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!request?.lead?.handoffJob?.payloadJson) {
+    return null;
+  }
+
+  const payload = request.lead.handoffJob.payloadJson as {
+    pickupLocation?: {
+      livePing?: {
+        latitude?: number;
+        longitude?: number;
+        accuracyMeters?: number | null;
+        capturedAt?: string;
+      } | null;
+    };
+  };
+
+  const ping = payload.pickupLocation?.livePing;
+  if (!ping || typeof ping.latitude !== "number" || typeof ping.longitude !== "number") {
+    return null;
+  }
+
+  return {
+    latitude: ping.latitude,
+    longitude: ping.longitude,
+    accuracyMeters: typeof ping.accuracyMeters === "number" ? ping.accuracyMeters : null,
+    capturedAt: typeof ping.capturedAt === "string" ? ping.capturedAt : null,
+    plainAddress: `${request.pickupAddress}, ${request.pickupArea}, ${request.pickupParish}`,
+  };
+}

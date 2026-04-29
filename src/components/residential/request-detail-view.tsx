@@ -9,6 +9,14 @@ type RequestWithEvents = ResidentialDispatchRequest & {
   events: ResidentialRequestEvent[];
 };
 
+type LivePickupPin = {
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  capturedAt: string | null;
+  plainAddress: string;
+};
+
 function formatMoney(minor: number | null | undefined, currency = "JMD") {
   if (minor == null) return "-";
   return new Intl.NumberFormat("en-JM", {
@@ -88,7 +96,7 @@ const eventTypeColors: Record<string, string> = {
   note_added: "bg-slate-400",
 };
 
-export function RequestDetailView({ request }: { request: RequestWithEvents }) {
+export function RequestDetailView({ request, livePickupPin }: { request: RequestWithEvents; livePickupPin?: LivePickupPin | null }) {
   const hasEvents = request.events.length > 0;
 
   return (
@@ -131,6 +139,25 @@ export function RequestDetailView({ request }: { request: RequestWithEvents }) {
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Pickup</dt>
             <dd className="mt-1 text-sm text-slate-900">{request.pickupAddress}</dd>
             <dd className="text-xs text-slate-500">{request.pickupArea}, {request.pickupParish}</dd>
+            {livePickupPin ? (
+              <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                <p className="font-semibold uppercase tracking-wide text-emerald-700">Live pickup pin</p>
+                <p className="mt-1">Pinned address: {livePickupPin.plainAddress}</p>
+                <p className="mt-1">
+                  Coordinates: {livePickupPin.latitude.toFixed(6)}, {livePickupPin.longitude.toFixed(6)}
+                </p>
+                {livePickupPin.accuracyMeters != null ? <p className="mt-1">Accuracy: ~{livePickupPin.accuracyMeters} m</p> : null}
+                {livePickupPin.capturedAt ? <p className="mt-1">Captured: {formatDate(livePickupPin.capturedAt)}</p> : null}
+                <a
+                  href={`https://www.google.com/maps?q=${livePickupPin.latitude},${livePickupPin.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex font-semibold text-emerald-800 underline underline-offset-2"
+                >
+                  Open pin in maps
+                </a>
+              </div>
+            ) : null}
           </div>
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Dropoff</dt>
