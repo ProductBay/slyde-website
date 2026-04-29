@@ -91,6 +91,15 @@ const navSubmenus: Record<string, Array<{ href: string; label: string; descripti
   ],
 };
 
+const desktopPriorityHrefs = new Set([
+  "/",
+  "/dispatch-from-home",
+  "/about",
+  "/become-a-slyder",
+  "/for-businesses",
+  "/safety",
+]);
+
 function hasActiveChild(pathname: string, href: string) {
   const submenuItems = navSubmenus[href];
   return submenuItems?.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)) ?? false;
@@ -105,6 +114,8 @@ export function Navbar() {
   const [authProfile, setAuthProfile] = useState<HeaderAuthProfile | null>(null);
   const pathname = usePathname();
   const wisdom = dailyWisdom[dailyIndex];
+  const primaryDesktopNavItems = navItems.filter((item) => desktopPriorityHrefs.has(item.href));
+  const overflowDesktopNavItems = navItems.filter((item) => !desktopPriorityHrefs.has(item.href));
 
   const isActive = (href: string) =>
     pathname === href || (href !== "/" && pathname.startsWith(href)) || hasActiveChild(pathname, href);
@@ -221,7 +232,7 @@ export function Navbar() {
 
         <nav className="hidden min-w-0 items-center justify-center lg:flex">
           <div className="flex min-w-0 max-w-full items-center gap-1 overflow-visible rounded-full border border-slate-200/80 bg-white/82 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_25px_-20px_rgba(15,23,42,0.35)]">
-            {navItems.map((item) => {
+            {primaryDesktopNavItems.map((item) => {
               const submenuItems = navSubmenus[item.href];
 
               if (!submenuItems) {
@@ -304,6 +315,34 @@ export function Navbar() {
                 </div>
               );
             })}
+
+            {overflowDesktopNavItems.length ? (
+              <div className="group relative">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.01em] text-slate-600 transition duration-200 hover:bg-slate-50 hover:text-slate-950"
+                >
+                  More
+                  <ChevronDown className="h-3.5 w-3.5 opacity-70 transition group-hover:opacity-100" />
+                </button>
+                <div className="pointer-events-none absolute left-1/2 top-full z-50 w-[16rem] -translate-x-1/2 pt-2 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                  <div className="rounded-[1rem] border border-slate-200/80 bg-white/96 p-2 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.28)] backdrop-blur-xl">
+                    {overflowDesktopNavItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "block rounded-xl px-3 py-2 text-sm font-medium transition",
+                          isActive(item.href) ? "bg-slate-950 text-white" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         </nav>
 
@@ -313,7 +352,7 @@ export function Navbar() {
               <div className="group relative">
                 <Link
                   href={identityPath}
-                  className="group relative flex h-11 items-center gap-2.5 overflow-hidden rounded-full border border-slate-200/90 bg-white/95 px-2.5 pr-3.5 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] transition hover:border-sky-200 hover:shadow-[0_22px_44px_-26px_rgba(14,116,144,0.35)]"
+                  className="group relative flex h-10 items-center gap-2 overflow-hidden rounded-full border border-slate-200/90 bg-white/95 px-2.5 pr-3 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] transition hover:border-sky-200 hover:shadow-[0_22px_44px_-26px_rgba(14,116,144,0.35)]"
                 >
                   <span
                     aria-hidden
@@ -328,10 +367,10 @@ export function Navbar() {
                     )}
                   </span>
                   <span className="relative min-w-0">
-                    <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+                    <span className="hidden truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700 2xl:block">
                       Signed In
                     </span>
-                    <span className="block max-w-[11rem] truncate text-xs font-semibold text-slate-900">
+                    <span className="block max-w-[8.5rem] truncate text-xs font-semibold text-slate-900 xl:max-w-[9.5rem]">
                       {identityName}
                     </span>
                   </span>
