@@ -52,6 +52,14 @@ export const residentialLeadSchema = z.object({
 
 export const residentialPickupSchema = z.object({
   pickupAddress: nonEmpty("Pickup address is required").max(300),
+  liveLocationPing: z
+    .object({
+      latitude: z.number().min(-90).max(90),
+      longitude: z.number().min(-180).max(180),
+      accuracyMeters: z.number().positive().max(5000).optional(),
+      capturedAt: z.string().datetime(),
+    })
+    .optional(),
 });
 
 // ─── Step 3: Delivery details ─────────────────────────────────────────────────

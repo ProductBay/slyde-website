@@ -30,6 +30,14 @@ export function buildHandoffPayload(args: {
       parish: args.input.parish,
       area: args.input.area,
       address: args.input.pickupAddress,
+      livePing: args.input.liveLocationPing
+        ? {
+            latitude: args.input.liveLocationPing.latitude,
+            longitude: args.input.liveLocationPing.longitude,
+            accuracyMeters: args.input.liveLocationPing.accuracyMeters ?? null,
+            capturedAt: args.input.liveLocationPing.capturedAt,
+          }
+        : null,
     },
     dropoffLocation: {
       parish: args.input.dropoffParish,

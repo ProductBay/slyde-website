@@ -66,6 +66,7 @@ const defaultForm: Partial<FormState> = {
   parish: undefined,
   area: "",
   pickupAddress: "",
+  liveLocationPing: undefined,
   dropoffParish: undefined,
   dropoffArea: "",
   dropoffAddress: "",
@@ -167,6 +168,8 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationMessage, setLocationMessage] = useState<string | null>(null);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K] | string | boolean | undefined) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -207,6 +210,38 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
     setStep((s) => s - 1);
     setErrors({});
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function captureLiveLocation() {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setLocationMessage("Live location is not supported on this device/browser.");
+      return;
+    }
+
+    setLocating(true);
+    setLocationMessage("Getting your live location...");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        update("liveLocationPing", {
+          latitude: Number(position.coords.latitude.toFixed(6)),
+          longitude: Number(position.coords.longitude.toFixed(6)),
+          accuracyMeters: Math.round(position.coords.accuracy),
+          capturedAt: new Date().toISOString(),
+        });
+        setLocationMessage("Live location captured. Slyders will see this as your exact pickup pin.");
+        setLocating(false);
+      },
+      () => {
+        setLocationMessage("Could not capture your live location. Please allow location access and try again.");
+        setLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0,
+      },
+    );
   }
 
   async function handleSubmit() {
@@ -335,6 +370,23 @@ export function ResidentialDispatchIntakeForm({ identity }: { identity: AccountI
                 onChange={(e) => update("pickupAddress", e.target.value)}
               />
               <FieldError message={errors.pickupAddress} />
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" variant="secondary" onClick={captureLiveLocation} disabled={locating}>
+                    {locating ? "Capturing location..." : "Ping Live Location"}
+                  </Button>
+                  {form.liveLocationPing ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
+                  {form.liveLocationPing ? (
+                    <span className="text-xs text-slate-600">
+                      {form.liveLocationPing.latitude}, {form.liveLocationPing.longitude}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  This improves pickup precision so the assigned Slyder can navigate directly to your exact location.
+                </p>
+                {locationMessage ? <p className="mt-2 text-xs text-slate-700">{locationMessage}</p> : null}
+              </div>
             </div>
           )}
 
