@@ -349,7 +349,7 @@ export function Navbar() {
           </div>
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-2 lg:flex">
+        <div className="hidden shrink-0 items-center gap-1.5 lg:flex">
           {showIdentityChip ? (
             <>
               <div className="group relative">
@@ -412,25 +412,24 @@ export function Navbar() {
                   </div>
                 </div>
               </div>
-              <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
+              <LinkButton href="/for-businesses" className="h-8 px-3 text-[11px] xl:px-3">
                 Partner with SLYDE <ArrowUpRight className="h-4 w-4" />
               </LinkButton>
             </>
           ) : (
             <>
               {showGuestAuthCtas ? (
-                <>
-                  <LinkButton href="/login" variant="secondary" className="h-8 px-2.5 text-[11px]">
-                    <LogIn className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 pr-1 text-[11px] font-semibold leading-none">
+                  <Link href="/login" className="text-sky-700 transition hover:text-sky-900">
                     Log in
-                  </LinkButton>
-                  <LinkButton href="/login?tab=register" variant="secondary" className="h-8 px-2.5 text-[11px]">
-                    <UserPlus className="h-3.5 w-3.5" />
+                  </Link>
+                  <span className="text-slate-300">|</span>
+                  <Link href="/login?tab=register" className="text-emerald-700 transition hover:text-emerald-900">
                     Register
-                  </LinkButton>
-                </>
+                  </Link>
+                </div>
               ) : null}
-              <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
+              <LinkButton href="/for-businesses" className="h-8 px-3 text-[11px] xl:px-3">
                 Partner with SLYDE <ArrowUpRight className="h-4 w-4" />
               </LinkButton>
             </>
