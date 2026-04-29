@@ -238,7 +238,7 @@ export function Navbar() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "group relative whitespace-nowrap rounded-full px-2 py-1.5 text-[10px] font-semibold tracking-[0.01em] transition duration-200 xl:px-2.5 xl:text-[11px]",
+                      "group relative whitespace-nowrap rounded-full px-2 py-1.5 text-[10px] font-semibold tracking-[0.01em] transition duration-200",
                       isActive(item.href) ? "bg-slate-950 text-white shadow-soft" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
                     )}
                   >
@@ -258,7 +258,7 @@ export function Navbar() {
                   <Link
                     href={item.href}
                     className={cn(
-                      "group relative inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-1.5 text-[10px] font-semibold tracking-[0.01em] transition duration-200 xl:px-2.5 xl:text-[11px]",
+                      "group relative inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-1.5 text-[10px] font-semibold tracking-[0.01em] transition duration-200",
                       isActive(item.href) ? "bg-slate-950 text-white shadow-soft" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
                     )}
                   >
@@ -315,7 +315,7 @@ export function Navbar() {
           </div>
         </nav>
 
-        <div className="hidden items-center gap-2 xl:flex">
+        <div className="hidden shrink-0 items-center gap-2 lg:flex">
           {showIdentityChip ? (
             <>
               <div className="group relative">
