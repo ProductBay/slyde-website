@@ -111,7 +111,7 @@ export function Navbar() {
   const [mobileSubmenu, setMobileSubmenu] = useState<string | null>(null);
   const [dailyIndex, setDailyIndex] = useState(0);
   const [todayLabel, setTodayLabel] = useState("");
-  const [authProfile, setAuthProfile] = useState<HeaderAuthProfile | null>(null);
+  const [authProfile, setAuthProfile] = useState<HeaderAuthProfile>();
   const pathname = usePathname();
   const wisdom = dailyWisdom[dailyIndex];
   const primaryDesktopNavItems = navItems.filter((item) => desktopPriorityHrefs.has(item.href));
@@ -162,13 +162,15 @@ export function Navbar() {
           cache: "no-store",
         });
 
-        if (!response.ok) return;
-        const data = (await response.json()) as HeaderAuthProfile;
-        if (active) {
-          setAuthProfile(data);
+        if (!response.ok) {
+          if (active) setAuthProfile({ authenticated: false });
+          return;
         }
+
+        const data = (await response.json()) as HeaderAuthProfile;
+        if (active) setAuthProfile(data);
       } catch {
-        // Fail silently and keep navbar usable.
+        if (active) setAuthProfile({ authenticated: false });
       }
     };
 
@@ -177,7 +179,7 @@ export function Navbar() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [pathname]);
 
   const identityName = authProfile?.user?.fullName?.trim() || "SLYDE Member";
   const identityInitials = identityName
@@ -188,12 +190,13 @@ export function Navbar() {
     .join("");
   const identityPath = authProfile?.accountPath || "/account";
   const showIdentityChip = Boolean(authProfile?.authenticated && authProfile.user);
+  const showGuestAuthCtas = authProfile?.authenticated === false;
 
   const handleUserSignOut = async () => {
     try {
       await fetch("/api/auth/user/logout", { method: "POST" });
     } finally {
-      setAuthProfile(null);
+      setAuthProfile({ authenticated: false });
       router.push("/login");
       router.refresh();
     }
@@ -360,7 +363,12 @@ export function Navbar() {
                     className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(2,132,199,0.08),rgba(34,197,94,0.06)_45%,rgba(249,115,22,0.06))] opacity-0 transition duration-300 group-hover:opacity-100"
                   />
                   <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-900 text-[10px] font-semibold text-white">
-                    {identityInitials || "SM"}
+                    {authProfile?.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={authProfile.avatarUrl} alt={identityName} className="h-full w-full object-cover" />
+                    ) : (
+                      identityInitials || "SM"
+                    )}
                   </span>
                   <ChevronDown className="relative h-3.5 w-3.5 text-slate-400 transition group-hover:text-slate-700" />
                 </Link>
@@ -410,14 +418,18 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <LinkButton href="/login" variant="secondary" className="h-9 px-3.5 text-xs">
-                <LogIn className="h-3.5 w-3.5" />
-                Log in
-              </LinkButton>
-              <LinkButton href="/login?tab=register" variant="secondary" className="h-9 px-3.5 text-xs">
-                <UserPlus className="h-3.5 w-3.5" />
-                Register
-              </LinkButton>
+              {showGuestAuthCtas ? (
+                <>
+                  <LinkButton href="/login" variant="secondary" className="h-8 px-2.5 text-[11px]">
+                    <LogIn className="h-3.5 w-3.5" />
+                    Log in
+                  </LinkButton>
+                  <LinkButton href="/login?tab=register" variant="secondary" className="h-8 px-2.5 text-[11px]">
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Register
+                  </LinkButton>
+                </>
+              ) : null}
               <LinkButton href="/for-businesses" className="h-9 px-4 text-xs xl:px-4">
                 Partner with SLYDE <ArrowUpRight className="h-4 w-4" />
               </LinkButton>
@@ -530,7 +542,7 @@ export function Navbar() {
             })}
 
             <div className="mt-2 grid gap-3">
-              {!showIdentityChip ? (
+              {showGuestAuthCtas ? (
                 <>
                   <LinkButton href="/login" variant="secondary" className="w-full">
                     <LogIn className="h-4 w-4" />
