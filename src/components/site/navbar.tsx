@@ -352,27 +352,15 @@ export function Navbar() {
               <div className="group relative">
                 <Link
                   href={identityPath}
-                  className="group relative flex h-10 items-center gap-2 overflow-hidden rounded-full border border-slate-200/90 bg-white/95 px-2.5 pr-3 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] transition hover:border-sky-200 hover:shadow-[0_22px_44px_-26px_rgba(14,116,144,0.35)]"
+                  aria-label={`${identityName} account menu`}
+                  className="group relative flex h-10 items-center gap-1.5 overflow-hidden rounded-full border border-slate-200/90 bg-white/95 px-1.5 pr-2 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] transition hover:border-sky-200 hover:shadow-[0_22px_44px_-26px_rgba(14,116,144,0.35)]"
                 >
                   <span
                     aria-hidden
                     className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(2,132,199,0.08),rgba(34,197,94,0.06)_45%,rgba(249,115,22,0.06))] opacity-0 transition duration-300 group-hover:opacity-100"
                   />
-                  <span className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-900 text-[10px] font-semibold text-white">
-                    {authProfile?.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={authProfile.avatarUrl} alt={identityName} className="h-full w-full object-cover" />
-                    ) : (
-                      identityInitials || "SM"
-                    )}
-                  </span>
-                  <span className="relative min-w-0">
-                    <span className="hidden truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700 2xl:block">
-                      Signed In
-                    </span>
-                    <span className="block max-w-[8.5rem] truncate text-xs font-semibold text-slate-900 xl:max-w-[9.5rem]">
-                      {identityName}
-                    </span>
+                  <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-900 text-[10px] font-semibold text-white">
+                    {identityInitials || "SM"}
                   </span>
                   <ChevronDown className="relative h-3.5 w-3.5 text-slate-400 transition group-hover:text-slate-700" />
                 </Link>
