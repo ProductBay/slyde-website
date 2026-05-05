@@ -74,10 +74,13 @@ async function ensureCoverageZones(store?: OnboardingStore) {
 
 function hydrateZones(store: OnboardingStore) {
   const timestamp = nowIso();
-  const known = new Set(store.coverageZones.map((zone) => zone.id));
+  const knownIds = new Set(store.coverageZones.map((zone) => zone.id));
+  // Also deduplicate by normalised name to prevent e.g. two "Kingston" zones
+  // when a seed uses a UUID id but an application derives id "kingston".
+  const knownNames = new Set(store.coverageZones.map((zone) => zone.name.toLowerCase().trim()));
 
   for (const seed of DEFAULT_ZONE_SEEDS) {
-    if (!known.has(seed.id)) {
+    if (!knownIds.has(seed.id)) {
       store.coverageZones.push({
         ...seed,
         isLive: false,
@@ -85,17 +88,19 @@ function hydrateZones(store: OnboardingStore) {
         createdAt: timestamp,
         updatedAt: timestamp,
       });
-      known.add(seed.id);
+      knownIds.add(seed.id);
+      knownNames.add(seed.name.toLowerCase().trim());
     }
   }
 
   for (const application of store.applications) {
     const zoneId = deriveZoneId(application);
-    if (!zoneId || known.has(zoneId)) continue;
+    const zoneName = toTitleCase(deriveZoneName(application));
+    if (!zoneId || knownIds.has(zoneId) || knownNames.has(zoneName.toLowerCase().trim())) continue;
 
     store.coverageZones.push({
       id: zoneId,
-      name: toTitleCase(deriveZoneName(application)),
+      name: zoneName,
       parish: application.parish,
       requiredReadySlyders: DEFAULT_ZONE_TARGET,
       merchantAvailability: "closed",
@@ -105,7 +110,8 @@ function hydrateZones(store: OnboardingStore) {
       createdAt: timestamp,
       updatedAt: timestamp,
     });
-    known.add(zoneId);
+    knownIds.add(zoneId);
+    knownNames.add(zoneName.toLowerCase().trim());
   }
 }
 

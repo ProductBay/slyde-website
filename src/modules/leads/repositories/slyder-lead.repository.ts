@@ -171,7 +171,16 @@ export async function getFunnelMetrics() {
 }
 
 /**
- * Returns a map of parish (normalised, lower-cased) → lead count.
+ * Normalise a parish name for comparison:
+ * lowercase, remove dots, collapse whitespace.
+ * e.g. "St. James" → "st james", "St. Andrew" → "st andrew"
+ */
+export function normalizeParishKey(p: string): string {
+  return p.toLowerCase().replace(/\./g, "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Returns a map of normalised parish key → lead count.
  * Only rows where parish is not null are included.
  */
 export async function getLeadCountsByParish(): Promise<Record<string, number>> {
@@ -184,7 +193,8 @@ export async function getLeadCountsByParish(): Promise<Record<string, number>> {
   const result: Record<string, number> = {};
   for (const row of rows) {
     if (row.parish) {
-      result[row.parish.toLowerCase().trim()] = row._count._all;
+      const key = normalizeParishKey(row.parish);
+      result[key] = (result[key] ?? 0) + row._count._all;
     }
   }
   return result;

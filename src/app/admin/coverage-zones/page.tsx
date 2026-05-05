@@ -5,10 +5,14 @@ import { DataTable, TableCell, TableHeaderCell } from "@/components/admin/data-t
 import { StatusBadge } from "@/components/admin/status-badge";
 import { getAdminPageContext } from "@/server/admin/admin-page";
 import { listCoverageZones } from "@/modules/admin/services/admin-control-tower.service";
-import { getLeadCountsByParish } from "@/modules/leads/repositories/slyder-lead.repository";
+import { getLeadCountsByParish, normalizeParishKey } from "@/modules/leads/repositories/slyder-lead.repository";
 
 // Medals for top-3
 const MEDALS = ["🥇", "🥈", "🥉"];
+
+// Kingston and St. Andrew form the same Corporate Area — roll St. Andrew leads into Kingston zone
+const ST_ANDREW_KEY = normalizeParishKey("St. Andrew");
+const KINGSTON_KEY = normalizeParishKey("Kingston");
 
 function buildInsight(
   top3: { parish: string; zone: string; count: number }[],
@@ -37,11 +41,14 @@ export default async function CoverageZonesPage() {
     getLeadCountsByParish(),
   ]);
 
-  // Attach lead count to each zone (match on parish, case-insensitive)
-  const zonesWithLeads = zones.map((zone) => ({
-    ...zone,
-    leadCount: leadsByParish[zone.parish.toLowerCase().trim()] ?? 0,
-  }));
+  // Attach lead count — normalise parish keys (strip dots) so "St. James" matches "St James" etc.
+  // St. Andrew leads roll up to Kingston zone (same Corporate Area).
+  const zonesWithLeads = zones.map((zone) => {
+    const key = normalizeParishKey(zone.parish);
+    const base = leadsByParish[key] ?? 0;
+    const stAndrew = key === KINGSTON_KEY ? (leadsByParish[ST_ANDREW_KEY] ?? 0) : 0;
+    return { ...zone, leadCount: base + stAndrew };
+  });
 
   // Top-3 zones by lead count (only those with at least 1)
   const top3 = [...zonesWithLeads]
