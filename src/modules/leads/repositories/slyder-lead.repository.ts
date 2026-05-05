@@ -169,3 +169,23 @@ export async function getFunnelMetrics() {
     },
   };
 }
+
+/**
+ * Returns a map of parish (normalised, lower-cased) → lead count.
+ * Only rows where parish is not null are included.
+ */
+export async function getLeadCountsByParish(): Promise<Record<string, number>> {
+  const rows = await prisma.slyderLead.groupBy({
+    by: ["parish"],
+    _count: { _all: true },
+    where: { parish: { not: null } },
+  });
+
+  const result: Record<string, number> = {};
+  for (const row of rows) {
+    if (row.parish) {
+      result[row.parish.toLowerCase().trim()] = row._count._all;
+    }
+  }
+  return result;
+}
