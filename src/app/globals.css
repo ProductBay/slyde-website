@@ -171,11 +171,9 @@ button {
 *::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(
     180deg,
-    #38bdf8 0%,
-    #fb923c 28%,
-    #fcd34d 52%,
-    #4ade80 74%,
-    #38bdf8 100%
+    #f97316 0%,
+    #fbbf24 40%,
+    #f97316 100%
   );
   border-radius: 999px;
   border: 2px solid transparent;

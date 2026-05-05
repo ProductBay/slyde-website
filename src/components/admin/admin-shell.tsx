@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { SidebarNav } from "@/components/admin/sidebar-nav";
 import { Topbar } from "@/components/admin/topbar";
+import { AdminAlertWatcher } from "@/components/admin/admin-alert-watcher";
 
 export function AdminShell({
   children,
@@ -22,6 +23,7 @@ export function AdminShell({
 
   return (
     <div className="admin-app-shell">
+      <AdminAlertWatcher />
       <SidebarNav mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} onClose={() => setMobileNavOpen(false)} />
       <div className="min-w-0">
         <Topbar
