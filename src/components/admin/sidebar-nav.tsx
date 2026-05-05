@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Gauge, Gift, Headset, Home, Layers3, MapPinned, RadioTower, ScrollText, Share2, Store, TrendingUp, Users, UserPlus, UserSquare2, Waypoints, X } from "lucide-react";
+import { Bell, Gauge, Gift, Headset, Home, Layers3, MapPinned, RadioTower, ScrollText, Settings, Share2, Store, TrendingUp, Users, UserPlus, UserSquare2, Waypoints, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/site/brand-mark";
@@ -28,6 +28,7 @@ const navItems = [
   { href: "/admin/launch-control", label: "Launch Control", icon: RadioTower },
   { href: "/admin/legal-documents", label: "Legal Documents", icon: ScrollText },
   { href: "/admin/legal-acceptances", label: "Legal Acceptances", icon: ScrollText },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function SidebarNav({

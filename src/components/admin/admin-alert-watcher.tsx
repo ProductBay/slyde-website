@@ -1,44 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { playAdminChime } from "@/lib/admin-chime";
 
 const POLL_INTERVAL_MS = 20_000; // every 20 seconds
 
 type AlertCounts = { users: number; leads: number };
-
-function playAlertChime(type: "user" | "lead") {
-  try {
-    const ctx = new AudioContext();
-
-    // Two-tone ascending chime
-    const notes = type === "user"
-      ? [880, 1100]   // user registration: bright high ding
-      : [660, 880];   // lead: slightly lower warm ding
-
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.18);
-
-      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.18);
-      gain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + i * 0.18 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.55);
-
-      osc.start(ctx.currentTime + i * 0.18);
-      osc.stop(ctx.currentTime + i * 0.18 + 0.6);
-    });
-
-    // Let the AudioContext close after playback
-    setTimeout(() => ctx.close(), 2000);
-  } catch {
-    // AudioContext not available (SSR guard — should not reach here)
-  }
-}
 
 export function AdminAlertWatcher() {
   const prevCounts = useRef<AlertCounts | null>(null);
@@ -69,11 +36,11 @@ export function AdminAlertWatcher() {
       const prev = prevCounts.current!;
 
       if (counts.users > prev.users) {
-        playAlertChime("user");
+        playAdminChime("user");
       }
 
       if (counts.leads > prev.leads) {
-        playAlertChime("lead");
+        playAdminChime("lead");
       }
 
       prevCounts.current = counts;
