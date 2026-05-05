@@ -30,7 +30,7 @@ export const navItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/dispatch-from-home", label: "Dispatch from Home" },
   { href: "/about", label: "About" },
-  { href: "/become-a-slyder", label: "For SLYDERS" },
+  { href: "/join", label: "Join" },
   { href: "/refer-a-slyder", label: "Refer a Slyder" },
   { href: "/for-businesses", label: "For Businesses" },
   { href: "/api-integrations", label: "API / Integrations" },

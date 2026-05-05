@@ -91,6 +91,22 @@ body {
   }
 }
 
+/* ─── Jamaica-flag caret: black → gold → green cycling blink ─── */
+@keyframes caret-jamaica {
+  0%,  28% { caret-color: #1a1a1a; }   /* black  */
+  33%, 61% { caret-color: #ffc600; }   /* gold   */
+  66%, 94% { caret-color: #007749; }   /* green  */
+  100%     { caret-color: #1a1a1a; }
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+textarea:focus,
+[contenteditable]:focus {
+  animation: caret-jamaica 1.8s steps(1, end) infinite;
+  caret-color: #1a1a1a;
+}
+/* ───────────────────────────────────────────────────────────── */
+
 a {
   color: inherit;
   text-decoration: none;
@@ -127,8 +143,8 @@ button {
 }
 
 *::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 *::-webkit-scrollbar-track {
@@ -137,26 +153,33 @@ button {
 }
 
 *::-webkit-scrollbar-thumb {
-  background:
-    linear-gradient(180deg, rgba(125, 211, 252, 0.95), rgba(56, 189, 248, 0.9) 42%, rgba(14, 116, 144, 0.86));
-  border: 3px solid transparent;
+  background: linear-gradient(
+    180deg,
+    #0084c2 0%,
+    #0ea5e9 18%,
+    #f97316 40%,
+    #fbbf24 58%,
+    #16a34a 78%,
+    #0284c7 100%
+  );
   border-radius: 999px;
-  background-clip: content-box;
-  box-shadow:
-    inset 0 1px 0 var(--scrollbar-thumb-edge),
-    0 0 0 1px rgba(14, 116, 144, 0.08);
-  transition: background 180ms ease, box-shadow 180ms ease;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: opacity 180ms ease;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background:
-    linear-gradient(180deg, rgba(186, 230, 253, 0.98), rgba(14, 165, 233, 0.94) 45%, rgba(2, 132, 199, 0.92));
-  border: 3px solid transparent;
-  background-clip: content-box;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.84),
-    0 0 0 1px rgba(14, 165, 233, 0.14),
-    0 0 16px var(--scrollbar-glow);
+  background: linear-gradient(
+    180deg,
+    #38bdf8 0%,
+    #fb923c 28%,
+    #fcd34d 52%,
+    #4ade80 74%,
+    #38bdf8 100%
+  );
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 *::-webkit-scrollbar-corner {
@@ -205,6 +228,7 @@ button {
 
   .field-input {
     @apply w-full rounded-2xl border border-border bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-sky-50/40 focus:ring-4 focus:ring-sky-100;
+    caret-color: #1a1a1a;
   }
 
   .field-checkbox {
@@ -216,7 +240,7 @@ button {
   }
 
   .admin-sidebar {
-    @apply sticky top-0 flex h-screen flex-col gap-6 border-r border-white/10 bg-slate-950 px-4 py-5 shadow-panel sm:px-5 sm:py-6;
+    @apply sticky top-0 flex h-screen min-h-0 flex-col overflow-hidden border-r border-white/10 bg-slate-950 px-4 py-5 shadow-panel sm:px-5 sm:py-6;
     background-image:
       radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 22%),
       linear-gradient(180deg, rgba(15, 23, 42, 0.99), rgba(2, 6, 23, 1));

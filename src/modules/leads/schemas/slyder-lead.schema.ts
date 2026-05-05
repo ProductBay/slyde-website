@@ -34,9 +34,26 @@ export const updateSlyderLeadSchema = createSlyderLeadSchema.partial().extend({
   qualificationNotes: z.string().trim().optional(),
   lastContactedAt: z.string().datetime().optional(),
   applicationId: z.string().optional(),
+  actionCenterTitle: z.string().trim().optional(),
+  actionCenterBody: z.string().trim().optional(),
+  actionCenterCtaLabel: z.string().trim().optional(),
+  actionCenterCtaHref: z.string().trim().optional(),
+  actionCenterUpdatedAt: z.string().datetime().optional(),
 });
 
 export type UpdateSlyderLeadInput = z.infer<typeof updateSlyderLeadSchema>;
+
+export const slyderLeadActionCenterSchema = z.object({
+  status: slyderLeadStatusSchema.optional(),
+  actionCenterTitle: z.string().trim().min(3, "Action title is required"),
+  actionCenterBody: z.string().trim().min(8, "Action details are required"),
+  actionCenterCtaLabel: z.string().trim().optional(),
+  actionCenterCtaHref: z.string().trim().optional(),
+  notifyEmail: z.boolean().default(true),
+  notifyWhatsapp: z.boolean().default(true),
+});
+
+export type SlyderLeadActionCenterInput = z.infer<typeof slyderLeadActionCenterSchema>;
 
 export const convertSlyderLeadSchema = z.object({
   leadId: z.string().min(1),

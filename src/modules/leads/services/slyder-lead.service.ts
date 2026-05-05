@@ -1,4 +1,10 @@
-import type { CreateSlyderLeadInput, UpdateSlyderLeadInput, ConvertSlyderLeadInput, ListSlyderLeadsQuery } from "@/modules/leads/schemas/slyder-lead.schema";
+import type {
+  CreateSlyderLeadInput,
+  UpdateSlyderLeadInput,
+  ConvertSlyderLeadInput,
+  ListSlyderLeadsQuery,
+  SlyderLeadActionCenterInput,
+} from "@/modules/leads/schemas/slyder-lead.schema";
 import type { CreateSlyderQualificationInput } from "@/modules/leads/schemas/slyder-qualification.schema";
 import * as repo from "@/modules/leads/repositories/slyder-lead.repository";
 import { getAppBaseUrl } from "@/lib/app-base-url";
@@ -48,6 +54,13 @@ function buildLeadNotificationContext(lead: SlyderLeadNotificationTarget) {
   };
 }
 
+function toAbsoluteAppUrl(value: string | undefined, fallback: string) {
+  if (!value) return fallback;
+  if (/^https?:\/\//i.test(value)) return value;
+  const baseUrl = getAppBaseUrl();
+  return `${baseUrl}${value.startsWith("/") ? value : `/${value}`}`;
+}
+
 async function sendSlyderLeadReceivedNotifications(lead: SlyderLeadNotificationTarget, options?: { force?: boolean; triggeredByUserId?: string }) {
   const { variables, payload } = buildLeadNotificationContext(lead);
 
@@ -79,6 +92,73 @@ async function sendSlyderLeadReceivedNotifications(lead: SlyderLeadNotificationT
   ]);
 
   return { email, whatsapp };
+}
+
+async function sendSlyderLeadActionCenterNotifications(
+  lead: SlyderLeadNotificationTarget,
+  input: SlyderLeadActionCenterInput,
+  options?: { triggeredByUserId?: string },
+) {
+  const { variables: baseVariables, payload: basePayload } = buildLeadNotificationContext(lead);
+  const ctaUrl = toAbsoluteAppUrl(input.actionCenterCtaHref, `${baseVariables.statusUrl}`);
+  const ctaLine = input.actionCenterCtaLabel && input.actionCenterCtaHref
+    ? `${input.actionCenterCtaLabel}: ${ctaUrl}`
+    : "";
+  const variables = {
+    ...baseVariables,
+    actionTitle: input.actionCenterTitle,
+    actionBody: input.actionCenterBody,
+    ctaLabel: input.actionCenterCtaLabel || "Open Action Center",
+    ctaUrl,
+    ctaLine,
+  };
+  const payload = {
+    ...basePayload,
+    actionTitle: input.actionCenterTitle,
+    actionBody: input.actionCenterBody,
+    ctaUrl,
+  };
+  const timestamp = Date.now();
+
+  const tasks: Promise<unknown>[] = [];
+  if (input.notifyEmail) {
+    tasks.push(
+      sendTemplateNotification({
+        templateKey: "slyder_lead_action_center_update_email",
+        actorType: "slyder_applicant",
+        recipient: lead.email,
+        recipientName: variables.fullName,
+        variables,
+        payload,
+        dedupeKey: `slyder_lead_action_center:email:${lead.id}:${timestamp}`,
+        force: true,
+        triggeredByUserId: options?.triggeredByUserId,
+        createdBySystem: !options?.triggeredByUserId,
+      }),
+    );
+  }
+  if (input.notifyWhatsapp) {
+    tasks.push(
+      sendTemplateNotification({
+        templateKey: "slyder_lead_action_center_update_whatsapp",
+        actorType: "slyder_applicant",
+        recipient: lead.whatsapp,
+        recipientName: variables.fullName,
+        variables,
+        payload,
+        dedupeKey: `slyder_lead_action_center:whatsapp:${lead.id}:${timestamp}`,
+        force: true,
+        triggeredByUserId: options?.triggeredByUserId,
+        createdBySystem: !options?.triggeredByUserId,
+      }),
+    );
+  }
+
+  const results = await Promise.allSettled(tasks);
+  return {
+    sent: results.filter((result) => result.status === "fulfilled").length,
+    failed: results.filter((result) => result.status === "rejected").length,
+  };
 }
 
 export async function createSlyderLead(input: CreateSlyderLeadInput) {
@@ -151,6 +231,34 @@ export async function qualifySlyderLead(input: CreateSlyderQualificationInput) {
     status: newStatus,
     qualificationScore: score,
     nextUrl: `/join/slyder/status?leadId=${input.leadId}`,
+  };
+}
+
+export async function updateSlyderLeadActionCenter(
+  id: string,
+  input: SlyderLeadActionCenterInput,
+  triggeredByUserId?: string,
+) {
+  const existingLead = await repo.findLeadById(id);
+  if (!existingLead) throw new Error("Slyder lead not found");
+
+  const lead = await repo.updateLead(id, {
+    ...(input.status ? { status: input.status } : {}),
+    actionCenterTitle: input.actionCenterTitle,
+    actionCenterBody: input.actionCenterBody,
+    actionCenterCtaLabel: input.actionCenterCtaLabel || "",
+    actionCenterCtaHref: input.actionCenterCtaHref || "",
+    actionCenterUpdatedAt: new Date().toISOString(),
+    lastContactedAt: new Date().toISOString(),
+  });
+
+  const notifications = await sendSlyderLeadActionCenterNotifications(lead, input, { triggeredByUserId });
+
+  return {
+    leadId: lead.id,
+    status: lead.status,
+    actionCenterUpdatedAt: lead.actionCenterUpdatedAt?.toISOString() ?? null,
+    notifications,
   };
 }
 

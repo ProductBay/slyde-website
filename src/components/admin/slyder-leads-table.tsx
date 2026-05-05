@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DataTable, TableCell, TableHeaderCell } from "@/components/admin/data-table";
 import { EmptyState } from "@/components/admin/empty-state";
+import { SlyderLeadActionCenterActions } from "@/components/admin/slyder-lead-action-center-actions";
 import { SlyderLeadMessageActions } from "@/components/admin/slyder-lead-message-actions";
 import { SlyderLeadStatusBadge } from "@/components/admin/slyder-lead-status-badge";
 
@@ -15,6 +16,10 @@ type Lead = {
   status: string;
   referralCode: string | null;
   qualificationScore: number | null;
+  actionCenterTitle: string | null;
+  actionCenterBody: string | null;
+  actionCenterCtaLabel: string | null;
+  actionCenterCtaHref: string | null;
   createdAt: string;
 };
 
@@ -73,6 +78,15 @@ export function SlyderLeadsTable({ leads, devAdminKey }: { leads: Lead[]; devAdm
                     >
                       View
                     </Link>
+                    <SlyderLeadActionCenterActions
+                      leadId={lead.id}
+                      currentStatus={lead.status}
+                      currentTitle={lead.actionCenterTitle}
+                      currentBody={lead.actionCenterBody}
+                      currentCtaLabel={lead.actionCenterCtaLabel}
+                      currentCtaHref={lead.actionCenterCtaHref}
+                      devAdminKey={devAdminKey}
+                    />
                     <SlyderLeadMessageActions leadId={lead.id} devAdminKey={devAdminKey} />
                   </div>
                 </TableCell>

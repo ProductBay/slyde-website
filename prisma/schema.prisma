@@ -1809,24 +1809,29 @@ enum SlyderLeadStatus {
 }
 
 model SlyderLead {
-  id                 String           @id @default(cuid())
-  firstName          String
-  lastName           String?
-  email              String
-  whatsapp           String
-  parish             String?
-  vehicleType        String?
-  source             String?
-  status             SlyderLeadStatus @default(NEW)
-  referralCode       String?          @unique
-  referredByCode     String?
-  qualificationScore Int?
-  qualificationNotes String?
-  applicationId      String?
-  convertedAt        DateTime?
-  lastContactedAt    DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id                    String           @id @default(cuid())
+  firstName             String
+  lastName              String?
+  email                 String
+  whatsapp              String
+  parish                String?
+  vehicleType           String?
+  source                String?
+  status                SlyderLeadStatus @default(NEW)
+  referralCode          String?          @unique
+  referredByCode        String?
+  qualificationScore    Int?
+  qualificationNotes    String?
+  applicationId         String?
+  convertedAt           DateTime?
+  lastContactedAt       DateTime?
+  actionCenterTitle     String?
+  actionCenterBody      String?
+  actionCenterCtaLabel  String?
+  actionCenterCtaHref   String?
+  actionCenterUpdatedAt DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
   qualification SlyderQualification?
 }

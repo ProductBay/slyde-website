@@ -53,6 +53,11 @@ export async function updateLead(id: string, data: UpdateSlyderLeadInput) {
       ...(data.qualificationNotes !== undefined ? { qualificationNotes: data.qualificationNotes } : {}),
       ...(data.lastContactedAt !== undefined ? { lastContactedAt: new Date(data.lastContactedAt) } : {}),
       ...(data.applicationId !== undefined ? { applicationId: data.applicationId } : {}),
+      ...(data.actionCenterTitle !== undefined ? { actionCenterTitle: data.actionCenterTitle } : {}),
+      ...(data.actionCenterBody !== undefined ? { actionCenterBody: data.actionCenterBody } : {}),
+      ...(data.actionCenterCtaLabel !== undefined ? { actionCenterCtaLabel: data.actionCenterCtaLabel } : {}),
+      ...(data.actionCenterCtaHref !== undefined ? { actionCenterCtaHref: data.actionCenterCtaHref } : {}),
+      ...(data.actionCenterUpdatedAt !== undefined ? { actionCenterUpdatedAt: new Date(data.actionCenterUpdatedAt) } : {}),
     },
   });
 }

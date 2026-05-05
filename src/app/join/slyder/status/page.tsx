@@ -83,6 +83,14 @@ function labelize(value: string) {
   return value.replace(/_/g, " ").toLowerCase();
 }
 
+function formatUpdatedAt(value: Date | null) {
+  if (!value) return null;
+  return new Intl.DateTimeFormat("en-JM", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
+}
+
 export default async function SlyderLeadStatusPage({ searchParams }: { searchParams?: SearchParams }) {
   const params = (await searchParams) ?? {};
   const leadId = readSingle(params.leadId);
@@ -148,6 +156,11 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
     nextAction: "Watch this page, email, and WhatsApp for official SLYDE updates.",
   };
   const applicationHref = `/become-a-slyder/apply?leadId=${encodeURIComponent(lead.id)}`;
+  const actionCenterTitle = lead.actionCenterTitle || "Next action center";
+  const actionCenterBody = lead.actionCenterBody || copy.nextAction;
+  const actionCenterCtaLabel = lead.actionCenterCtaLabel || copy.action;
+  const actionCenterCtaHref = lead.actionCenterCtaHref || (copy.action ? applicationHref : null);
+  const actionCenterUpdatedAt = formatUpdatedAt(lead.actionCenterUpdatedAt);
 
   return (
     <section className="section-shell py-12 sm:py-16">
@@ -183,8 +196,24 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
             <div className="flex items-start gap-3">
               <Bell className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" />
               <div>
-                <p className="text-sm font-semibold text-slate-950">Next action center</p>
-                <p className="mt-1 text-sm leading-6 text-slate-700">{copy.nextAction}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-slate-950">{actionCenterTitle}</p>
+                  {actionCenterUpdatedAt ? (
+                    <span className="rounded-full bg-white px-2 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-sky-700">
+                      Updated {actionCenterUpdatedAt}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-sm leading-6 text-slate-700">{actionCenterBody}</p>
+                {actionCenterCtaLabel && actionCenterCtaHref ? (
+                  <Link
+                    href={actionCenterCtaHref}
+                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition duration-200 hover:-translate-y-0.5"
+                  >
+                    {actionCenterCtaLabel}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : null}
               </div>
             </div>
           </div>
@@ -225,17 +254,6 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
             </div>
           </div>
 
-          {copy.action ? (
-            <div className="mt-8">
-              <Link
-                href={applicationHref}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-glow transition duration-200 hover:-translate-y-0.5"
-              >
-                {copy.action}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          ) : null}
         </div>
       </div>
     </section>

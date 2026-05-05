@@ -2,12 +2,28 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ArrowUpRight, ChevronDown, LogIn, Menu, UserPlus, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, ArrowUpRight, ChevronDown, LogIn, Menu, UserPlus, X } from "lucide-react";
 import { navItems } from "@/content/site";
 import { BrandMark } from "@/components/site/brand-mark";
 import { LinkButton } from "@/components/ui/link-button";
 import { cn } from "@/lib/utils";
+
+const LAUNCH_DATE = new Date("2026-06-02T00:00:00-05:00");
+
+type CountdownState = { days: number; hours: number; minutes: number; launched: boolean };
+
+function getCountdown(now: Date): CountdownState {
+  const diff = LAUNCH_DATE.getTime() - now.getTime();
+  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, launched: true };
+  const totalMinutes = Math.floor(diff / 60_000);
+  return {
+    days: Math.floor(totalMinutes / (60 * 24)),
+    hours: Math.floor((totalMinutes % (60 * 24)) / 60),
+    minutes: totalMinutes % 60,
+    launched: false,
+  };
+}
 
 type HeaderAuthProfile = {
   authenticated: boolean;
@@ -71,9 +87,10 @@ const navSubmenus: Record<string, Array<{ href: string; label: string; descripti
     { href: "/coverage", label: "Coverage", description: "Explore launch zones and rollout areas." },
     { href: "/faq", label: "FAQ", description: "Find quick answers about the platform." },
   ],
-  "/become-a-slyder": [
-    { href: "/become-a-slyder", label: "Overview", description: "Understand the Slyder opportunity." },
-    { href: "/become-a-slyder/apply", label: "Apply Now", description: "Start your onboarding journey." },
+  "/join": [
+    { href: "/join", label: "Join SLYDE", description: "Reserve your spot in Jamaica's delivery network." },
+    { href: "/join/slyder", label: "Become a Slyder", description: "Start earning with SLYDE deliveries." },
+    { href: "/join/merchant", label: "Register My Business", description: "Connect your business to SLYDE logistics." },
     { href: "/slyder-payouts", label: "Slyder Payouts", description: "See how earnings and payouts work." },
     { href: "/grow-your-area", label: "Grow Your Area", description: "Help build readiness in your zone." },
   ],
@@ -95,7 +112,7 @@ const desktopPriorityHrefs = new Set([
   "/",
   "/dispatch-from-home",
   "/about",
-  "/become-a-slyder",
+  "/join",
   "/for-businesses",
   "/safety",
 ]);
@@ -111,6 +128,7 @@ export function Navbar() {
   const [mobileSubmenu, setMobileSubmenu] = useState<string | null>(null);
   const [dailyIndex, setDailyIndex] = useState(0);
   const [todayLabel, setTodayLabel] = useState("");
+  const [countdown, setCountdown] = useState<CountdownState>(() => getCountdown(new Date()));
   const [authProfile, setAuthProfile] = useState<HeaderAuthProfile>();
   const pathname = usePathname();
   const wisdom = dailyWisdom[dailyIndex];
@@ -151,6 +169,19 @@ export function Navbar() {
       if (dailyInterval) window.clearInterval(dailyInterval);
     };
   }, []);
+
+  useEffect(() => {
+    const sync = () => setCountdown(getCountdown(new Date()));
+    sync();
+    const interval = window.setInterval(sync, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const launchLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en-JM", { month: "short", day: "numeric" }).format(LAUNCH_DATE),
+    [],
+  );
 
   useEffect(() => {
     let active = true;
@@ -204,27 +235,70 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,248,252,0.9))] shadow-[0_16px_44px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+      {/* ── Daily Wisdom + Inline Countdown ── */}
       <div className="border-b border-sky-200/70 bg-[linear-gradient(90deg,rgba(6,23,47,0.98),rgba(7,37,66,0.94),rgba(11,64,94,0.9))] px-4 py-2 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-sky-200/88">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(74,222,128,0.82)]" />
-              Daily Yard Wisdom
+        <div className="mx-auto max-w-7xl">
+
+          {/* Row 1 — always visible: label + date on left, countdown on right */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.26em] text-sky-200/88">
+                Daily Yard Wisdom
+              </span>
+              <span className="hidden text-[10px] text-sky-100/60 sm:inline">·</span>
+              <span className="hidden text-[10px] text-sky-100/70 sm:inline">{todayLabel}</span>
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-sky-100/80 sm:text-xs">
-              <span className="font-semibold text-white/92">Welcome to SLYDE</span>
-              <span className="hidden h-1 w-1 rounded-full bg-sky-200/55 sm:inline-block" />
-              <span>{todayLabel}</span>
-            </div>
+
+            {!countdown.launched && (
+              <div className="flex shrink-0 items-center gap-1.5">
+                <div className="flex items-center gap-1">
+                  {[
+                    { v: countdown.days, l: "D" },
+                    { v: countdown.hours, l: "H" },
+                    { v: countdown.minutes, l: "M" },
+                  ].map(({ v, l }) => (
+                    <div
+                      key={l}
+                      className="flex w-8 flex-col items-center rounded-lg border border-white/10 bg-white/[0.08] py-0.5 sm:w-9"
+                    >
+                      <span className="text-[12px] font-bold leading-none text-white sm:text-[13px]">
+                        {String(v).padStart(2, "0")}
+                      </span>
+                      <span className="text-[8px] font-semibold uppercase tracking-[0.12em] text-sky-300/70">
+                        {l}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  href="/join"
+                  className="inline-flex items-center gap-1 rounded-full bg-sky-500 px-2.5 py-1 text-[10px] font-bold text-white transition hover:bg-sky-400"
+                >
+                  <span className="hidden sm:inline">Join by {launchLabel}</span>
+                  <span className="sm:hidden">Join</span>
+                  <ArrowRight className="h-2.5 w-2.5" />
+                </Link>
+              </div>
+            )}
+            {countdown.launched && (
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                Live
+              </span>
+            )}
           </div>
-          <div className="min-w-0 sm:max-w-[48rem] sm:text-right">
-            <p className="truncate text-sm font-semibold text-white sm:text-[0.95rem]">
+
+          {/* Row 2 — wisdom proverb + reflection, always visible */}
+          <div className="mt-1 min-w-0">
+            <p className="truncate text-[11px] font-semibold text-white sm:text-xs">
               {wisdom.proverb}
             </p>
-            <p className="truncate text-[11px] text-sky-100/76 sm:text-xs">
+            <p className="truncate text-[10px] text-sky-100/65 sm:text-[10.5px]">
               {wisdom.reflection}
             </p>
           </div>
+
         </div>
       </div>
 
@@ -556,8 +630,8 @@ export function Navbar() {
               <LinkButton href="/for-businesses" className="w-full">
                 Partner with SLYDE
               </LinkButton>
-              <LinkButton href="/become-a-slyder/apply" variant="secondary" className="w-full">
-                Apply as a Slyder
+              <LinkButton href="/join" variant="secondary" className="w-full">
+                Join SLYDE
               </LinkButton>
               <LinkButton href="/employee/login" variant="secondary" className="w-full">
                 Employee Portal

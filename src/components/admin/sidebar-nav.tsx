@@ -53,7 +53,7 @@ export function SidebarNav({
       />
       <aside
         className={cn(
-          "admin-sidebar fixed inset-y-0 left-0 z-50 w-[88vw] max-w-[21rem] -translate-x-full overflow-y-auto transition-transform duration-300 xl:sticky xl:z-auto xl:w-auto xl:max-w-none xl:translate-x-0 xl:overflow-visible",
+          "admin-sidebar fixed inset-y-0 left-0 z-50 w-[88vw] max-w-[21rem] -translate-x-full transition-transform duration-300 xl:sticky xl:z-auto xl:w-auto xl:max-w-none xl:translate-x-0",
           mobileOpen && "translate-x-0",
         )}
       >
@@ -76,9 +76,9 @@ export function SidebarNav({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <nav className="mt-8 grid gap-1.5">
+        <nav className="mt-8 grid min-h-0 flex-1 content-start gap-1.5 overflow-y-auto pr-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const isActive = item.href === "/admin" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
             return (
               <Link
@@ -93,7 +93,7 @@ export function SidebarNav({
             );
           })}
         </nav>
-        <div className="mt-auto rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+        <div className="mt-5 shrink-0 rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-3">
             <Waypoints className="h-5 w-5 text-sky-300" />
             <p className="text-sm font-medium text-white">Region-by-region launch model</p>

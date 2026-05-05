@@ -7,7 +7,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const json = await request.json();
-    const parsed = updateSlyderLeadSchema.safeParse(json);
+    const parsed = updateSlyderLeadSchema
+      .pick({
+        firstName: true,
+        lastName: true,
+        email: true,
+        whatsapp: true,
+        parish: true,
+        vehicleType: true,
+        source: true,
+        referredByCode: true,
+      })
+      .safeParse(json);
 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

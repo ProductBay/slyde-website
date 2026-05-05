@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Footer } from "@/components/site/footer";
 import { FloatingSupportButton } from "@/components/site/floating-support-button";
-import { LaunchCountdownBar } from "@/components/site/launch-countdown-bar";
 import { Navbar } from "@/components/site/navbar";
 
 export function AppChrome({ children }: { children: ReactNode }) {
@@ -22,10 +21,9 @@ export function AppChrome({ children }: { children: ReactNode }) {
   return (
     <>
       <Navbar />
-      <main className="relative isolate pb-28 sm:pb-32">{children}</main>
+      <main className="relative isolate">{children}</main>
       <Footer />
       <FloatingSupportButton />
-      <LaunchCountdownBar />
     </>
   );
 }

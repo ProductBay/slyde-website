@@ -43,6 +43,10 @@ export default async function AdminSlyderLeadsPage({
     status: lead.status,
     referralCode: lead.referralCode,
     qualificationScore: lead.qualificationScore,
+    actionCenterTitle: lead.actionCenterTitle,
+    actionCenterBody: lead.actionCenterBody,
+    actionCenterCtaLabel: lead.actionCenterCtaLabel,
+    actionCenterCtaHref: lead.actionCenterCtaHref,
     createdAt: lead.createdAt.toISOString(),
   }));
   const devAdminKey = mode === "development" ? process.env.SLYDE_ADMIN_DEV_KEY || "dev-admin-key" : undefined;
