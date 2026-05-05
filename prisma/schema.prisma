@@ -552,82 +552,82 @@ enum ReferrerInviteEmailStatus {
 }
 
 model User {
-  id                 String            @id @db.Uuid
-  email              String            @unique
-  phone              String            @unique
+  id                 String         @id @db.Uuid
+  email              String         @unique
+  phone              String         @unique
   fullName           String
   passwordHash       String?
   roles              UserRoleCode[]
   userType           UserType
   accountStatus      AccountStatus
   isEnabled          Boolean
-  activationIssuedAt DateTime?         @db.Timestamptz(6)
-  lastLoginAt        DateTime?         @db.Timestamptz(6)
-  createdAt          DateTime          @db.Timestamptz(6)
-  updatedAt          DateTime          @db.Timestamptz(6)
+  activationIssuedAt DateTime?      @db.Timestamptz(6)
+  lastLoginAt        DateTime?      @db.Timestamptz(6)
+  createdAt          DateTime       @db.Timestamptz(6)
+  updatedAt          DateTime       @db.Timestamptz(6)
 
-  slyderProfile              SlyderProfile?
-  employeeProfile            EmployeeProfile?
-  approvedApplications       SlyderProfile[]        @relation("SlyderProfileApprovedBy")
-  reviewedApplications       SlyderApplication[]    @relation("SlyderApplicationReviewedBy")
-  employeeApplications       EmployeeApplication[]  @relation("EmployeeApplicationLinkedUser")
-  merchantTeamMemberships    MerchantTeamMember[]
-  managedEmployees           EmployeeProfile[]      @relation("EmployeeProfileManager")
-  publishedEmployeeAnnouncements EmployeeAnnouncement[] @relation("EmployeeAnnouncementPublishedBy")
-  triggeredNotifications     NotificationRecord[]   @relation("NotificationTriggeredBy")
-  sessions                   SessionRecord[]
-  activationTokens           ActivationToken[]
-  otpChallenges              OtpChallenge[]
-  residentialLeads              ResidentialLead[]
-  residentialDispatchRequests   ResidentialDispatchRequest[]
-  residentialWallet             ResidentialWallet?
-  residentialWalletTransactions ResidentialWalletTransaction[]
-  residentialAccountProfile     ResidentialAccountProfile?
-  reviewedKycProfiles           ResidentialAccountProfile[] @relation("KycReviewedBy")
+  slyderProfile                  SlyderProfile?
+  employeeProfile                EmployeeProfile?
+  approvedApplications           SlyderProfile[]                @relation("SlyderProfileApprovedBy")
+  reviewedApplications           SlyderApplication[]            @relation("SlyderApplicationReviewedBy")
+  employeeApplications           EmployeeApplication[]          @relation("EmployeeApplicationLinkedUser")
+  merchantTeamMemberships        MerchantTeamMember[]
+  managedEmployees               EmployeeProfile[]              @relation("EmployeeProfileManager")
+  publishedEmployeeAnnouncements EmployeeAnnouncement[]         @relation("EmployeeAnnouncementPublishedBy")
+  triggeredNotifications         NotificationRecord[]           @relation("NotificationTriggeredBy")
+  sessions                       SessionRecord[]
+  activationTokens               ActivationToken[]
+  otpChallenges                  OtpChallenge[]
+  residentialLeads               ResidentialLead[]
+  residentialDispatchRequests    ResidentialDispatchRequest[]
+  residentialWallet              ResidentialWallet?
+  residentialWalletTransactions  ResidentialWalletTransaction[]
+  residentialAccountProfile      ResidentialAccountProfile?
+  reviewedKycProfiles            ResidentialAccountProfile[]    @relation("KycReviewedBy")
 }
 
 model SlyderApplication {
-  id                     String                      @id @db.Uuid
-  applicationCode        String                      @unique
-  fullName               String
-  email                  String
-  phone                  String
-  dateOfBirth            DateTime                    @db.Date
-  parish                 String
-  address                String
-  trn                    String
-  emergencyContactName   String
-  emergencyContactPhone  String
-  courierType            CourierType
-  workTypePreference     String
-  availability           String
-  preferredZones         String[]
+  id                      String            @id @db.Uuid
+  applicationCode         String            @unique
+  fullName                String
+  email                   String
+  phone                   String
+  dateOfBirth             DateTime          @db.Date
+  parish                  String
+  address                 String
+  trn                     String
+  emergencyContactName    String
+  emergencyContactPhone   String
+  courierType             CourierType
+  workTypePreference      String
+  availability            String
+  preferredZones          String[]
   deliveryTypePreferences String[]
-  maxTravelComfort       String
-  peakHours              String
-  smartphoneType         String
-  whatsappNumber         String
-  gpsConfirmed           Boolean
-  internetConfirmed      Boolean
-  readinessAnswers       Json
-  agreementsAccepted     Json
-  applicationStatus      ApplicationStatus
-  accountStatus          AccountStatus
-  operationalStatus      OperationalStatus
-  readinessStatus        ReadinessStatus
-  reviewNotes            String?
-  rejectionReason        String?
-  requestedDocumentNotes String?
-  requestedDocumentTypes DocumentType[]
-  submittedAt            DateTime                    @db.Timestamptz(6)
-  reviewedAt             DateTime?                   @db.Timestamptz(6)
-  reviewedBy             String?                     @db.Uuid
-  linkedUserId           String?                     @db.Uuid
-  linkedSlyderProfileId  String?                     @db.Uuid
-  createdAt              DateTime                    @db.Timestamptz(6)
-  updatedAt              DateTime                    @db.Timestamptz(6)
+  maxTravelComfort        String
+  peakHours               String
+  smartphoneType          String
+  whatsappNumber          String
+  gpsConfirmed            Boolean
+  internetConfirmed       Boolean
+  readinessAnswers        Json
+  agreementsAccepted      Json
+  applicationStatus       ApplicationStatus
+  accountStatus           AccountStatus
+  operationalStatus       OperationalStatus
+  readinessStatus         ReadinessStatus
+  reviewNotes             String?
+  rejectionReason         String?
+  requestedDocumentNotes  String?
+  requestedDocumentTypes  DocumentType[]
+  submittedAt             DateTime          @db.Timestamptz(6)
+  reviewedAt              DateTime?         @db.Timestamptz(6)
+  reviewedBy              String?           @db.Uuid
+  linkedUserId            String?           @db.Uuid
+  linkedSlyderProfileId   String?           @db.Uuid
+  createdAt               DateTime          @db.Timestamptz(6)
+  updatedAt               DateTime          @db.Timestamptz(6)
 
-  reviewer        User?                    @relation("SlyderApplicationReviewedBy", fields: [reviewedBy], references: [id])
+  reviewer        User?                       @relation("SlyderApplicationReviewedBy", fields: [reviewedBy], references: [id])
   vehicle         SlyderApplicationVehicle?
   documents       SlyderApplicationDocument[]
   slyderProfile   SlyderProfile?
@@ -639,18 +639,18 @@ model SlyderApplication {
 }
 
 model SlyderApplicationVehicle {
-  id                 String            @id @db.Uuid
-  applicationId      String            @unique @db.Uuid
+  id                 String    @id @db.Uuid
+  applicationId      String    @unique @db.Uuid
   make               String?
   model              String?
   year               String?
   color              String?
   plateNumber        String?
-  registrationExpiry DateTime?         @db.Date
-  insuranceExpiry    DateTime?         @db.Date
-  fitnessExpiry      DateTime?         @db.Date
-  createdAt          DateTime          @db.Timestamptz(6)
-  updatedAt          DateTime          @db.Timestamptz(6)
+  registrationExpiry DateTime? @db.Date
+  insuranceExpiry    DateTime? @db.Date
+  fitnessExpiry      DateTime? @db.Date
+  createdAt          DateTime  @db.Timestamptz(6)
+  updatedAt          DateTime  @db.Timestamptz(6)
 
   application SlyderApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
@@ -676,53 +676,53 @@ model SlyderApplicationDocument {
 }
 
 model SlyderProfile {
-  id                            String            @id @db.Uuid
-  userId                        String            @unique @db.Uuid
-  applicationId                 String            @unique @db.Uuid
-  coverageZoneId                String?           @db.Uuid
-  displayName                   String
-  phone                         String
-  email                         String
-  courierType                   CourierType
-  onboardingStatus              OnboardingStatus
-  readinessStatus               ReadinessStatus
-  operationalStatus             OperationalStatus
-  accountStatus                 AccountStatus
-  contractAccepted              Boolean
-  contractAcceptedAt            DateTime?         @db.Timestamptz(6)
-  vehicleVerified               Boolean
-  payoutSetupComplete           Boolean
-  profileComplete               Boolean
-  trainingComplete              Boolean
-  permissionsComplete           Boolean
-  requiredAgreementsAccepted    Boolean
-  setupCompletedAt              DateTime?         @db.Timestamptz(6)
-  trainingAcknowledgedAt        DateTime?         @db.Timestamptz(6)
-  activatedAt                   DateTime?         @db.Timestamptz(6)
-  canGoOnline                   Boolean
-  canReceiveOrders              Boolean
-  profileConfirmed              Boolean
-  vehicleConfirmed              Boolean
-  payoutConfigured              Boolean
-  legalAccepted                 Boolean
-  locationPermissionConfirmed   Boolean
+  id                              String            @id @db.Uuid
+  userId                          String            @unique @db.Uuid
+  applicationId                   String            @unique @db.Uuid
+  coverageZoneId                  String?           @db.Uuid
+  displayName                     String
+  phone                           String
+  email                           String
+  courierType                     CourierType
+  onboardingStatus                OnboardingStatus
+  readinessStatus                 ReadinessStatus
+  operationalStatus               OperationalStatus
+  accountStatus                   AccountStatus
+  contractAccepted                Boolean
+  contractAcceptedAt              DateTime?         @db.Timestamptz(6)
+  vehicleVerified                 Boolean
+  payoutSetupComplete             Boolean
+  profileComplete                 Boolean
+  trainingComplete                Boolean
+  permissionsComplete             Boolean
+  requiredAgreementsAccepted      Boolean
+  setupCompletedAt                DateTime?         @db.Timestamptz(6)
+  trainingAcknowledgedAt          DateTime?         @db.Timestamptz(6)
+  activatedAt                     DateTime?         @db.Timestamptz(6)
+  canGoOnline                     Boolean
+  canReceiveOrders                Boolean
+  profileConfirmed                Boolean
+  vehicleConfirmed                Boolean
+  payoutConfigured                Boolean
+  legalAccepted                   Boolean
+  locationPermissionConfirmed     Boolean
   notificationPermissionConfirmed Boolean
-  equipmentConfirmed            Boolean
-  trainingAcknowledged          Boolean
-  emergencyContactConfirmed     Boolean
-  readinessChecklistStatus      ReadinessStatus
-  readinessChecklistCreatedAt   DateTime?         @db.Timestamptz(6)
-  readinessChecklistUpdatedAt   DateTime?         @db.Timestamptz(6)
-  approvedAt                    DateTime          @db.Timestamptz(6)
-  approvedBy                    String            @db.Uuid
-  createdAt                     DateTime          @db.Timestamptz(6)
-  updatedAt                     DateTime          @db.Timestamptz(6)
+  equipmentConfirmed              Boolean
+  trainingAcknowledged            Boolean
+  emergencyContactConfirmed       Boolean
+  readinessChecklistStatus        ReadinessStatus
+  readinessChecklistCreatedAt     DateTime?         @db.Timestamptz(6)
+  readinessChecklistUpdatedAt     DateTime?         @db.Timestamptz(6)
+  approvedAt                      DateTime          @db.Timestamptz(6)
+  approvedBy                      String            @db.Uuid
+  createdAt                       DateTime          @db.Timestamptz(6)
+  updatedAt                       DateTime          @db.Timestamptz(6)
 
-  user         User              @relation(fields: [userId], references: [id])
-  application  SlyderApplication @relation(fields: [applicationId], references: [id])
-  coverageZone CoverageZone?     @relation(fields: [coverageZoneId], references: [id])
-  approver     User              @relation("SlyderProfileApprovedBy", fields: [approvedBy], references: [id])
-  notifications NotificationRecord[]
+  user            User                   @relation(fields: [userId], references: [id])
+  application     SlyderApplication      @relation(fields: [applicationId], references: [id])
+  coverageZone    CoverageZone?          @relation(fields: [coverageZoneId], references: [id])
+  approver        User                   @relation("SlyderProfileApprovedBy", fields: [approvedBy], references: [id])
+  notifications   NotificationRecord[]
   publicReferrals PublicSlyderReferral[]
 
   @@index([coverageZoneId])
@@ -760,12 +760,12 @@ model ActivationToken {
 }
 
 model OtpChallenge {
-  id         String   @id @db.Uuid
-  userId     String   @db.Uuid
+  id         String    @id @db.Uuid
+  userId     String    @db.Uuid
   codeHash   String
-  expiresAt  DateTime @db.Timestamptz(6)
+  expiresAt  DateTime  @db.Timestamptz(6)
   consumedAt DateTime? @db.Timestamptz(6)
-  createdAt  DateTime @db.Timestamptz(6)
+  createdAt  DateTime  @db.Timestamptz(6)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -826,53 +826,53 @@ model NotificationTriggerEvent {
 }
 
 model NotificationRecord {
-  id                 String                 @id @db.Uuid
-  templateId         String?                @db.Uuid
-  templateKey        String?
-  triggerEventId     String?                @db.Uuid
-  triggerEventKey    String?
-  dedupeKey          String?
-  actorType          NotificationActorType?
-  actorId            String?                @db.Uuid
-  relatedEntityType  RelatedEntityType?
-  relatedEntityId    String?                @db.Uuid
-  userId             String?                @db.Uuid
-  applicationId      String?                @db.Uuid
-  slyderProfileId    String?                @db.Uuid
-  channel            NotificationChannel
-  template           String
-  recipient          String?
-  recipientName      String?
-  status             NotificationStatus?
-  providerName       String?
-  providerMessageId  String?
-  subjectSnapshot    String?
-  bodySnapshot       String?
-  variablesSnapshot  Json?
-  failureReason      String?
-  resentFromId       String?                @db.Uuid
-  retryCount         Int?
-  lastAttemptAt      DateTime?              @db.Timestamptz(6)
-  sentAt             DateTime?              @db.Timestamptz(6)
-  deliveredAt        DateTime?              @db.Timestamptz(6)
-  createdBySystem    Boolean?
-  triggeredByUserId  String?                @db.Uuid
-  metadata           Json?
-  payload            Json
-  createdAt          DateTime               @db.Timestamptz(6)
-  updatedAt          DateTime?              @db.Timestamptz(6)
+  id                String                 @id @db.Uuid
+  templateId        String?                @db.Uuid
+  templateKey       String?
+  triggerEventId    String?                @db.Uuid
+  triggerEventKey   String?
+  dedupeKey         String?
+  actorType         NotificationActorType?
+  actorId           String?                @db.Uuid
+  relatedEntityType RelatedEntityType?
+  relatedEntityId   String?                @db.Uuid
+  userId            String?                @db.Uuid
+  applicationId     String?                @db.Uuid
+  slyderProfileId   String?                @db.Uuid
+  channel           NotificationChannel
+  template          String
+  recipient         String?
+  recipientName     String?
+  status            NotificationStatus?
+  providerName      String?
+  providerMessageId String?
+  subjectSnapshot   String?
+  bodySnapshot      String?
+  variablesSnapshot Json?
+  failureReason     String?
+  resentFromId      String?                @db.Uuid
+  retryCount        Int?
+  lastAttemptAt     DateTime?              @db.Timestamptz(6)
+  sentAt            DateTime?              @db.Timestamptz(6)
+  deliveredAt       DateTime?              @db.Timestamptz(6)
+  createdBySystem   Boolean?
+  triggeredByUserId String?                @db.Uuid
+  metadata          Json?
+  payload           Json
+  createdAt         DateTime               @db.Timestamptz(6)
+  updatedAt         DateTime?              @db.Timestamptz(6)
 
-  templateRef      NotificationTemplate?    @relation(fields: [templateId], references: [id])
-  triggerEvent     NotificationTriggerEvent? @relation(fields: [triggerEventId], references: [id])
-  resentFrom       NotificationRecord?      @relation("NotificationResendChain", fields: [resentFromId], references: [id])
-  resentChildren   NotificationRecord[]     @relation("NotificationResendChain")
-  triggeredByUser  User?                    @relation("NotificationTriggeredBy", fields: [triggeredByUserId], references: [id])
-  slyderProfile    SlyderProfile?           @relation(fields: [slyderProfileId], references: [id])
+  templateRef     NotificationTemplate?     @relation(fields: [templateId], references: [id])
+  triggerEvent    NotificationTriggerEvent? @relation(fields: [triggerEventId], references: [id])
+  resentFrom      NotificationRecord?       @relation("NotificationResendChain", fields: [resentFromId], references: [id])
+  resentChildren  NotificationRecord[]      @relation("NotificationResendChain")
+  triggeredByUser User?                     @relation("NotificationTriggeredBy", fields: [triggeredByUserId], references: [id])
+  slyderProfile   SlyderProfile?            @relation(fields: [slyderProfileId], references: [id])
 
+  @@unique([dedupeKey])
   @@index([actorType, actorId, createdAt(sort: Desc)])
   @@index([applicationId, createdAt(sort: Desc)])
   @@index([slyderProfileId, createdAt(sort: Desc)])
-  @@unique([dedupeKey])
 }
 
 model SupportConversation {
@@ -910,8 +910,8 @@ model SupportConversation {
 }
 
 model SupportMessage {
-  id                String              @id @db.Uuid
-  conversationId    String              @db.Uuid
+  id                String            @id @db.Uuid
+  conversationId    String            @db.Uuid
   senderType        SupportSenderType
   senderId          String?
   body              String
@@ -919,7 +919,7 @@ model SupportMessage {
   externalMessageId String?
   aiGenerated       Boolean
   metadata          Json?
-  createdAt         DateTime            @db.Timestamptz(6)
+  createdAt         DateTime          @db.Timestamptz(6)
 
   conversation SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -927,11 +927,11 @@ model SupportMessage {
 }
 
 model SupportContextSnapshot {
-  id             String              @id @db.Uuid
-  conversationId String              @db.Uuid
+  id             String   @id @db.Uuid
+  conversationId String   @db.Uuid
   contextType    String
   payload        Json
-  createdAt      DateTime            @db.Timestamptz(6)
+  createdAt      DateTime @db.Timestamptz(6)
 
   conversation SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -939,14 +939,14 @@ model SupportContextSnapshot {
 }
 
 model SupportHandoff {
-  id                String              @id @db.Uuid
-  conversationId    String              @db.Uuid
+  id                String   @id @db.Uuid
+  conversationId    String   @db.Uuid
   reason            String
   summary           String
   recommendedTeam   String
   confidenceScore   Float?
-  acceptedByAgentId String?             @db.Uuid
-  createdAt         DateTime            @db.Timestamptz(6)
+  acceptedByAgentId String?  @db.Uuid
+  createdAt         DateTime @db.Timestamptz(6)
 
   conversation SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -955,14 +955,14 @@ model SupportHandoff {
 }
 
 model SupportEvent {
-  id             String              @id @db.Uuid
-  conversationId String              @db.Uuid
+  id             String           @id @db.Uuid
+  conversationId String           @db.Uuid
   eventType      SupportEventType
   actorType      String
   actorId        String?
   notes          String?
   metadata       Json?
-  createdAt      DateTime            @db.Timestamptz(6)
+  createdAt      DateTime         @db.Timestamptz(6)
 
   conversation SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -986,17 +986,17 @@ model SupportKnowledgeArticle {
 }
 
 model CoverageZone {
-  id                  String               @id @db.Uuid
-  name                String
-  parish              String
+  id                   String               @id @db.Uuid
+  name                 String
+  parish               String
   requiredReadySlyders Int
   merchantAvailability MerchantAvailability
   estimatedLaunchLabel String
-  isLive              Boolean
-  isPaused            Boolean
-  notes               String?
-  createdAt           DateTime             @db.Timestamptz(6)
-  updatedAt           DateTime             @db.Timestamptz(6)
+  isLive               Boolean
+  isPaused             Boolean
+  notes                String?
+  createdAt            DateTime             @db.Timestamptz(6)
+  updatedAt            DateTime             @db.Timestamptz(6)
 
   slyderProfiles SlyderProfile[]
 
@@ -1004,49 +1004,49 @@ model CoverageZone {
 }
 
 model MerchantInterest {
-  id                  String                  @id @db.Uuid
-  companyName         String
-  contactName         String
-  email               String
-  phone               String
-  whatsappNumber      String?
-  businessType        String
-  deliveryVolume      String
-  coverageNeeds       String
-  goals               String
-  parish              String?
-  town                String?
-  zoneId              String?                 @db.Uuid
-  zoneName            String?
-  operationalNotes    String?
-  lifecycleStatus     MerchantLifecycleStatus
-  linkedMerchantUserId String?                @db.Uuid
-  createdAt           DateTime                @db.Timestamptz(6)
-  updatedAt           DateTime                @db.Timestamptz(6)
+  id                   String                  @id @db.Uuid
+  companyName          String
+  contactName          String
+  email                String
+  phone                String
+  whatsappNumber       String?
+  businessType         String
+  deliveryVolume       String
+  coverageNeeds        String
+  goals                String
+  parish               String?
+  town                 String?
+  zoneId               String?                 @db.Uuid
+  zoneName             String?
+  operationalNotes     String?
+  lifecycleStatus      MerchantLifecycleStatus
+  linkedMerchantUserId String?                 @db.Uuid
+  createdAt            DateTime                @db.Timestamptz(6)
+  updatedAt            DateTime                @db.Timestamptz(6)
 
   @@index([lifecycleStatus, createdAt(sort: Desc)])
 }
 
 model MerchantLead {
-  id                    String                @id @db.Uuid
-  businessName          String
-  contactName           String
-  phone                 String
-  email                 String
-  parish                String
-  town                  String
-  category              String
-  instagramHandle       String?
-  website               String?
-  orderChannels         Json
-  averageDailyOrders    String?
-  currentDeliveryMethod String?
+  id                     String                @id @db.Uuid
+  businessName           String
+  contactName            String
+  phone                  String
+  email                  String
+  parish                 String
+  town                   String
+  category               String
+  instagramHandle        String?
+  website                String?
+  orderChannels          Json
+  averageDailyOrders     String?
+  currentDeliveryMethod  String?
   preferredStartTimeline String?
-  productIntent         MerchantProductIntent
-  status                MerchantLeadStatus
-  notes                 String?
-  createdAt             DateTime              @db.Timestamptz(6)
-  updatedAt             DateTime              @db.Timestamptz(6)
+  productIntent          MerchantProductIntent
+  status                 MerchantLeadStatus
+  notes                  String?
+  createdAt              DateTime              @db.Timestamptz(6)
+  updatedAt              DateTime              @db.Timestamptz(6)
 
   applications MerchantApplication[]
 
@@ -1057,43 +1057,43 @@ model MerchantLead {
 }
 
 model MerchantApplication {
-  id                String                              @id @db.Uuid
-  merchantLeadId    String                              @db.Uuid
-  onboardingTrack   MerchantOnboardingTrack
-  storeName         String?
-  logoUrl           String?
-  heroBannerUrl     String?
-  heroBannerPosition String?
-  businessDescription String?
-  category          String?
-  pickupAddress     String?
-  serviceAreas      Json
-  fulfillmentMode   String?
-  catalogReady      Boolean?
-  payoutDetails     Json?
-  operatingHours    Json?
-  documentStatus    MerchantDocumentStatus
-  legalStatus       MerchantLegalStatus
-  approvalStatus    MerchantApplicationApprovalStatus
-  activationStatus  MerchantApplicationActivationStatus
-  businessLicenseStatus                MerchantBusinessLicenseStatus @default(missing)
-  businessLicenseNumber                String?
-  businessLicenseSubmittedAt           DateTime?                     @db.Timestamptz(6)
-  businessLicenseVerifiedAt            DateTime?                     @db.Timestamptz(6)
-  businessLicenseGraceEndsAt           DateTime?                     @db.Timestamptz(6)
-  businessLicenseRequiredAfterDeliveries Int                        @default(10)
-  businessLicenseDisabledAt            DateTime?                     @db.Timestamptz(6)
-  assignedAdminId   String?                             @db.Uuid
-  createdAt         DateTime                            @db.Timestamptz(6)
-  updatedAt         DateTime                            @db.Timestamptz(6)
+  id                                     String                              @id @db.Uuid
+  merchantLeadId                         String                              @db.Uuid
+  onboardingTrack                        MerchantOnboardingTrack
+  storeName                              String?
+  logoUrl                                String?
+  heroBannerUrl                          String?
+  heroBannerPosition                     String?
+  businessDescription                    String?
+  category                               String?
+  pickupAddress                          String?
+  serviceAreas                           Json
+  fulfillmentMode                        String?
+  catalogReady                           Boolean?
+  payoutDetails                          Json?
+  operatingHours                         Json?
+  documentStatus                         MerchantDocumentStatus
+  legalStatus                            MerchantLegalStatus
+  approvalStatus                         MerchantApplicationApprovalStatus
+  activationStatus                       MerchantApplicationActivationStatus
+  businessLicenseStatus                  MerchantBusinessLicenseStatus       @default(missing)
+  businessLicenseNumber                  String?
+  businessLicenseSubmittedAt             DateTime?                           @db.Timestamptz(6)
+  businessLicenseVerifiedAt              DateTime?                           @db.Timestamptz(6)
+  businessLicenseGraceEndsAt             DateTime?                           @db.Timestamptz(6)
+  businessLicenseRequiredAfterDeliveries Int                                 @default(10)
+  businessLicenseDisabledAt              DateTime?                           @db.Timestamptz(6)
+  assignedAdminId                        String?                             @db.Uuid
+  createdAt                              DateTime                            @db.Timestamptz(6)
+  updatedAt                              DateTime                            @db.Timestamptz(6)
 
-  merchantLead        MerchantLead                @relation(fields: [merchantLeadId], references: [id], onDelete: Cascade)
-  integrationProfile  MerchantIntegrationProfile?
-  onboardingEvents    MerchantOnboardingEvent[]
-  orders              MerchantOrder[]
-  deliveries          MerchantDelivery[]
-  addresses           MerchantAddress[]
-  teamMembers         MerchantTeamMember[]
+  merchantLead           MerchantLead                    @relation(fields: [merchantLeadId], references: [id], onDelete: Cascade)
+  integrationProfile     MerchantIntegrationProfile?
+  onboardingEvents       MerchantOnboardingEvent[]
+  orders                 MerchantOrder[]
+  deliveries             MerchantDelivery[]
+  addresses              MerchantAddress[]
+  teamMembers            MerchantTeamMember[]
   notificationPreference MerchantNotificationPreference?
 
   @@index([merchantLeadId, createdAt(sort: Desc)])
@@ -1103,33 +1103,33 @@ model MerchantApplication {
 }
 
 model MerchantIntegrationProfile {
-  id                   String                     @id @db.Uuid
-  merchantApplicationId String                    @unique @db.Uuid
-  dispatchMode         MerchantDispatchMode
-  acceptsCOD           Boolean
-  averageBasketSize    String?
-  packageTypes         Json
-  operatingHours       Json?
-  orderSources         Json
-  pickupLocations      Json
-  deliveryRadius       String?
-  sameDaySupported     Boolean
-  scheduledSupported   Boolean
-  integrationReadiness MerchantIntegrationReadiness
-  createdAt            DateTime                   @db.Timestamptz(6)
-  updatedAt            DateTime                   @db.Timestamptz(6)
+  id                    String                       @id @db.Uuid
+  merchantApplicationId String                       @unique @db.Uuid
+  dispatchMode          MerchantDispatchMode
+  acceptsCOD            Boolean
+  averageBasketSize     String?
+  packageTypes          Json
+  operatingHours        Json?
+  orderSources          Json
+  pickupLocations       Json
+  deliveryRadius        String?
+  sameDaySupported      Boolean
+  scheduledSupported    Boolean
+  integrationReadiness  MerchantIntegrationReadiness
+  createdAt             DateTime                     @db.Timestamptz(6)
+  updatedAt             DateTime                     @db.Timestamptz(6)
 
   merchantApplication MerchantApplication @relation(fields: [merchantApplicationId], references: [id], onDelete: Cascade)
 }
 
 model MerchantOnboardingEvent {
-  id                   String              @id @db.Uuid
-  merchantApplicationId String             @db.Uuid
-  eventType            String
-  actorType            String
-  actorId              String?             @db.Uuid
-  notes                String?
-  createdAt            DateTime            @db.Timestamptz(6)
+  id                    String   @id @db.Uuid
+  merchantApplicationId String   @db.Uuid
+  eventType             String
+  actorType             String
+  actorId               String?  @db.Uuid
+  notes                 String?
+  createdAt             DateTime @db.Timestamptz(6)
 
   merchantApplication MerchantApplication @relation(fields: [merchantApplicationId], references: [id], onDelete: Cascade)
 
@@ -1157,9 +1157,9 @@ model MerchantOrder {
   createdAt             DateTime                @db.Timestamptz(6)
   updatedAt             DateTime                @db.Timestamptz(6)
 
-  merchant        MerchantApplication @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  pickupLocation  MerchantAddress?    @relation("MerchantOrderPickupLocation", fields: [pickupLocationId], references: [id], onDelete: SetNull)
-  deliveries      MerchantDelivery[]
+  merchant       MerchantApplication @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  pickupLocation MerchantAddress?    @relation("MerchantOrderPickupLocation", fields: [pickupLocationId], references: [id], onDelete: SetNull)
+  deliveries     MerchantDelivery[]
 
   @@unique([merchantId, orderNumber])
   @@index([merchantId, status, createdAt(sort: Desc)])
@@ -1168,31 +1168,31 @@ model MerchantOrder {
 }
 
 model MerchantDelivery {
-  id                 String                 @id @db.Uuid
-  merchantOrderId    String                 @db.Uuid
-  merchantId         String                 @db.Uuid
-  dispatchMode       MerchantDispatchMode
-  deliveryType       DeliveryType?          @default(in_parish)
+  id                       String                    @id @db.Uuid
+  merchantOrderId          String                    @db.Uuid
+  merchantId               String                    @db.Uuid
+  dispatchMode             MerchantDispatchMode
+  deliveryType             DeliveryType?             @default(in_parish)
   overallOutOfParishStatus OutOfParishOverallStatus?
-  riderId            String?                @db.Uuid
-  quoteAmount        Decimal?               @db.Decimal(10, 2)
-  localPickupFee     Decimal?               @db.Decimal(10, 2)
-  partnerTransferFee Decimal?               @db.Decimal(10, 2)
-  finalMileFee       Decimal?               @db.Decimal(10, 2)
-  totalFee           Decimal?               @db.Decimal(10, 2)
-  assignedAt         DateTime?              @db.Timestamptz(6)
-  pickedUpAt         DateTime?              @db.Timestamptz(6)
-  deliveredAt        DateTime?              @db.Timestamptz(6)
-  failedAt           DateTime?              @db.Timestamptz(6)
-  cancelledAt        DateTime?              @db.Timestamptz(6)
-  status             MerchantDeliveryStatus
-  proofOfDeliveryUrl String?
-  createdAt          DateTime               @db.Timestamptz(6)
-  updatedAt          DateTime               @db.Timestamptz(6)
+  riderId                  String?                   @db.Uuid
+  quoteAmount              Decimal?                  @db.Decimal(10, 2)
+  localPickupFee           Decimal?                  @db.Decimal(10, 2)
+  partnerTransferFee       Decimal?                  @db.Decimal(10, 2)
+  finalMileFee             Decimal?                  @db.Decimal(10, 2)
+  totalFee                 Decimal?                  @db.Decimal(10, 2)
+  assignedAt               DateTime?                 @db.Timestamptz(6)
+  pickedUpAt               DateTime?                 @db.Timestamptz(6)
+  deliveredAt              DateTime?                 @db.Timestamptz(6)
+  failedAt                 DateTime?                 @db.Timestamptz(6)
+  cancelledAt              DateTime?                 @db.Timestamptz(6)
+  status                   MerchantDeliveryStatus
+  proofOfDeliveryUrl       String?
+  createdAt                DateTime                  @db.Timestamptz(6)
+  updatedAt                DateTime                  @db.Timestamptz(6)
 
-  merchant MerchantApplication @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  order    MerchantOrder        @relation(fields: [merchantOrderId], references: [id], onDelete: Cascade)
-  events   MerchantDispatchEvent[]
+  merchant     MerchantApplication     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  order        MerchantOrder           @relation(fields: [merchantOrderId], references: [id], onDelete: Cascade)
+  events       MerchantDispatchEvent[]
   transferPlan DeliveryTransferPlan?
   deliveryLegs DeliveryLeg[]
 
@@ -1217,8 +1217,8 @@ model MerchantAddress {
   createdAt    DateTime            @db.Timestamptz(6)
   updatedAt    DateTime            @db.Timestamptz(6)
 
-  merchant            MerchantApplication @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  pickupOrders        MerchantOrder[]     @relation("MerchantOrderPickupLocation")
+  merchant     MerchantApplication @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  pickupOrders MerchantOrder[]     @relation("MerchantOrderPickupLocation")
 
   @@index([merchantId, type, createdAt(sort: Desc)])
   @@index([merchantId, isDefault])
@@ -1244,8 +1244,8 @@ model MerchantTeamMember {
 }
 
 model MerchantNotificationPreference {
-  id                String              @id @db.Uuid
-  merchantId        String              @unique @db.Uuid
+  id                String   @id @db.Uuid
+  merchantId        String   @unique @db.Uuid
   emailEnabled      Boolean
   smsEnabled        Boolean
   whatsappEnabled   Boolean
@@ -1253,8 +1253,8 @@ model MerchantNotificationPreference {
   notifyOnDelivered Boolean
   notifyOnFailed    Boolean
   notifyOnBilling   Boolean
-  createdAt         DateTime            @db.Timestamptz(6)
-  updatedAt         DateTime            @db.Timestamptz(6)
+  createdAt         DateTime @db.Timestamptz(6)
+  updatedAt         DateTime @db.Timestamptz(6)
 
   merchant MerchantApplication @relation(fields: [merchantId], references: [id], onDelete: Cascade)
 
@@ -1262,14 +1262,14 @@ model MerchantNotificationPreference {
 }
 
 model MerchantDispatchEvent {
-  id                 String           @id @db.Uuid
-  merchantDeliveryId String           @db.Uuid
+  id                 String   @id @db.Uuid
+  merchantDeliveryId String   @db.Uuid
   eventType          String
   actorType          String
-  actorId            String?          @db.Uuid
+  actorId            String?  @db.Uuid
   notes              String?
   metadata           Json?
-  createdAt          DateTime         @db.Timestamptz(6)
+  createdAt          DateTime @db.Timestamptz(6)
 
   delivery MerchantDelivery @relation(fields: [merchantDeliveryId], references: [id], onDelete: Cascade)
 
@@ -1277,39 +1277,39 @@ model MerchantDispatchEvent {
 }
 
 model PartnerCarrier {
-  id                        String                 @id @db.Uuid
-  name                      String
-  slug                      String                 @unique
-  type                      PartnerCarrierType
-  supportsTracking          Boolean
-  supportsApi               Boolean
-  supportsFinalDelivery     Boolean
-  supportsBranchCollection  Boolean
-  active                    Boolean
-  contactConfig             Json?
-  trackingConfig            Json?
-  webhookConfig             Json?
-  createdAt                 DateTime               @db.Timestamptz(6)
-  updatedAt                 DateTime               @db.Timestamptz(6)
+  id                       String             @id @db.Uuid
+  name                     String
+  slug                     String             @unique
+  type                     PartnerCarrierType
+  supportsTracking         Boolean
+  supportsApi              Boolean
+  supportsFinalDelivery    Boolean
+  supportsBranchCollection Boolean
+  active                   Boolean
+  contactConfig            Json?
+  trackingConfig           Json?
+  webhookConfig            Json?
+  createdAt                DateTime           @db.Timestamptz(6)
+  updatedAt                DateTime           @db.Timestamptz(6)
 
-  handoffLocations     PartnerHandoffLocation[]
-  transferPlans        DeliveryTransferPlan[]
+  handoffLocations      PartnerHandoffLocation[]
+  transferPlans         DeliveryTransferPlan[]
   partnerTrackingEvents PartnerTrackingEvent[]
 
   @@index([active, createdAt(sort: Desc)])
 }
 
 model PartnerHandoffLocation {
-  id                String          @id @db.Uuid
-  partnerCarrierId  String          @db.Uuid
-  name              String
-  parish            String
-  town              String
-  addressLine       String
-  openingHours      Json?
-  active            Boolean
-  createdAt         DateTime        @db.Timestamptz(6)
-  updatedAt         DateTime        @db.Timestamptz(6)
+  id               String   @id @db.Uuid
+  partnerCarrierId String   @db.Uuid
+  name             String
+  parish           String
+  town             String
+  addressLine      String
+  openingHours     Json?
+  active           Boolean
+  createdAt        DateTime @db.Timestamptz(6)
+  updatedAt        DateTime @db.Timestamptz(6)
 
   partnerCarrier PartnerCarrier @relation(fields: [partnerCarrierId], references: [id], onDelete: Cascade)
 
@@ -1317,25 +1317,25 @@ model PartnerHandoffLocation {
 }
 
 model DeliveryTransferPlan {
-  id                         String                    @id @db.Uuid
-  merchantDeliveryId         String                    @unique @db.Uuid
-  deliveryType               DeliveryType
-  originParish               String
-  destinationParish          String
-  destinationTown            String?
-  transferPartnerId          String                    @db.Uuid
-  originHandoffLocationId    String?                   @db.Uuid
-  destinationHandoffLocationId String?                 @db.Uuid
-  finalFulfillmentMethod     FinalFulfillmentMethod
-  packageValue               Decimal?                  @db.Decimal(10, 2)
-  specialHandlingNotes       String?
-  customerTrackingCode       String                    @unique
-  overallStatus              OutOfParishOverallStatus
-  createdAt                  DateTime                  @db.Timestamptz(6)
-  updatedAt                  DateTime                  @db.Timestamptz(6)
+  id                           String                   @id @db.Uuid
+  merchantDeliveryId           String                   @unique @db.Uuid
+  deliveryType                 DeliveryType
+  originParish                 String
+  destinationParish            String
+  destinationTown              String?
+  transferPartnerId            String                   @db.Uuid
+  originHandoffLocationId      String?                  @db.Uuid
+  destinationHandoffLocationId String?                  @db.Uuid
+  finalFulfillmentMethod       FinalFulfillmentMethod
+  packageValue                 Decimal?                 @db.Decimal(10, 2)
+  specialHandlingNotes         String?
+  customerTrackingCode         String                   @unique
+  overallStatus                OutOfParishOverallStatus
+  createdAt                    DateTime                 @db.Timestamptz(6)
+  updatedAt                    DateTime                 @db.Timestamptz(6)
 
-  merchantDelivery MerchantDelivery      @relation(fields: [merchantDeliveryId], references: [id], onDelete: Cascade)
-  transferPartner  PartnerCarrier        @relation(fields: [transferPartnerId], references: [id], onDelete: Restrict)
+  merchantDelivery MerchantDelivery @relation(fields: [merchantDeliveryId], references: [id], onDelete: Cascade)
+  transferPartner  PartnerCarrier   @relation(fields: [transferPartnerId], references: [id], onDelete: Restrict)
   deliveryLegs     DeliveryLeg[]
 
   @@index([merchantDeliveryId])
@@ -1364,8 +1364,8 @@ model DeliveryLeg {
   createdAt                DateTime                @db.Timestamptz(6)
   updatedAt                DateTime                @db.Timestamptz(6)
 
-  merchantDelivery MerchantDelivery     @relation(fields: [merchantDeliveryId], references: [id], onDelete: Cascade)
-  transferPlan     DeliveryTransferPlan? @relation(fields: [transferPlanId], references: [id], onDelete: SetNull)
+  merchantDelivery      MerchantDelivery       @relation(fields: [merchantDeliveryId], references: [id], onDelete: Cascade)
+  transferPlan          DeliveryTransferPlan?  @relation(fields: [transferPlanId], references: [id], onDelete: SetNull)
   partnerTrackingEvents PartnerTrackingEvent[]
 
   @@index([merchantDeliveryId, status, createdAt(sort: Desc)])
@@ -1374,17 +1374,17 @@ model DeliveryLeg {
 }
 
 model PartnerTrackingEvent {
-  id                        String                @id @db.Uuid
-  deliveryLegId             String                @db.Uuid
-  partnerCarrierId          String                @db.Uuid
+  id                        String   @id @db.Uuid
+  deliveryLegId             String   @db.Uuid
+  partnerCarrierId          String   @db.Uuid
   externalTrackingReference String?
   rawStatus                 String
   normalizedStatus          String
   notes                     String?
-  eventTimestamp            DateTime              @db.Timestamptz(6)
-  createdAt                 DateTime              @db.Timestamptz(6)
+  eventTimestamp            DateTime @db.Timestamptz(6)
+  createdAt                 DateTime @db.Timestamptz(6)
 
-  deliveryLeg    DeliveryLeg   @relation(fields: [deliveryLegId], references: [id], onDelete: Cascade)
+  deliveryLeg    DeliveryLeg    @relation(fields: [deliveryLegId], references: [id], onDelete: Cascade)
   partnerCarrier PartnerCarrier @relation(fields: [partnerCarrierId], references: [id], onDelete: Cascade)
 
   @@index([deliveryLegId, createdAt(sort: Desc)])
@@ -1392,15 +1392,15 @@ model PartnerTrackingEvent {
 }
 
 model ReferrerAccount {
-  id              String                   @id @default(cuid())
+  id              String    @id @default(cuid())
   fullName        String
-  email           String?                  @unique
-  phone           String?                  @unique
-  emailVerifiedAt DateTime?                @db.Timestamptz(6)
-  phoneVerifiedAt DateTime?                @db.Timestamptz(6)
-  isEnabled       Boolean                  @default(true)
-  createdAt       DateTime                 @default(now()) @db.Timestamptz(6)
-  updatedAt       DateTime                 @updatedAt @db.Timestamptz(6)
+  email           String?   @unique
+  phone           String?   @unique
+  emailVerifiedAt DateTime? @db.Timestamptz(6)
+  phoneVerifiedAt DateTime? @db.Timestamptz(6)
+  isEnabled       Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(6)
 
   loginChallenges ReferrerLoginChallenge[]
   sessions        ReferrerSession[]
@@ -1429,10 +1429,10 @@ model ReferrerLoginChallenge {
 }
 
 model ReferrerSession {
-  id                String           @id @default(cuid())
+  id                String   @id @default(cuid())
   referrerAccountId String
-  createdAt         DateTime         @default(now()) @db.Timestamptz(6)
-  expiresAt         DateTime         @db.Timestamptz(6)
+  createdAt         DateTime @default(now()) @db.Timestamptz(6)
+  expiresAt         DateTime @db.Timestamptz(6)
 
   referrerAccount ReferrerAccount @relation(fields: [referrerAccountId], references: [id], onDelete: Cascade)
 
@@ -1440,48 +1440,48 @@ model ReferrerSession {
 }
 
 model PublicSlyderReferral {
-  id                      String           @id @default(cuid())
-  referralCode            String           @unique
-  referrerName            String
-  referrerPhone           String
-  referrerEmail           String?
-  referrerAccountId       String?
-  referredName            String
-  referredEmail           String?
-  referredPhone           String
-  referredParish          String?
-  referredTown            String?
-  referredVehicleType     String?
-  notes                   String?
-  status                  String
-  statusReason            String?
-  inviteEmailSentAt       DateTime?        @db.Timestamptz(6)
-  inviteEmailStatus       ReferrerInviteEmailStatus?
-  applicationStartedAt    DateTime?        @db.Timestamptz(6)
-  applicationCompletedAt  DateTime?        @db.Timestamptz(6)
-  approvedAt              DateTime?        @db.Timestamptz(6)
-  activatedAt             DateTime?        @db.Timestamptz(6)
-  readyAt                 DateTime?        @db.Timestamptz(6)
-  firstDeliveryCompletedAt DateTime?       @db.Timestamptz(6)
-  rewardEarnedAt          DateTime?        @db.Timestamptz(6)
-  rewardClaimedAt         DateTime?        @db.Timestamptz(6)
-  rewardGiftedAt          DateTime?        @db.Timestamptz(6)
-  rewardRedeemedAt        DateTime?        @db.Timestamptz(6)
-  linkedSlyderApplicationId String?        @db.Uuid
-  linkedSlyderProfileId   String?          @db.Uuid
-  rewardId                String?          @unique
-  duplicateOfReferralId   String?
-  submittedIpHash         String?
-  submittedUserAgent      String?
-  createdAt               DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt               DateTime         @updatedAt @db.Timestamptz(6)
+  id                        String                     @id @default(cuid())
+  referralCode              String                     @unique
+  referrerName              String
+  referrerPhone             String
+  referrerEmail             String?
+  referrerAccountId         String?
+  referredName              String
+  referredEmail             String?
+  referredPhone             String
+  referredParish            String?
+  referredTown              String?
+  referredVehicleType       String?
+  notes                     String?
+  status                    String
+  statusReason              String?
+  inviteEmailSentAt         DateTime?                  @db.Timestamptz(6)
+  inviteEmailStatus         ReferrerInviteEmailStatus?
+  applicationStartedAt      DateTime?                  @db.Timestamptz(6)
+  applicationCompletedAt    DateTime?                  @db.Timestamptz(6)
+  approvedAt                DateTime?                  @db.Timestamptz(6)
+  activatedAt               DateTime?                  @db.Timestamptz(6)
+  readyAt                   DateTime?                  @db.Timestamptz(6)
+  firstDeliveryCompletedAt  DateTime?                  @db.Timestamptz(6)
+  rewardEarnedAt            DateTime?                  @db.Timestamptz(6)
+  rewardClaimedAt           DateTime?                  @db.Timestamptz(6)
+  rewardGiftedAt            DateTime?                  @db.Timestamptz(6)
+  rewardRedeemedAt          DateTime?                  @db.Timestamptz(6)
+  linkedSlyderApplicationId String?                    @db.Uuid
+  linkedSlyderProfileId     String?                    @db.Uuid
+  rewardId                  String?                    @unique
+  duplicateOfReferralId     String?
+  submittedIpHash           String?
+  submittedUserAgent        String?
+  createdAt                 DateTime                   @default(now()) @db.Timestamptz(6)
+  updatedAt                 DateTime                   @updatedAt @db.Timestamptz(6)
 
-  referrerAccount         ReferrerAccount?   @relation(fields: [referrerAccountId], references: [id])
-  linkedSlyderApplication SlyderApplication? @relation(fields: [linkedSlyderApplicationId], references: [id])
-  linkedSlyderProfile     SlyderProfile?     @relation(fields: [linkedSlyderProfileId], references: [id])
+  referrerAccount         ReferrerAccount?       @relation(fields: [referrerAccountId], references: [id])
+  linkedSlyderApplication SlyderApplication?     @relation(fields: [linkedSlyderApplicationId], references: [id])
+  linkedSlyderProfile     SlyderProfile?         @relation(fields: [linkedSlyderProfileId], references: [id])
   reward                  ReferralReward?
   events                  ReferralEvent[]
-  duplicateOfReferral     PublicSlyderReferral? @relation("ReferralDuplicates", fields: [duplicateOfReferralId], references: [id])
+  duplicateOfReferral     PublicSlyderReferral?  @relation("ReferralDuplicates", fields: [duplicateOfReferralId], references: [id])
   duplicateChildren       PublicSlyderReferral[] @relation("ReferralDuplicates")
 
   @@index([referrerAccountId])
@@ -1495,13 +1495,13 @@ model PublicSlyderReferral {
 }
 
 model ReferralEvent {
-  id          String              @id @default(cuid())
+  id          String   @id @default(cuid())
   referralId  String
   eventType   String
   title       String
   description String?
   metadata    Json?
-  createdAt   DateTime            @default(now()) @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
 
   referral PublicSlyderReferral @relation(fields: [referralId], references: [id], onDelete: Cascade)
 
@@ -1510,29 +1510,29 @@ model ReferralEvent {
 }
 
 model ReferralReward {
-  id                    String               @id @default(cuid())
-  publicReferralId      String               @unique
-  rewardType            String
-  rewardValue           Int
-  currency              String               @default("JMD")
-  status                String
-  isTransferable        Boolean              @default(true)
-  transferCount         Int                  @default(0)
-  transferredAt         DateTime?            @db.Timestamptz(6)
-  ownerCustomerAccountId String?
-  ownerPhone            String?
+  id                        String    @id @default(cuid())
+  publicReferralId          String    @unique
+  rewardType                String
+  rewardValue               Int
+  currency                  String    @default("JMD")
+  status                    String
+  isTransferable            Boolean   @default(true)
+  transferCount             Int       @default(0)
+  transferredAt             DateTime? @db.Timestamptz(6)
+  ownerCustomerAccountId    String?
+  ownerPhone                String?
   giftedToCustomerAccountId String?
-  giftedToPhone         String?
-  giftedByReferrerPhone String?
-  minOrderValue         Int?
-  expiresAt             DateTime             @db.Timestamptz(6)
-  redeemedAt            DateTime?            @db.Timestamptz(6)
-  redemptionOrderId     String?
-  createdAt             DateTime             @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime             @updatedAt @db.Timestamptz(6)
+  giftedToPhone             String?
+  giftedByReferrerPhone     String?
+  minOrderValue             Int?
+  expiresAt                 DateTime  @db.Timestamptz(6)
+  redeemedAt                DateTime? @db.Timestamptz(6)
+  redemptionOrderId         String?
+  createdAt                 DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt                 DateTime  @updatedAt @db.Timestamptz(6)
 
-  publicReferral        PublicSlyderReferral @relation(fields: [publicReferralId], references: [id], onDelete: Cascade)
-  audits                ReferralRewardAudit[]
+  publicReferral PublicSlyderReferral  @relation(fields: [publicReferralId], references: [id], onDelete: Cascade)
+  audits         ReferralRewardAudit[]
 
   @@index([status])
   @@index([expiresAt])
@@ -1542,13 +1542,13 @@ model ReferralReward {
 }
 
 model ReferralRewardAudit {
-  id        String         @id @default(cuid())
-  rewardId   String
+  id        String   @id @default(cuid())
+  rewardId  String
   action    String
   actorType String
   actorId   String?
   notes     String?
-  createdAt DateTime       @default(now()) @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   reward ReferralReward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
 
@@ -1556,29 +1556,29 @@ model ReferralRewardAudit {
 }
 
 model EmployeeApplication {
-  id                     String                    @id @db.Uuid
-  fullName               String
-  email                  String
-  phone                  String
-  roleInterest           String
-  departmentInterest     EmployeeDepartmentCode
-  employmentType         EmployeeEmploymentType
-  location               String
-  experienceSummary      String
-  managerTrackInterest   Boolean?
-  resumeUrl              String?
-  notes                  String?
-  status                 EmployeeApplicationStatus
-  submittedAt            DateTime                  @db.Timestamptz(6)
-  reviewedAt             DateTime?                 @db.Timestamptz(6)
-  reviewedByLabel        String?
-  linkedUserId           String?                   @db.Uuid
-  linkedEmployeeProfileId String?                  @unique @db.Uuid
-  createdAt              DateTime                  @db.Timestamptz(6)
-  updatedAt              DateTime                  @db.Timestamptz(6)
+  id                      String                    @id @db.Uuid
+  fullName                String
+  email                   String
+  phone                   String
+  roleInterest            String
+  departmentInterest      EmployeeDepartmentCode
+  employmentType          EmployeeEmploymentType
+  location                String
+  experienceSummary       String
+  managerTrackInterest    Boolean?
+  resumeUrl               String?
+  notes                   String?
+  status                  EmployeeApplicationStatus
+  submittedAt             DateTime                  @db.Timestamptz(6)
+  reviewedAt              DateTime?                 @db.Timestamptz(6)
+  reviewedByLabel         String?
+  linkedUserId            String?                   @db.Uuid
+  linkedEmployeeProfileId String?                   @unique @db.Uuid
+  createdAt               DateTime                  @db.Timestamptz(6)
+  updatedAt               DateTime                  @db.Timestamptz(6)
 
-  linkedUser       User?             @relation("EmployeeApplicationLinkedUser", fields: [linkedUserId], references: [id])
-  linkedProfile    EmployeeProfile?  @relation("EmployeeApplicationLinkedProfile", fields: [linkedEmployeeProfileId], references: [id])
+  linkedUser    User?            @relation("EmployeeApplicationLinkedUser", fields: [linkedUserId], references: [id])
+  linkedProfile EmployeeProfile? @relation("EmployeeApplicationLinkedProfile", fields: [linkedEmployeeProfileId], references: [id])
 
   @@index([status, submittedAt(sort: Desc)])
   @@index([linkedUserId])
@@ -1586,29 +1586,29 @@ model EmployeeApplication {
 }
 
 model EmployeeProfile {
-  id                    String                    @id @db.Uuid
-  userId                String                    @unique @db.Uuid
-  employeeCode          String                    @unique
+  id                    String                   @id @db.Uuid
+  userId                String                   @unique @db.Uuid
+  employeeCode          String                   @unique
   displayName           String
   department            EmployeeDepartmentCode
   title                 String
   employmentType        EmployeeEmploymentType
-  managerUserId         String?                   @db.Uuid
-  startDate             DateTime                  @db.Date
+  managerUserId         String?                  @db.Uuid
+  startDate             DateTime                 @db.Date
   locationLabel         String
   payrollFrequency      EmployeePayrollFrequency
   payoutMethod          EmployeePayoutMethod
   payoutAccountMasked   String?
   isOnboarded           Boolean
-  onboardingCompletedAt DateTime?                 @db.Timestamptz(6)
+  onboardingCompletedAt DateTime?                @db.Timestamptz(6)
   emergencyContactName  String?
   emergencyContactPhone String?
-  createdAt             DateTime                  @db.Timestamptz(6)
-  updatedAt             DateTime                  @db.Timestamptz(6)
+  createdAt             DateTime                 @db.Timestamptz(6)
+  updatedAt             DateTime                 @db.Timestamptz(6)
 
-  user                  User                      @relation(fields: [userId], references: [id])
-  manager               User?                     @relation("EmployeeProfileManager", fields: [managerUserId], references: [id])
-  linkedApplication     EmployeeApplication?      @relation("EmployeeApplicationLinkedProfile")
+  user                  User                           @relation(fields: [userId], references: [id])
+  manager               User?                          @relation("EmployeeProfileManager", fields: [managerUserId], references: [id])
+  linkedApplication     EmployeeApplication?           @relation("EmployeeApplicationLinkedProfile")
   guideAcknowledgements EmployeeGuideAcknowledgement[]
   payrollRecords        EmployeePayrollRecord[]
   payoutRecords         EmployeePayoutRecord[]
@@ -1618,16 +1618,16 @@ model EmployeeProfile {
 }
 
 model EmployeeAnnouncement {
-  id                String                      @id @db.Uuid
+  id                String                       @id @db.Uuid
   title             String
   excerpt           String
   body              String
   audience          EmployeeGuideAudience[]
-  publishedByUserId String?                     @db.Uuid
+  publishedByUserId String?                      @db.Uuid
   priority          EmployeeAnnouncementPriority
-  publishedAt       DateTime                    @db.Timestamptz(6)
-  createdAt         DateTime                    @db.Timestamptz(6)
-  updatedAt         DateTime                    @db.Timestamptz(6)
+  publishedAt       DateTime                     @db.Timestamptz(6)
+  createdAt         DateTime                     @db.Timestamptz(6)
+  updatedAt         DateTime                     @db.Timestamptz(6)
 
   publishedBy User? @relation("EmployeeAnnouncementPublishedBy", fields: [publishedByUserId], references: [id])
 
@@ -1635,16 +1635,16 @@ model EmployeeAnnouncement {
 }
 
 model EmployeeGuide {
-  id             String                    @id @db.Uuid
-  slug           String                    @unique
-  title          String
-  summary        String
-  category       EmployeeGuideCategory
-  audience       EmployeeGuideAudience[]
+  id              String                  @id @db.Uuid
+  slug            String                  @unique
+  title           String
+  summary         String
+  category        EmployeeGuideCategory
+  audience        EmployeeGuideAudience[]
   contentMarkdown String
-  isFeatured     Boolean
-  createdAt      DateTime                  @db.Timestamptz(6)
-  updatedAt      DateTime                  @db.Timestamptz(6)
+  isFeatured      Boolean
+  createdAt       DateTime                @db.Timestamptz(6)
+  updatedAt       DateTime                @db.Timestamptz(6)
 
   acknowledgements EmployeeGuideAcknowledgement[]
 
@@ -1652,31 +1652,31 @@ model EmployeeGuide {
 }
 
 model EmployeeGuideAcknowledgement {
-  id                String          @id @db.Uuid
-  guideId           String          @db.Uuid
-  employeeProfileId String          @db.Uuid
-  acknowledgedAt    DateTime        @db.Timestamptz(6)
-  createdAt         DateTime        @db.Timestamptz(6)
+  id                String   @id @db.Uuid
+  guideId           String   @db.Uuid
+  employeeProfileId String   @db.Uuid
+  acknowledgedAt    DateTime @db.Timestamptz(6)
+  createdAt         DateTime @db.Timestamptz(6)
 
-  guide            EmployeeGuide   @relation(fields: [guideId], references: [id], onDelete: Cascade)
-  employeeProfile  EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
+  guide           EmployeeGuide   @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  employeeProfile EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
 
   @@unique([guideId, employeeProfileId])
   @@index([employeeProfileId, acknowledgedAt(sort: Desc)])
 }
 
 model EmployeePayrollRecord {
-  id                String                    @id @db.Uuid
-  employeeProfileId String                    @db.Uuid
-  payPeriodStart    DateTime                  @db.Date
-  payPeriodEnd      DateTime                  @db.Date
-  grossAmount       Decimal                   @db.Decimal(12, 2)
-  deductionsAmount  Decimal                   @db.Decimal(12, 2)
-  netAmount         Decimal                   @db.Decimal(12, 2)
+  id                String                      @id @db.Uuid
+  employeeProfileId String                      @db.Uuid
+  payPeriodStart    DateTime                    @db.Date
+  payPeriodEnd      DateTime                    @db.Date
+  grossAmount       Decimal                     @db.Decimal(12, 2)
+  deductionsAmount  Decimal                     @db.Decimal(12, 2)
+  netAmount         Decimal                     @db.Decimal(12, 2)
   status            EmployeePayrollRecordStatus
-  payDate           DateTime                  @db.Date
-  createdAt         DateTime                  @db.Timestamptz(6)
-  updatedAt         DateTime                  @db.Timestamptz(6)
+  payDate           DateTime                    @db.Date
+  createdAt         DateTime                    @db.Timestamptz(6)
+  updatedAt         DateTime                    @db.Timestamptz(6)
 
   employeeProfile EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
 
@@ -1684,14 +1684,14 @@ model EmployeePayrollRecord {
 }
 
 model EmployeePayoutRecord {
-  id                String                    @id @db.Uuid
-  employeeProfileId String                    @db.Uuid
+  id                String                     @id @db.Uuid
+  employeeProfileId String                     @db.Uuid
   sourceLabel       String
-  amount            Decimal                   @db.Decimal(12, 2)
+  amount            Decimal                    @db.Decimal(12, 2)
   status            EmployeePayoutRecordStatus
-  payoutDate        DateTime                  @db.Date
-  createdAt         DateTime                  @db.Timestamptz(6)
-  updatedAt         DateTime                  @db.Timestamptz(6)
+  payoutDate        DateTime                   @db.Date
+  createdAt         DateTime                   @db.Timestamptz(6)
+  updatedAt         DateTime                   @db.Timestamptz(6)
 
   employeeProfile EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
 
@@ -1751,12 +1751,12 @@ model LegalAcceptance {
 }
 
 model LegalDocumentPublishHistory {
-  id              String            @id @db.Uuid
-  legalDocumentId String            @db.Uuid
+  id              String             @id @db.Uuid
+  legalDocumentId String             @db.Uuid
   action          LegalPublishAction
   note            String?
-  actedBy         String?           @db.Uuid
-  createdAt       DateTime          @db.Timestamptz(6)
+  actedBy         String?            @db.Uuid
+  createdAt       DateTime           @db.Timestamptz(6)
 
   legalDocument LegalDocument @relation(fields: [legalDocumentId], references: [id], onDelete: Cascade)
 
@@ -1792,6 +1792,63 @@ enum ResidentialParcelCategory {
   other
 }
 
+// ─── Slyder Lead Funnel ──────────────────────────────────────────────────────
+
+enum SlyderLeadStatus {
+  NEW
+  QUALIFIED
+  NURTURING
+  STARTED_APPLICATION
+  ABANDONED
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  ACTIVATED
+  LIVE
+  REJECTED
+}
+
+model SlyderLead {
+  id                 String           @id @default(cuid())
+  firstName          String
+  lastName           String?
+  email              String
+  whatsapp           String
+  parish             String?
+  vehicleType        String?
+  source             String?
+  status             SlyderLeadStatus @default(NEW)
+  referralCode       String?          @unique
+  referredByCode     String?
+  qualificationScore Int?
+  qualificationNotes String?
+  applicationId      String?
+  convertedAt        DateTime?
+  lastContactedAt    DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  qualification SlyderQualification?
+}
+
+model SlyderQualification {
+  id                 String   @id @default(cuid())
+  leadId             String   @unique
+  hasVehicle         Boolean?
+  hasSmartphone      Boolean?
+  usesWhatsapp       Boolean?
+  hasDataAccess      Boolean?
+  availableWeekly    Boolean?
+  preferredZones     String[]
+  preferredSchedule  String?
+  deliveryExperience String?
+  readinessLevel     String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  lead SlyderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
 enum ResidentialDispatchStatus {
   submitted
   payment_pending
@@ -1812,24 +1869,24 @@ enum ResidentialPaymentMethod {
 }
 
 model ResidentialLead {
-  id              String                  @id @db.Uuid
-  userId          String                  @db.Uuid
-  referenceCode   String                  @unique
-  fullName        String
-  phone           String
-  email           String?
-  parish          String
-  area            String
-  status          ResidentialIntakeStatus
-  sourceCampaign  String?
-  ipAddress       String?
-  userAgent       String?
-  createdAt       DateTime                @db.Timestamptz(6)
-  updatedAt       DateTime                @db.Timestamptz(6)
+  id             String                  @id @db.Uuid
+  userId         String                  @db.Uuid
+  referenceCode  String                  @unique
+  fullName       String
+  phone          String
+  email          String?
+  parish         String
+  area           String
+  status         ResidentialIntakeStatus
+  sourceCampaign String?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime                @db.Timestamptz(6)
+  updatedAt      DateTime                @db.Timestamptz(6)
 
-  user           User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dispatchIntent ResidentialDispatchIntent?
-  handoffJob     ResidentialHandoffJob?
+  user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dispatchIntent  ResidentialDispatchIntent?
+  handoffJob      ResidentialHandoffJob?
   dispatchRequest ResidentialDispatchRequest?
 
   @@index([status, createdAt(sort: Desc)])
@@ -1861,36 +1918,36 @@ model ResidentialDispatchIntent {
 }
 
 model ResidentialDispatchRequest {
-  id                String                    @id @db.Uuid
-  leadId            String                    @unique @db.Uuid
-  userId            String                    @db.Uuid
-  referenceCode     String                    @unique
-  status            ResidentialDispatchStatus
-  paymentMethod     ResidentialPaymentMethod
-  pickupAddress     String
-  pickupParish      String
-  pickupArea        String
-  dropoffAddress    String
-  dropoffParish     String
-  dropoffArea       String
-  parcelCategory    ResidentialParcelCategory
-  parcelNotes       String?
-  urgency           String
-  preferredWindow   String?
-  submittedAt       DateTime                  @db.Timestamptz(6)
-  confirmedAt       DateTime?                 @db.Timestamptz(6)
-  riderAssignedAt   DateTime?                 @db.Timestamptz(6)
-  pickedUpAt        DateTime?                 @db.Timestamptz(6)
-  deliveredAt       DateTime?                 @db.Timestamptz(6)
-  cancelledAt       DateTime?                 @db.Timestamptz(6)
-  failureReason     String?
-  paymentStatus     ResidentialPaymentStatus  @default(pending)
-  paymentReference  String?
-  authorizedAt      DateTime?                 @db.Timestamptz(6)
-  capturedAt        DateTime?                 @db.Timestamptz(6)
-  refundedAt        DateTime?                 @db.Timestamptz(6)
-  createdAt         DateTime                  @db.Timestamptz(6)
-  updatedAt         DateTime                  @db.Timestamptz(6)
+  id               String                    @id @db.Uuid
+  leadId           String                    @unique @db.Uuid
+  userId           String                    @db.Uuid
+  referenceCode    String                    @unique
+  status           ResidentialDispatchStatus
+  paymentMethod    ResidentialPaymentMethod
+  pickupAddress    String
+  pickupParish     String
+  pickupArea       String
+  dropoffAddress   String
+  dropoffParish    String
+  dropoffArea      String
+  parcelCategory   ResidentialParcelCategory
+  parcelNotes      String?
+  urgency          String
+  preferredWindow  String?
+  submittedAt      DateTime                  @db.Timestamptz(6)
+  confirmedAt      DateTime?                 @db.Timestamptz(6)
+  riderAssignedAt  DateTime?                 @db.Timestamptz(6)
+  pickedUpAt       DateTime?                 @db.Timestamptz(6)
+  deliveredAt      DateTime?                 @db.Timestamptz(6)
+  cancelledAt      DateTime?                 @db.Timestamptz(6)
+  failureReason    String?
+  paymentStatus    ResidentialPaymentStatus  @default(pending)
+  paymentReference String?
+  authorizedAt     DateTime?                 @db.Timestamptz(6)
+  capturedAt       DateTime?                 @db.Timestamptz(6)
+  refundedAt       DateTime?                 @db.Timestamptz(6)
+  createdAt        DateTime                  @db.Timestamptz(6)
+  updatedAt        DateTime                  @db.Timestamptz(6)
 
   lead   ResidentialLead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user   User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1901,17 +1958,17 @@ model ResidentialDispatchRequest {
 }
 
 model ResidentialWallet {
-  id                String   @id @db.Uuid
-  userId            String   @unique @db.Uuid
-  currency          String
-  availableBalance  Int
-  heldBalance       Int
+  id                 String    @id @db.Uuid
+  userId             String    @unique @db.Uuid
+  currency           String
+  availableBalance   Int
+  heldBalance        Int
   totalLifetimeTopUp Int
-  lastTopUpAt       DateTime? @db.Timestamptz(6)
-  createdAt         DateTime @db.Timestamptz(6)
-  updatedAt         DateTime @db.Timestamptz(6)
+  lastTopUpAt        DateTime? @db.Timestamptz(6)
+  createdAt          DateTime  @db.Timestamptz(6)
+  updatedAt          DateTime  @db.Timestamptz(6)
 
-  user         User                            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions ResidentialWalletTransaction[]
 }
 
@@ -1946,16 +2003,16 @@ enum ResidentialWalletTxType {
 }
 
 model ResidentialWalletTransaction {
-  id               String                   @id @db.Uuid
-  walletId         String                   @db.Uuid
-  userId           String                   @db.Uuid
-  type             ResidentialWalletTxType
-  amountJMD        Int
-  balanceAfterJMD  Int
-  reference        String?
-  orderId          String?                  @db.Uuid
-  description      String?
-  createdAt        DateTime                 @db.Timestamptz(6)
+  id              String                  @id @db.Uuid
+  walletId        String                  @db.Uuid
+  userId          String                  @db.Uuid
+  type            ResidentialWalletTxType
+  amountJMD       Int
+  balanceAfterJMD Int
+  reference       String?
+  orderId         String?                 @db.Uuid
+  description     String?
+  createdAt       DateTime                @db.Timestamptz(6)
 
   wallet ResidentialWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
   user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1993,23 +2050,22 @@ enum ResidentialRequestEventType {
 }
 
 model ResidentialRequestEvent {
-  id          String                       @id @db.Uuid
-  requestId   String                       @db.Uuid
+  id          String                      @id @db.Uuid
+  requestId   String                      @db.Uuid
   eventType   ResidentialRequestEventType
   title       String
   description String?
   actorType   String
-  actorId     String?                      @db.Uuid
+  actorId     String?                     @db.Uuid
   metadata    Json?
-  createdAt   DateTime                     @db.Timestamptz(6)
+  createdAt   DateTime                    @db.Timestamptz(6)
 
   request ResidentialDispatchRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
+  // ─── Residential Account KYC / Verification ──────────────────────────────────
+
   @@index([requestId, createdAt(sort: Asc)])
-
-// ─── Residential Account KYC / Verification ──────────────────────────────────
 }
-
 
 enum ResidentIdType {
   national_id

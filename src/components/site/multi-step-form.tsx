@@ -360,7 +360,7 @@ function ZoneCard({ zone, locationInfo, checked, onChange }: { zone: string; loc
   );
 }
 
-export function MultiStepForm() {
+export function MultiStepForm({ leadId }: { leadId?: string | null }) {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<SlyderApplicationDraft>(defaultDraft);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -370,6 +370,18 @@ export function MultiStepForm() {
   const [aiAssistInput, setAiAssistInput] = useState("");
   const [aiAssistMessage, setAiAssistMessage] = useState<string | null>(null);
   const [zoneSearch, setZoneSearch] = useState("");
+
+  // Mark lead as STARTED_APPLICATION when the form mounts
+  useEffect(() => {
+    const id = leadId ?? window.localStorage.getItem("slyde-slyder-lead-id");
+    if (!id) return;
+    void fetch(`/api/public/slyder-leads/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "STARTED_APPLICATION" }),
+    }).catch(() => undefined);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -569,7 +581,21 @@ export function MultiStepForm() {
         return;
       }
 
+      const responseData = (await response.json().catch(() => null)) as { id?: string } | null;
+      const applicationId = responseData?.id;
+
+      // Convert lead to submitted state if we have a lead ID
+      const activeLeadId = leadId ?? window.localStorage.getItem("slyde-slyder-lead-id");
+      if (activeLeadId) {
+        void fetch("/api/public/slyder-leads/convert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId: activeLeadId, status: "SUBMITTED", applicationId }),
+        }).catch(() => undefined);
+      }
+
       window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem("slyde-slyder-lead-id");
       window.location.assign("/success/slyder-application");
     });
   }

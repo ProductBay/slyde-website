@@ -8,6 +8,7 @@ import type {
   OnboardingStore,
   PublicSlyderReferral,
   SetupStatusResponse,
+  StoredUser,
 } from "@/types/backend/onboarding";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { dispatchViaProvider } from "@/server/notifications/providers";
@@ -2210,10 +2211,63 @@ export async function sendUserRegistrationWelcomeNotification(
   const user = store.users.find((item) => item.id === userId);
   if (!user) throw new Error("User not found for welcome notification");
 
-  const baseUrl = getWebsiteBaseUrl();
   const actorType = resolveActorTypeForUser(user);
+  const { variables, payload } = buildUserRegistrationWelcomeContext(user);
+
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `user_registration_welcome:${user.id}:${user.userType}`,
+    actorType,
+    actorId: user.id,
+    payload,
+  });
+  if (isDuplicate) return null;
+
+  const results = await Promise.all([
+    sendTemplateNotificationInStore(store, {
+      templateKey: "user_registration_welcome_email",
+      actorType,
+      actorId: user.id,
+      recipient: user.email,
+      recipientName: user.fullName,
+      userId: user.id,
+      variables,
+      payload,
+      triggerEventId: event.id,
+      triggerEventKey: event.eventKey,
+      dedupeKey: `user_registration_welcome:email:${user.id}:${user.userType}`,
+    }),
+    sendTemplateNotificationInStore(store, {
+      templateKey: "user_registration_welcome_whatsapp",
+      actorType,
+      actorId: user.id,
+      recipient: user.phone,
+      recipientName: user.fullName,
+      userId: user.id,
+      variables,
+      payload,
+      triggerEventId: event.id,
+      triggerEventKey: event.eventKey,
+      dedupeKey: `user_registration_welcome:whatsapp:${user.id}:${user.userType}`,
+    }),
+  ]);
+
+  updateTriggerStatus(
+    store,
+    event.id,
+    results.some((result) => result.status === "failed") ? "partially_processed" : "processed",
+    results.find((result) => result.status === "failed")?.failureReason,
+  );
+  return results;
+}
+
+function buildUserRegistrationWelcomeContext(user: StoredUser) {
+  const baseUrl = getWebsiteBaseUrl();
   const profileUrl = resolveProfileUrl(baseUrl, user);
   const supportUrl = `${baseUrl}/support`;
+  const joinSlyderUrl = `${baseUrl}/join/slyder`;
+  const merchantSignupUrl = `${baseUrl}/join/merchant`;
+  const trackUrl = `${baseUrl}/track`;
+  const coverageUrl = `${baseUrl}/coverage`;
   const becomeSlyderUrl = `${baseUrl}/become-a-slyder`;
   const businessPartnerUrl = `${baseUrl}/for-businesses`;
   const dispatchFromHomeUrl = `${baseUrl}/dispatch-from-home`;
@@ -2221,43 +2275,32 @@ export async function sendUserRegistrationWelcomeNotification(
   const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
   const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
 
-  const { event, isDuplicate } = createTriggerEvent(store, {
-    eventKey: `user_registration_welcome:${user.id}:${user.userType}`,
-    actorType,
-    actorId: user.id,
-    payload: {
-      profileUrl,
-      supportUrl,
-      becomeSlyderUrl,
-      businessPartnerUrl,
-      dispatchFromHomeUrl,
-      referUrl,
-    },
-  });
-  if (isDuplicate) return null;
+  const variables = {
+    fullName: user.fullName,
+    accountTypeLabel: resolveAccountTypeLabel(user),
+    profileUrl,
+    supportUrl,
+    joinSlyderUrl,
+    merchantSignupUrl,
+    trackUrl,
+    coverageUrl,
+    becomeSlyderUrl,
+    businessPartnerUrl,
+    dispatchFromHomeUrl,
+    referUrl,
+    supportEmail,
+    supportPhone,
+  };
 
-  const result = await sendTemplateNotificationInStore(store, {
-    templateKey: "user_registration_welcome_email",
-    actorType,
-    actorId: user.id,
-    recipient: user.email,
-    recipientName: user.fullName,
-    userId: user.id,
-    variables: {
-      fullName: user.fullName,
-      accountTypeLabel: resolveAccountTypeLabel(user),
-      profileUrl,
-      supportUrl,
-      becomeSlyderUrl,
-      businessPartnerUrl,
-      dispatchFromHomeUrl,
-      referUrl,
-      supportEmail,
-      supportPhone,
-    },
+  return {
+    variables,
     payload: {
       profileUrl,
       supportUrl,
+      joinSlyderUrl,
+      merchantSignupUrl,
+      trackUrl,
+      coverageUrl,
       becomeSlyderUrl,
       businessPartnerUrl,
       dispatchFromHomeUrl,
@@ -2265,13 +2308,45 @@ export async function sendUserRegistrationWelcomeNotification(
       userType: user.userType,
       roles: user.roles,
     },
-    triggerEventId: event.id,
-    triggerEventKey: event.eventKey,
-    dedupeKey: `user_registration_welcome:email:${user.id}:${user.userType}`,
-  });
+  };
+}
 
-  updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
-  return result;
+export async function resendUserRegistrationWelcomeEmail(
+  store: OnboardingStore,
+  userId: string,
+  triggeredByUserId?: string,
+) {
+  const user = store.users.find((item) => item.id === userId);
+  if (!user) throw new Error("User not found for welcome notification");
+
+  const actorType = resolveActorTypeForUser(user);
+  const { variables, payload } = buildUserRegistrationWelcomeContext(user);
+
+  return sendTemplateNotificationInStore(store, {
+    templateKey: "user_registration_welcome_email",
+    actorType,
+    actorId: user.id,
+    recipient: user.email,
+    recipientName: user.fullName,
+    userId: user.id,
+    variables,
+    payload,
+    triggeredByUserId,
+    createdBySystem: false,
+    force: true,
+  });
+}
+
+export function getUserRegistrationWelcomeWhatsappMessage(store: OnboardingStore, userId: string) {
+  const user = store.users.find((item) => item.id === userId);
+  if (!user) throw new Error("User not found for WhatsApp message");
+
+  const { variables } = buildUserRegistrationWelcomeContext(user);
+  const { body } = renderTemplate(store, "user_registration_welcome_whatsapp", variables);
+  return {
+    recipient: user.phone,
+    body,
+  };
 }
 
 export async function sendSlyderDocumentsRequestedNotification(store: OnboardingStore, applicationId: string, _userId: string | undefined, requestedDocumentTypes: string[], notes: string) {

@@ -12,7 +12,14 @@ export const metadata: Metadata = buildMetadata(
   "/become-a-slyder/apply",
 );
 
-export default async function SlyderApplyPage() {
+export default async function SlyderApplyPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) ?? {};
+  const leadId = typeof params.leadId === "string" ? params.leadId : null;
+
   const session = await getSessionContext();
   if (!session?.user?.isEnabled) {
     redirect("/login?next=/become-a-slyder/apply");
@@ -49,7 +56,7 @@ export default async function SlyderApplyPage() {
           />
         </div>
         <div>
-          <MultiStepForm />
+          <MultiStepForm leadId={leadId} />
         </div>
       </div>
     </section>

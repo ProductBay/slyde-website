@@ -1,0 +1,9 @@
+.data
+.logs
+.next
+backups
+node_modules
+*.log
+website-dev-*.out.log
+website-dev-*.err.log
+tsconfig.tsbuildinfo

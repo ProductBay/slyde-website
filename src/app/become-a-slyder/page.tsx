@@ -109,7 +109,17 @@ const independentWorkHighlights = [
   },
 ];
 
-export default function BecomeASlyderPage() {
+export default async function BecomeASlyderPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) ?? {};
+  const leadId = typeof params.leadId === "string" ? params.leadId : null;
+  const applyHref = leadId
+    ? `/become-a-slyder/apply?leadId=${leadId}`
+    : "/become-a-slyder/apply";
+  const applyLabel = leadId ? "Continue My SLYDE Application" : "Apply Now";
   return (
     <>
       <HeroSection
@@ -118,7 +128,7 @@ export default function BecomeASlyderPage() {
         description="Apply to become an independent delivery partner on the SLYDE network. Set your availability, move in your area, and receive delivery opportunities from a growing mix of businesses, companies, platforms, and residential customers."
         supportText="Independent contractor opportunity. Flexible hours. Network-powered dispatch."
         actions={[
-          { href: "/become-a-slyder/apply", label: "Apply Now" },
+          { href: applyHref, label: applyLabel },
           { href: "/faq", label: "Read Slyder FAQ", variant: "secondary" },
         ]}
         aside={
@@ -166,7 +176,7 @@ export default function BecomeASlyderPage() {
                 ))}
               </div>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <LinkButton href="/become-a-slyder/apply" className="justify-center">Start your application</LinkButton>
+                <LinkButton href={applyHref} className="justify-center">{applyLabel}</LinkButton>
                 <LinkButton href="#slyder-requirements" variant="secondary" className="justify-center">Check requirements</LinkButton>
               </div>
             </div>
@@ -201,7 +211,7 @@ export default function BecomeASlyderPage() {
                 This page is designed to answer the big questions first: what the role is, how onboarding works, what to have ready, and when you can expect to start.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <LinkButton href="/become-a-slyder/apply">Start your application</LinkButton>
+                <LinkButton href={applyHref}>Start your application</LinkButton>
                 <LinkButton href="#slyder-requirements" variant="secondary">See requirements</LinkButton>
               </div>
             </div>
@@ -435,7 +445,7 @@ export default function BecomeASlyderPage() {
         eyebrow="Join The SLYDE Network"
         title="Join the SLYDE network today"
         description="Be part of the next generation of delivery in Jamaica. Apply early, secure your place in your area, and stay ready as SLYDE launches region by region."
-        actions={[primaryCtas[0]]}
+        actions={[{ ...primaryCtas[0], href: applyHref }]}
       />
     </>
   );

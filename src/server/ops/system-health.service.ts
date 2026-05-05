@@ -100,7 +100,7 @@ export async function getSystemHealthSummary() {
       },
       whatsapp: {
         configured: isWhatsappConfigured(),
-        provider: isWhatsappConfigured() ? "twilio_whatsapp" : "whatsapp_stub",
+        provider: isWhatsappConfigured() ? "whatsapp_web" : "whatsapp_stub",
       },
       sms: {
         configured: isSmsConfigured(),

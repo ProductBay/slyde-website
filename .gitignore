@@ -18,10 +18,17 @@ out/
 # BACKUPS
 backups/
 
+# LOCAL DATA STORE
+.data/
+
+# BUILD INFO
+*.tsbuildinfo
+
 # LOG FILES
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.out.log
 
 # SYSTEM FILES
 .DS_Store

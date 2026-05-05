@@ -1,5 +1,11 @@
 import { UserRoleCode, UserType } from "@prisma/client";
+import { buildWhatsappWebUrl } from "@/server/notifications/providers";
+import {
+  getUserRegistrationWelcomeWhatsappMessage,
+  resendUserRegistrationWelcomeEmail,
+} from "@/server/notifications/notification.service";
 import { prisma } from "@/server/db/prisma";
+import { withPersistenceTransaction } from "@/server/persistence";
 
 export type AdminUserStatusFilter = "enabled" | "disabled";
 
@@ -106,4 +112,18 @@ export async function listAdminUsers(filters: AdminUserFilters): Promise<AdminUs
       activeSessionCount: activeByUserId.get(user.id) ?? 0,
     };
   });
+}
+
+export async function resendAdminUserRegistrationEmail(userId: string, triggeredByUserId?: string) {
+  return withPersistenceTransaction((store) => resendUserRegistrationWelcomeEmail(store, userId, triggeredByUserId));
+}
+
+export async function getAdminUserRegistrationWhatsappUrl(userId: string) {
+  const { recipient, body } = await withPersistenceTransaction((store) =>
+    getUserRegistrationWelcomeWhatsappMessage(store, userId),
+  );
+  const whatsappUrl = buildWhatsappWebUrl(recipient, body);
+  if (!whatsappUrl) throw new Error("A valid WhatsApp phone number is required.");
+
+  return { whatsappUrl };
 }

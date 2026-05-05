@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Gauge, Gift, Headset, Home, Layers3, MapPinned, RadioTower, ScrollText, Store, Users, UserSquare2, Waypoints, X } from "lucide-react";
+import { Bell, Gauge, Gift, Headset, Home, Layers3, MapPinned, RadioTower, ScrollText, Share2, Store, TrendingUp, Users, UserPlus, UserSquare2, Waypoints, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/site/brand-mark";
@@ -11,6 +11,9 @@ const navItems = [
   { href: "/admin/residential", label: "Residential", icon: Home },
   { href: "/admin/users", label: "Registered Users", icon: Users },
   { href: "/admin/slyder-applications", label: "Slyder Applications", icon: UserSquare2 },
+  { href: "/admin/slyder-leads", label: "Slyder Leads", icon: UserPlus },
+  { href: "/admin/slyder-funnel", label: "Slyder Funnel", icon: TrendingUp },
+  { href: "/admin/slyder-referrals", label: "Slyder Referrals", icon: Share2 },
   { href: "/admin/employee-applications", label: "Employee Applications", icon: UserSquare2 },
   { href: "/admin/merchant-leads", label: "Merchant Leads", icon: Store },
   { href: "/admin/merchant-applications", label: "Merchant Applications", icon: Store },

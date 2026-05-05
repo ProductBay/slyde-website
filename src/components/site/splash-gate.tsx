@@ -18,36 +18,42 @@ type Phase = "splash" | "modal" | "exit";
 
 const STORAGE_KEY = "slyde_splash_v1";
 
+const SLYDER_SPOT_COUNT = 243;
+const SLYDER_SPOT_TOTAL = 500;
+const SLYDER_PCT = Math.round((SLYDER_SPOT_COUNT / SLYDER_SPOT_TOTAL) * 100);
+
 const FEATURED = [
   {
     id: "slyder",
-    title: "Become a Slyder",
-    sub: "Earn with us",
+    title: "Become a Founding Slyder",
+    sub: "Founding spots open",
     description:
-      "Join Jamaica's verified courier network. Apply, get activated, and start earning on your own schedule.",
-    href: "/become-a-slyder/apply",
+      "Join the first wave of SLYDE couriers and reserve your activation spot before public launch. Set your own hours and work your area.",
+    href: "/join/slyder",
     icon: UserRoundPlus,
     card: "from-sky-500/25 via-cyan-500/12 to-transparent",
     badge: "bg-sky-500/20 text-sky-300 border border-sky-400/35",
     iconRing: "bg-sky-500/20 text-sky-300",
     border: "border-sky-400/35 hover:border-sky-400/60",
-    cta: "Apply now",
-    infoCta: "Get more information",
-    infoHref: "https://slydenetwork.com/become-a-slyder",
+    cta: "Reserve My Spot",
+    infoCta: "Learn More",
+    infoHref: "/become-a-slyder",
   },
   {
     id: "business",
-    title: "Register Your Business",
-    sub: "Grow with us",
+    title: "Become a Founding Merchant",
+    sub: "Early merchant access",
     description:
-      "Get managed delivery capacity without building an internal fleet. Scale confidently with SLYDE infrastructure.",
-    href: "/for-businesses",
+      "Get priority onboarding and launch benefits for your business before the SLYDE network opens publicly. No commitment required yet.",
+    href: "/join/merchant",
     icon: BriefcaseBusiness,
     card: "from-emerald-500/25 via-teal-500/12 to-transparent",
     badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-400/35",
     iconRing: "bg-emerald-500/20 text-emerald-300",
     border: "border-emerald-400/35 hover:border-emerald-400/60",
-    cta: "Get started",
+    cta: "Register My Business",
+    infoCta: "View Business Benefits",
+    infoHref: "/for-businesses",
   },
 ];
 
@@ -56,13 +62,13 @@ const SECONDARY = [
     id: "track",
     title: "Track a Delivery",
     description: "Follow your package in real time from dispatch to doorstep.",
-    href: "/track",
+    href: "/contact",
     icon: Package,
     card: "from-violet-500/15 to-transparent",
     iconRing: "bg-violet-500/20 text-violet-300",
     border: "border-violet-400/25 hover:border-violet-400/50",
-    cta: "Coming soon",
-    disabled: true,
+    cta: "Get Help",
+    disabled: false,
   },
   {
     id: "refer",
@@ -90,7 +96,7 @@ const SECONDARY = [
     id: "support",
     title: "Get Support",
     description: "Reach the SLYDE operations team for help.",
-    href: "/support",
+    href: "/contact",
     icon: MessageCircle,
     card: "from-slate-500/15 to-transparent",
     iconRing: "bg-slate-500/20 text-slate-300",
@@ -104,6 +110,15 @@ export function SplashGate() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Only show for genuine direct/organic arrivals:
+    // - suppress if the URL carries any query parameters (UTM, ref, leadId, etc.)
+    // - suppress if an external referrer is present (email webmail, social, other sites)
+    const hasQueryParams = window.location.search.length > 0;
+    const referrer = document.referrer;
+    const isExternalReferrer =
+      referrer.length > 0 && !referrer.startsWith(window.location.origin);
+
+    if (hasQueryParams || isExternalReferrer) return;
     if (sessionStorage.getItem(STORAGE_KEY)) return;
     setVisible(true);
     document.body.style.overflow = "hidden";
@@ -323,10 +338,10 @@ export function SplashGate() {
                   Welcome to SLYDE
                 </p>
                 <h2 className="mt-2 text-xl font-extrabold leading-tight text-white sm:text-2xl">
-                  What would you like to do today?
+                  Join Jamaica&apos;s New Delivery Infrastructure
                 </h2>
                 <p className="mt-1 text-sm text-slate-400">
-                  Choose a path or explore the full site.
+                  Earn independently as a Slyder or power deliveries for your business.
                 </p>
               </div>
 
@@ -340,25 +355,39 @@ export function SplashGate() {
                         <div
                           key={s.id}
                           style={{ animation: `sg-card-in 0.48s ease ${0.08 + i * 0.1}s both` }}
-                          className={`group relative overflow-hidden rounded-2xl border p-4 sm:p-5 transition duration-200 hover:-translate-y-0.5 ${s.border}`}
+                          className={`group relative overflow-hidden rounded-2xl border-2 p-4 sm:p-5 transition duration-200 hover:-translate-y-0.5 shadow-[0_0_40px_-8px_rgba(14,165,233,0.35)] ${s.border}`}
                         >
                           <div className={`absolute inset-0 bg-gradient-to-br ${s.card}`} />
+                          {/* Top glow line */}
+                          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
                           <div className="relative">
                             <div className="flex items-start justify-between gap-3">
-                              <span className={`inline-flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl ${s.iconRing}`}>
-                                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                              <span className={`inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl shadow-[0_0_20px_-4px_rgba(14,165,233,0.5)] ${s.iconRing}`}>
+                                <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                               </span>
-                              <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] ${s.badge}`}>
+                              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] ${s.badge}`}>
+                                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400" />
                                 {s.sub}
                               </span>
                             </div>
-                            <h3 className="mt-3 text-sm font-bold text-white sm:mt-4 sm:text-base">{s.title}</h3>
-                            <p className="mt-1 hidden text-xs leading-[1.6] text-slate-400 sm:block">{s.description}</p>
+                            <h3 className="mt-3 text-base font-extrabold text-white sm:mt-4 sm:text-lg">{s.title}</h3>
+                            <p className="mt-1 hidden text-xs leading-[1.6] text-slate-300 sm:block">{s.description}</p>
+                            {/* Founding counter — visible on all screen sizes */}
+                            <div className="mt-3">
+                              <div className="mb-1.5 flex items-center justify-between text-[10px] text-slate-400">
+                                <span className="font-semibold text-sky-300">{SLYDER_SPOT_COUNT} / {SLYDER_SPOT_TOTAL} spots reserved</span>
+                                <span>{SLYDER_PCT}% filled</span>
+                              </div>
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                                <div className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400" style={{ width: `${SLYDER_PCT}%` }} />
+                              </div>
+                              <p className="mt-2 text-[10px] font-medium text-sky-400/80">No documents required &middot; Under 30 seconds &middot; WhatsApp updates</p>
+                            </div>
                             <div className="mt-3 grid grid-cols-2 gap-2">
                               <Link
                                 href={s.href}
                                 onClick={dismiss}
-                                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-sky-500/20 px-3 text-xs font-semibold text-sky-200 ring-1 ring-sky-400/35 transition hover:bg-sky-500/30"
+                                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-sky-500 px-3 text-xs font-bold text-white shadow-[0_4px_16px_-4px_rgba(14,165,233,0.6)] transition hover:bg-sky-400"
                               >
                                 {s.cta}
                                 <ArrowRight className="h-3.5 w-3.5" />
@@ -366,9 +395,9 @@ export function SplashGate() {
                               <Link
                                 href={s.infoHref ?? "/become-a-slyder"}
                                 onClick={dismiss}
-                                className="inline-flex h-10 items-center justify-center rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-200 ring-1 ring-white/15 transition hover:bg-white/[0.09]"
+                                className="inline-flex h-10 items-center justify-center rounded-full bg-white/[0.06] px-3 text-xs font-semibold text-slate-200 ring-1 ring-white/15 transition hover:bg-white/[0.12]"
                               >
-                                {s.infoCta ?? "Get more information"}
+                                {s.infoCta ?? "Learn More"}
                               </Link>
                             </div>
                           </div>
@@ -377,31 +406,47 @@ export function SplashGate() {
                     }
 
                     return (
-                      <Link
+                      <div
                         key={s.id}
-                        href={s.href}
-                        onClick={dismiss}
                         style={{ animation: `sg-card-in 0.48s ease ${0.08 + i * 0.1}s both` }}
-                        className={`group relative overflow-hidden rounded-2xl border p-5 transition duration-200 hover:-translate-y-0.5 ${s.border}`}
+                        className={`group relative overflow-hidden rounded-2xl border-2 p-4 sm:p-5 transition duration-200 hover:-translate-y-0.5 shadow-[0_0_32px_-8px_rgba(16,185,129,0.25)] ${s.border}`}
                       >
                         <div className={`absolute inset-0 bg-gradient-to-br ${s.card}`} />
+                        {/* Top glow line */}
+                        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent" />
                         <div className="relative">
                           <div className="flex items-start justify-between gap-3">
-                            <span className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${s.iconRing}`}>
-                              <Icon className="h-5 w-5" />
+                            <span className={`inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl shadow-[0_0_20px_-4px_rgba(16,185,129,0.4)] ${s.iconRing}`}>
+                              <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                             </span>
                             <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] ${s.badge}`}>
                               {s.sub}
                             </span>
                           </div>
-                          <h3 className="mt-4 text-base font-bold text-white">{s.title}</h3>
-                          <p className="mt-1.5 text-xs leading-[1.6] text-slate-400">{s.description}</p>
-                          <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-sky-400 transition-all duration-150 group-hover:gap-3">
-                            {s.cta}
-                            <ArrowRight className="h-3.5 w-3.5" />
+                          <h3 className="mt-3 text-base font-extrabold text-white sm:mt-4 sm:text-lg">{s.title}</h3>
+                          <p className="mt-1 hidden text-xs leading-[1.6] text-slate-300 sm:block">{s.description}</p>
+                          <p className="mt-2 text-[10px] font-medium text-emerald-400/80">No commitment required &middot; Full onboarding comes after &middot; WhatsApp updates</p>
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <Link
+                              href={s.href}
+                              onClick={dismiss}
+                              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-emerald-500 px-3 text-xs font-bold text-white shadow-[0_4px_16px_-4px_rgba(16,185,129,0.55)] transition hover:bg-emerald-400"
+                            >
+                              {s.cta}
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                            {s.infoHref && (
+                              <Link
+                                href={s.infoHref}
+                                onClick={dismiss}
+                                className="inline-flex h-10 items-center justify-center rounded-full bg-white/[0.06] px-3 text-xs font-semibold text-slate-200 ring-1 ring-white/15 transition hover:bg-white/[0.12]"
+                              >
+                                {s.infoCta ?? "Learn More"}
+                              </Link>
+                            )}
                           </div>
                         </div>
-                      </Link>
+                      </div>
                     );
                   })}
                 </div>
@@ -410,28 +455,6 @@ export function SplashGate() {
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
                   {SECONDARY.map((s, i) => {
                     const Icon = s.icon;
-                    if (s.disabled) {
-                      return (
-                        <div
-                          key={s.id}
-                          style={{ animation: `sg-card-in 0.48s ease ${0.28 + i * 0.07}s both` }}
-                          className={`relative overflow-hidden rounded-xl border p-3 sm:p-4 opacity-80 ${s.border}`}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-br ${s.card}`} />
-                          <div className="relative">
-                            <span className={`inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg ${s.iconRing}`}>
-                              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            </span>
-                            <h3 className="mt-2 text-[11px] font-bold text-white leading-snug sm:mt-3 sm:text-sm">{s.title}</h3>
-                            <p className="mt-1 hidden text-[11px] leading-[1.55] text-slate-500 sm:block">{s.description}</p>
-                            <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-violet-400/35 bg-violet-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-200 sm:mt-3 sm:text-[10px]">
-                              {s.cta}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
                     return (
                       <Link
                         key={s.id}
@@ -457,18 +480,17 @@ export function SplashGate() {
                   })}
                 </div>
 
-                {/* ── Explore CTA ── */}
+                {/* ── Browse link (de-emphasised) ── */}
                 <div
-                  className="mt-3 flex justify-center sm:mt-5"
+                  className="mt-3 flex justify-center sm:mt-4"
                   style={{ animation: "sg-card-in 0.48s ease 0.62s both" }}
                 >
                   <button
                     onClick={dismiss}
-                    className="inline-flex items-center gap-2.5 rounded-full bg-white/[0.07] px-7 py-3 text-sm font-semibold text-slate-300 ring-1 ring-white/10 transition duration-200 hover:bg-white/[0.12] hover:text-white"
+                    className="inline-flex items-center gap-1.5 text-xs text-slate-600 transition hover:text-slate-400"
                   >
-                    <Compass className="h-4 w-4 text-sky-400" />
-                    Explore the full SLYDE site
-                    <ArrowRight className="h-4 w-4 opacity-50" />
+                    <Compass className="h-3.5 w-3.5" />
+                    Prefer to browse first? Explore the full site
                   </button>
                 </div>
               </div>

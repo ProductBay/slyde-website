@@ -18,12 +18,41 @@ function buildMessageId(prefix: string) {
   return `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 18)}`;
 }
 
-function toHtml(text: string) {
+function escapeHtml(text: string) {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\n/g, "<br />");
+    .replace(/>/g, "&gt;");
+}
+
+function linkifyEscapedText(text: string) {
+  return escapeHtml(text).replace(
+    /(https?:\/\/[^\s<]+)/g,
+    (url) => `<a href="${url}" style="color:#0369a1;text-decoration:underline">${url}</a>`,
+  );
+}
+
+function renderEmailHtml(input: { subject: string; body: string; messageReference: string }) {
+  const paragraphs = input.body
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => `<p style="margin:0 0 16px">${linkifyEscapedText(paragraph).replace(/\n/g, "<br />")}</p>`)
+    .join("");
+
+  return [
+    "<!doctype html>",
+    '<html lang="en">',
+    '<body style="margin:0;background:#f8fafc;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#0f172a">',
+    '<div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:28px">',
+    `<h1 style="margin:0 0 20px;font-size:20px;line-height:1.3;color:#020617">${escapeHtml(input.subject)}</h1>`,
+    `<div style="font-size:15px;line-height:1.7;color:#0f172a">${paragraphs}</div>`,
+    '<hr style="border:0;border-top:1px solid #e2e8f0;margin:24px 0" />',
+    `<p style="margin:0;font-size:12px;line-height:1.6;color:#64748b">SLYDE message reference: ${escapeHtml(input.messageReference)}</p>`,
+    "</div>",
+    "</body>",
+    "</html>",
+  ].join("");
 }
 
 function normalizeJamaicaPhone(value: string | undefined) {
@@ -44,6 +73,13 @@ function normalizeJamaicaPhone(value: string | undefined) {
   return `+${digits}`;
 }
 
+export function buildWhatsappWebUrl(recipient: string | undefined, body: string) {
+  const normalizedRecipient = normalizeJamaicaPhone(recipient);
+  if (!normalizedRecipient) return null;
+
+  return `https://web.whatsapp.com/send?phone=${encodeURIComponent(normalizedRecipient.replace(/^\+/, ""))}&text=${encodeURIComponent(body)}`;
+}
+
 function getResendConfig() {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM;
@@ -56,17 +92,8 @@ export function isEmailConfigured() {
   return Boolean(getResendConfig());
 }
 
-function getTwilioWhatsappConfig() {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_WHATSAPP_FROM;
-
-  if (!accountSid || !authToken || !from) return null;
-  return { accountSid, authToken, from: from.startsWith("whatsapp:") ? from : `whatsapp:${from}` };
-}
-
 export function isWhatsappConfigured() {
-  return Boolean(getTwilioWhatsappConfig());
+  return true;
 }
 
 async function sendEmailViaResend(payload: DispatchPayload): Promise<DispatchResult> {
@@ -78,6 +105,11 @@ async function sendEmailViaResend(payload: DispatchPayload): Promise<DispatchRes
     return { ok: false, providerName: "resend", errorMessage: "Recipient is required for email delivery." };
   }
 
+  const subject = payload.subject || "SLYDE Notification";
+  const messageReference = buildMessageId("slyde_email");
+  const text = `${payload.body}\n\nSLYDE message reference: ${messageReference}`;
+  const html = renderEmailHtml({ subject, body: payload.body, messageReference });
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -87,9 +119,9 @@ async function sendEmailViaResend(payload: DispatchPayload): Promise<DispatchRes
     body: JSON.stringify({
       from: config.from,
       to: [payload.recipient],
-      subject: payload.subject || "SLYDE Notification",
-      text: payload.body,
-      html: `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#0f172a">${toHtml(payload.body)}</div>`,
+      subject,
+      text,
+      html,
     }),
   });
 
@@ -130,68 +162,22 @@ async function sendEmail(payload: DispatchPayload): Promise<DispatchResult> {
   return sendEmailStub(payload);
 }
 
-async function sendWhatsappViaTwilio(payload: DispatchPayload): Promise<DispatchResult> {
-  const config = getTwilioWhatsappConfig();
-  if (!config) {
-    return { ok: false, providerName: "twilio_whatsapp", errorMessage: "Twilio WhatsApp is not configured." };
+async function sendWhatsappViaWeb(payload: DispatchPayload): Promise<DispatchResult> {
+  const whatsappUrl = buildWhatsappWebUrl(payload.recipient, payload.body);
+  if (!whatsappUrl) {
+    return { ok: false, providerName: "whatsapp_web", errorMessage: "A valid WhatsApp recipient number is required." };
   }
 
-  const normalizedRecipient = normalizeJamaicaPhone(payload.recipient);
-  if (!normalizedRecipient) {
-    return { ok: false, providerName: "twilio_whatsapp", errorMessage: "A valid WhatsApp recipient number is required." };
-  }
-
-  const credentials = Buffer.from(`${config.accountSid}:${config.authToken}`).toString("base64");
-  const body = new URLSearchParams({
-    From: config.from,
-    To: `whatsapp:${normalizedRecipient}`,
-    Body: payload.body,
-  });
-
-  const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${config.accountSid}/Messages.json`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-
-  const data = (await response.json().catch(() => null)) as { sid?: string; message?: string; code?: number } | null;
-  if (!response.ok) {
-    return {
-      ok: false,
-      providerName: "twilio_whatsapp",
-      errorMessage: data?.message || `Twilio WhatsApp request failed with status ${response.status}.`,
-    };
-  }
-
+  console.info("[SLYDE WhatsApp Web]", JSON.stringify({ ...payload, whatsappUrl }));
   return {
     ok: true,
-    providerName: "twilio_whatsapp",
-    providerMessageId: data?.sid || buildMessageId("twilio_wa"),
-  };
-}
-
-async function sendWhatsappStub(payload: DispatchPayload): Promise<DispatchResult> {
-  if (!payload.recipient) {
-    return { ok: false, providerName: "whatsapp_stub", errorMessage: "Recipient is required for WhatsApp delivery." };
-  }
-
-  console.info("[SLYDE WhatsApp stub]", JSON.stringify(payload));
-  return {
-    ok: true,
-    providerName: "whatsapp_stub",
-    providerMessageId: buildMessageId("wa"),
+    providerName: "whatsapp_web",
+    providerMessageId: buildMessageId("wa_web"),
   };
 }
 
 async function sendWhatsapp(payload: DispatchPayload): Promise<DispatchResult> {
-  if (getTwilioWhatsappConfig()) {
-    return sendWhatsappViaTwilio(payload);
-  }
-
-  return sendWhatsappStub(payload);
+  return sendWhatsappViaWeb(payload);
 }
 
 async function sendSms(payload: DispatchPayload): Promise<DispatchResult> {
