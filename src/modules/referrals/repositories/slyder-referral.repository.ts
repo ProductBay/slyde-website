@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db/prisma";
+import { ReferralPayoutMethod, ReferralPayoutStatus as PrismaReferralPayoutStatus, ReferralStatus as PrismaReferralStatus } from "@prisma/client";
 import type { ReferralStatus, ReferralReferrerType, SlyderReferralFilters } from "@/modules/referrals/schemas/slyder-referral.schema";
 import type { ReferralPayoutStatus, SlyderReferralPayoutFilters } from "@/modules/referrals/schemas/slyder-referral-payout.schema";
 
@@ -107,7 +108,13 @@ export async function updateSlyderReferral(
     paidOutAt: Date;
   }>,
 ) {
-  return prisma.slyderReferral.update({ where: { id }, data });
+  return prisma.slyderReferral.update({
+    where: { id },
+    data: {
+      ...data,
+      status: data.status as PrismaReferralStatus | undefined,
+    },
+  });
 }
 
 export async function listSlyderReferrals(filters: SlyderReferralFilters) {
@@ -178,7 +185,7 @@ export async function updateSlyderReferralPayout(
   id: string,
   data: Partial<{
     status: ReferralPayoutStatus;
-    payoutMethod: string;
+    payoutMethod: ReferralPayoutMethod;
     externalReference: string;
     adminNotes: string;
     earnedAt: Date;
@@ -186,7 +193,13 @@ export async function updateSlyderReferralPayout(
     paidAt: Date;
   }>,
 ) {
-  return prisma.slyderReferralPayout.update({ where: { id }, data });
+  return prisma.slyderReferralPayout.update({
+    where: { id },
+    data: {
+      ...data,
+      status: data.status as PrismaReferralPayoutStatus | undefined,
+    },
+  });
 }
 
 export async function listSlyderReferralPayouts(filters: SlyderReferralPayoutFilters) {
