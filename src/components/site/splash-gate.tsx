@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -106,19 +107,13 @@ const SECONDARY = [
 ];
 
 export function SplashGate() {
+  const pathname = usePathname();
   const [phase, setPhase] = useState<Phase>("splash");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Only show for genuine direct/organic arrivals:
-    // - suppress if the URL carries any query parameters (UTM, ref, leadId, etc.)
-    // - suppress if an external referrer is present (email webmail, social, other sites)
-    const hasQueryParams = window.location.search.length > 0;
-    const referrer = document.referrer;
-    const isExternalReferrer =
-      referrer.length > 0 && !referrer.startsWith(window.location.origin);
-
-    if (hasQueryParams || isExternalReferrer) return;
+    // Only show on the homepage — never intercept direct deep-links or external referrals
+    if (pathname !== "/") return;
     if (sessionStorage.getItem(STORAGE_KEY)) return;
     setVisible(true);
     document.body.style.overflow = "hidden";
