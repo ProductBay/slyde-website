@@ -25,12 +25,25 @@ import { zoneStatusMessages } from "@/content/site";
 const DEFAULT_ZONE_TARGET = 24;
 
 const DEFAULT_ZONE_SEEDS: Array<Pick<CoverageZone, "id" | "name" | "parish" | "requiredReadySlyders" | "merchantAvailability" | "estimatedLaunchLabel">> = [
-  { id: "11111111-1111-4111-8111-111111111111", name: "Kingston", parish: "Kingston", requiredReadySlyders: 50, merchantAvailability: "waitlist", estimatedLaunchLabel: "Launching Soon" },
-  { id: "montego-bay", name: "Montego Bay", parish: "St James", requiredReadySlyders: 36, merchantAvailability: "waitlist", estimatedLaunchLabel: "Near Ready" },
-  { id: "mandeville", name: "Mandeville", parish: "Manchester", requiredReadySlyders: 28, merchantAvailability: "closed", estimatedLaunchLabel: "Building Network" },
-  { id: "spanish-town", name: "Spanish Town", parish: "St Catherine", requiredReadySlyders: 32, merchantAvailability: "closed", estimatedLaunchLabel: "Building Network" },
-  { id: "ochos-rios", name: "Ocho Rios", parish: "St Ann", requiredReadySlyders: 24, merchantAvailability: "closed", estimatedLaunchLabel: "Network Build" },
-  { id: "savanna-la-mar", name: "Savanna-la-Mar", parish: "Westmoreland", requiredReadySlyders: 18, merchantAvailability: "closed", estimatedLaunchLabel: "Network Build" },
+  // Kingston Metropolitan Area
+  { id: "11111111-1111-4111-8111-111111111111", name: "Kingston",        parish: "Kingston",     requiredReadySlyders: 50, merchantAvailability: "waitlist", estimatedLaunchLabel: "Launching Soon"   },
+  { id: "st-andrew",                            name: "St Andrew",       parish: "St Andrew",    requiredReadySlyders: 40, merchantAvailability: "waitlist", estimatedLaunchLabel: "Near Ready"        },
+  // Eastern Jamaica
+  { id: "morant-bay",                           name: "Morant Bay",      parish: "St Thomas",    requiredReadySlyders: 12, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
+  { id: "port-antonio",                         name: "Port Antonio",    parish: "Portland",     requiredReadySlyders: 10, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
+  { id: "port-maria",                           name: "Port Maria",      parish: "St Mary",      requiredReadySlyders: 10, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
+  // North Coast
+  { id: "ochos-rios",                           name: "Ocho Rios",       parish: "St Ann",       requiredReadySlyders: 24, merchantAvailability: "closed",   estimatedLaunchLabel: "Network Build"     },
+  { id: "falmouth",                             name: "Falmouth",        parish: "Trelawny",     requiredReadySlyders: 12, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
+  { id: "montego-bay",                          name: "Montego Bay",     parish: "St James",     requiredReadySlyders: 36, merchantAvailability: "waitlist", estimatedLaunchLabel: "Near Ready"        },
+  // Western Jamaica
+  { id: "lucea",                                name: "Lucea",           parish: "Hanover",      requiredReadySlyders: 10, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
+  { id: "savanna-la-mar",                       name: "Savanna-la-Mar",  parish: "Westmoreland", requiredReadySlyders: 18, merchantAvailability: "closed",   estimatedLaunchLabel: "Network Build"     },
+  // South Jamaica
+  { id: "black-river",                          name: "Black River",     parish: "St Elizabeth", requiredReadySlyders: 14, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
+  { id: "mandeville",                           name: "Mandeville",      parish: "Manchester",   requiredReadySlyders: 28, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
+  { id: "may-pen",                              name: "May Pen",         parish: "Clarendon",    requiredReadySlyders: 20, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
+  { id: "spanish-town",                         name: "Spanish Town",    parish: "St Catherine", requiredReadySlyders: 32, merchantAvailability: "closed",   estimatedLaunchLabel: "Building Network"  },
 ];
 
 function nowIso() {

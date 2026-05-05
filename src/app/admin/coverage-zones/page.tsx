@@ -10,9 +10,23 @@ import { getLeadCountsByParish, normalizeParishKey } from "@/modules/leads/repos
 // Medals for top-3
 const MEDALS = ["🥇", "🥈", "🥉"];
 
-// Kingston and St. Andrew form the same Corporate Area — roll St. Andrew leads into Kingston zone
-const ST_ANDREW_KEY = normalizeParishKey("St. Andrew");
-const KINGSTON_KEY = normalizeParishKey("Kingston");
+// All 14 Jamaican parishes mapped to their major towns (keyed by normalised parish name)
+const PARISH_TOWNS: Record<string, string[]> = {
+  "kingston":     ["New Kingston", "Downtown Kingston", "Cross Roads"],
+  "st andrew":    ["Half Way Tree", "Constant Spring", "Liguanea", "Papine"],
+  "st thomas":    ["Morant Bay", "Yallahs", "Port Morant"],
+  "portland":     ["Port Antonio", "Buff Bay", "Manchioneal"],
+  "st mary":      ["Port Maria", "Annotto Bay", "Oracabessa"],
+  "st ann":       ["Ocho Rios", "St. Ann's Bay", "Brown's Town", "Runaway Bay"],
+  "trelawny":     ["Falmouth", "Clark's Town", "Wakefield"],
+  "st james":     ["Montego Bay", "Ironshore", "Rose Hall"],
+  "hanover":      ["Lucea", "Green Island", "Sandy Bay"],
+  "westmoreland": ["Savanna-la-Mar", "Negril", "Whithorn"],
+  "st elizabeth": ["Black River", "Santa Cruz", "Junction"],
+  "manchester":   ["Mandeville", "Christiana", "Porus"],
+  "clarendon":    ["May Pen", "Chapelton", "Lionel Town"],
+  "st catherine": ["Spanish Town", "Portmore", "Old Harbour", "Linstead"],
+};
 
 function buildInsight(
   top3: { parish: string; zone: string; count: number }[],
@@ -41,13 +55,14 @@ export default async function CoverageZonesPage() {
     getLeadCountsByParish(),
   ]);
 
-  // Attach lead count — normalise parish keys (strip dots) so "St. James" matches "St James" etc.
-  // St. Andrew leads roll up to Kingston zone (same Corporate Area).
+  // Attach lead count and major towns — normalise parish keys (strip dots) so "St. James" matches "St James" etc.
   const zonesWithLeads = zones.map((zone) => {
     const key = normalizeParishKey(zone.parish);
-    const base = leadsByParish[key] ?? 0;
-    const stAndrew = key === KINGSTON_KEY ? (leadsByParish[ST_ANDREW_KEY] ?? 0) : 0;
-    return { ...zone, leadCount: base + stAndrew };
+    return {
+      ...zone,
+      leadCount: leadsByParish[key] ?? 0,
+      majorTowns: PARISH_TOWNS[key] ?? [],
+    };
   });
 
   // Top-3 zones by lead count (only those with at least 1)
@@ -108,6 +123,7 @@ export default async function CoverageZonesPage() {
             <tr>
               <TableHeaderCell>Zone</TableHeaderCell>
               <TableHeaderCell>Parish</TableHeaderCell>
+              <TableHeaderCell>Major Towns</TableHeaderCell>
               <TableHeaderCell>Launch Status</TableHeaderCell>
               <TableHeaderCell>Slyder Leads</TableHeaderCell>
               <TableHeaderCell>Total Applicants</TableHeaderCell>
@@ -125,6 +141,11 @@ export default async function CoverageZonesPage() {
               <tr key={zone.id}>
                 <TableCell className="font-medium text-slate-950">{zone.name}</TableCell>
                 <TableCell>{zone.parish}</TableCell>
+                <TableCell>
+                  <span className="text-xs text-slate-500">
+                    {zone.majorTowns.length > 0 ? zone.majorTowns.join(", ") : "—"}
+                  </span>
+                </TableCell>
                 <TableCell><StatusBadge status={zone.launchStatus} /></TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${zone.leadCount > 0 ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-400"}`}>

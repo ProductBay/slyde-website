@@ -1,4 +1,5 @@
 import type { NotificationChannel } from "@/types/backend/onboarding";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 
 export type DispatchPayload = {
   channel: NotificationChannel;
@@ -32,7 +33,14 @@ function linkifyEscapedText(text: string) {
   );
 }
 
+function getPublicAssetUrl(path: string) {
+  const baseUrl = getAppBaseUrl().replace(/\/$/, "");
+  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 function renderEmailHtml(input: { subject: string; body: string; messageReference: string }) {
+  const slydeLogoUrl = getPublicAssetUrl("/images/slyde-logo-email.png");
+  const adashLogoUrl = getPublicAssetUrl("/images/adash-logo-email.png");
   const paragraphs = input.body
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
@@ -44,12 +52,34 @@ function renderEmailHtml(input: { subject: string; body: string; messageReferenc
     "<!doctype html>",
     '<html lang="en">',
     '<body style="margin:0;background:#f8fafc;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#0f172a">',
-    '<div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:28px">',
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#f8fafc">',
+    "<tr>",
+    '<td align="center">',
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;border-collapse:collapse">',
+    "<tr>",
+    '<td style="padding:0 0 14px">',
+    `<img src="${slydeLogoUrl}" alt="SLYDE Logistics" width="190" style="display:block;width:190px;max-width:70%;height:auto;border:0" />`,
+    "</td>",
+    "</tr>",
+    "<tr>",
+    '<td style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:28px">',
     `<h1 style="margin:0 0 20px;font-size:20px;line-height:1.3;color:#020617">${escapeHtml(input.subject)}</h1>`,
     `<div style="font-size:15px;line-height:1.7;color:#0f172a">${paragraphs}</div>`,
     '<hr style="border:0;border-top:1px solid #e2e8f0;margin:24px 0" />',
     `<p style="margin:0;font-size:12px;line-height:1.6;color:#64748b">SLYDE message reference: ${escapeHtml(input.messageReference)}</p>`,
-    "</div>",
+    "</td>",
+    "</tr>",
+    "<tr>",
+    '<td style="padding:18px 4px 0;text-align:center">',
+    '<p style="margin:0 0 8px;font-size:11px;line-height:1.5;letter-spacing:0.12em;text-transform:uppercase;color:#64748b">Powered by</p>',
+    `<img src="${adashLogoUrl}" alt="A'Dash Technologies Group" width="160" style="display:inline-block;width:160px;max-width:60%;height:auto;border:0" />`,
+    '<p style="margin:10px 0 0;font-size:12px;line-height:1.6;color:#64748b">A&apos;Dash Technologies Group</p>',
+    "</td>",
+    "</tr>",
+    "</table>",
+    "</td>",
+    "</tr>",
+    "</table>",
     "</body>",
     "</html>",
   ].join("");
