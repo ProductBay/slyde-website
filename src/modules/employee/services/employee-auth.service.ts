@@ -8,7 +8,7 @@ import { SESSION_COOKIE } from "@/server/auth/session";
 import { createStatelessSessionToken } from "@/server/auth/stateless-session";
 import { hashToken } from "@/server/auth/tokens";
 import { appendAuditEvent } from "@/server/audit/audit.service";
-import { sendEmployeeActivationCompletedNotification } from "@/server/notifications/notification.service";
+import { sendUserRegistrationWelcomeNotification } from "@/server/notifications/notification.service";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 
 function nowIso() {
@@ -123,10 +123,7 @@ export async function setEmployeePassword(token: string, password: string) {
       },
     });
 
-    const application = store.employeeApplications.find((item) => item.linkedUserId === user.id);
-    if (application) {
-      await sendEmployeeActivationCompletedNotification(store, user.id, application.id);
-    }
+    await sendUserRegistrationWelcomeNotification(store, user.id);
 
     return { userId: user.id, accountStatus: user.accountStatus };
   });

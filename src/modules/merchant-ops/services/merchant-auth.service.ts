@@ -6,7 +6,7 @@ import { SESSION_COOKIE } from "@/server/auth/session";
 import { createStatelessSessionToken } from "@/server/auth/stateless-session";
 import { hashToken } from "@/server/auth/tokens";
 import { findMerchantWorkspaceByUserId } from "@/modules/merchant-ops/repositories/merchant-ops.repository";
-import { sendMerchantActivationCompletedNotification } from "@/server/notifications/notification.service";
+import { sendUserRegistrationWelcomeNotification } from "@/server/notifications/notification.service";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 
 function isMerchantRole(role: string) {
@@ -112,17 +112,7 @@ export async function setMerchantPassword(token: string, password: string) {
     activation.status = "used";
     activation.updatedAt = nowIso();
 
-    const membership = store.merchantTeamMembers.find((item) => item.userId === user.id);
-    const application =
-      (membership ? store.merchantApplications.find((item) => item.id === membership.merchantId) : undefined) ??
-      store.merchantApplications.find((item) => {
-        const lead = store.merchantLeads.find((leadItem) => leadItem.id === item.merchantLeadId);
-        return lead ? lead.email.toLowerCase() === user.email.toLowerCase() || lead.phone === user.phone : false;
-      });
-
-    if (application) {
-      await sendMerchantActivationCompletedNotification(store, user.id, application.id);
-    }
+    await sendUserRegistrationWelcomeNotification(store, user.id);
 
     return { userId: user.id, accountStatus: user.accountStatus };
   });

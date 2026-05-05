@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { AppChrome } from "@/components/layout/app-chrome";
+import { SplashGate } from "@/components/site/splash-gate";
 import { WebAppInstallPrompt } from "@/components/site/web-app-install-prompt";
 import { buildMetadata } from "@/lib/metadata";
 import { Analytics } from "@vercel/analytics/next";
@@ -17,9 +18,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body>
+        <SplashGate />
         <AppChrome>{children}</AppChrome>
         <WebAppInstallPrompt />
         <Analytics />
+        <Script
+          src="https://cdn.jotfor.ms/agent/embedjs/019864c4e3e37599aeab74f4e01a4d6f51ba/embed.js"
+          strategy="afterInteractive"
+        />
         {GA_ID ? (
           <>
             <Script

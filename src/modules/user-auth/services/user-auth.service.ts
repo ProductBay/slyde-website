@@ -4,6 +4,7 @@ import { normalizeEmail, normalizePhone } from "@/modules/onboarding/services/on
 import { hashPassword, verifyPassword } from "@/server/auth/passwords";
 import { SESSION_COOKIE, hasRole } from "@/server/auth/session";
 import { createStatelessSessionToken } from "@/server/auth/stateless-session";
+import { sendUserRegistrationWelcomeNotification } from "@/server/notifications/notification.service";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import type { RegisterUserInput, LoginUserInput } from "@/modules/user-auth/schemas/user-auth.schemas";
 
@@ -53,6 +54,8 @@ export async function registerUser(input: RegisterUserInput) {
       createdAt: now,
       updatedAt: now,
     });
+
+    await sendUserRegistrationWelcomeNotification(store, userId);
 
     return { userId, now };
   });

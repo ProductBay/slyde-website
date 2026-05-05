@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: Gauge },
   { href: "/admin/residential", label: "Residential", icon: Home },
+  { href: "/admin/users", label: "Registered Users", icon: Users },
   { href: "/admin/slyder-applications", label: "Slyder Applications", icon: UserSquare2 },
   { href: "/admin/employee-applications", label: "Employee Applications", icon: UserSquare2 },
   { href: "/admin/merchant-leads", label: "Merchant Leads", icon: Store },

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { ResidentialDispatchIntakeForm } from "@/components/residential/dispatch-intake-form";
 import { buildMetadata } from "@/lib/metadata";
 import { getSessionContext } from "@/server/auth/session";
 
@@ -19,50 +18,42 @@ export default async function DispatchFromHomeStartPage() {
   }
 
   return (
-    <div className="section-shell py-10 sm:py-14">
-      <div className="mb-8">
-        <Link
-          href="/dispatch-from-home"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-950"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dispatch from Home
-        </Link>
+    <div className="relative min-h-[72vh]">
+      <div className="section-shell py-10 sm:py-14">
+        <div className="mb-8">
+          <Link
+            href="/dispatch-from-home"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-950"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dispatch from Home
+          </Link>
+        </div>
       </div>
 
-      <div className="mb-8 space-y-3">
-        <p className="eyebrow-badge border-sky-100 bg-sky-50 text-sky-700">Residential dispatch</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-          Submit your dispatch request
-        </h1>
-        <p className="max-w-2xl text-base leading-7 text-slate-600">
-          Fill in the four steps below. Once submitted, we will match your request to a verified Slyder in your area
-          and confirm the pickup details with you.
-        </p>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 px-4 backdrop-blur-sm">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200/70 bg-white p-7 text-center shadow-panel">
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-sky-700">Dispatch From Home</p>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">Coming soon</h1>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            This service is not live yet. We are finalizing launch-readiness and will open this flow soon.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/dispatch-from-home"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Back to overview
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Explore site
+            </Link>
+          </div>
+        </div>
       </div>
-
-      <div className="max-w-2xl">
-        <ResidentialDispatchIntakeForm
-          identity={{
-            fullName: session.user.fullName,
-            phone: session.user.phone,
-            email: session.user.email,
-          }}
-        />
-      </div>
-
-      <p className="mt-6 max-w-xl text-xs leading-6 text-slate-400">
-        By submitting this form you agree to the SLYDE{" "}
-        <Link href="/privacy" className="underline hover:text-slate-700">
-          Privacy Notice
-        </Link>{" "}
-        and{" "}
-        <Link href="/terms" className="underline hover:text-slate-700">
-          Terms of Use
-        </Link>
-        . Residential dispatching is account-based and cash-free for security. Confirmation is sent after payment
-        verification and assignment.
-      </p>
     </div>
   );
 }

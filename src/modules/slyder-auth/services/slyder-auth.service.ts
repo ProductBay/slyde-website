@@ -7,7 +7,7 @@ import { appendAuditEvent } from "@/server/audit/audit.service";
 import { verifyPassword, hashPassword } from "@/server/auth/passwords";
 import { SESSION_COOKIE } from "@/server/auth/session";
 import { generateOtpCode, hashToken } from "@/server/auth/tokens";
-import { sendSlyderActivationCompletedNotification, sendSlyderOtpNotification } from "@/server/notifications/notification.service";
+import { sendSlyderOtpNotification, sendUserRegistrationWelcomeNotification } from "@/server/notifications/notification.service";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { completeSlyderOnboardingSetup, getSlyderOnboardingStatus } from "@/modules/slyder-auth/services/slyder-onboarding.service";
 
@@ -111,9 +111,7 @@ export async function setSlyderPassword(token: string, password: string) {
       metadata: {},
     });
 
-    if (profile) {
-      await sendSlyderActivationCompletedNotification(store, user.id, profile.applicationId);
-    }
+    await sendUserRegistrationWelcomeNotification(store, user.id);
 
     return { userId: user.id, accountStatus: user.accountStatus };
   });

@@ -699,6 +699,30 @@ function getEmployeeApplicationFirstName(store: OnboardingStore, applicationId: 
   return application?.fullName.split(" ")[0] || "there";
 }
 
+function resolveActorTypeForUser(user: OnboardingStore["users"][number]): NotificationActorType {
+  if (user.roles.includes("platform_admin") || user.roles.includes("operations_admin")) return "admin_user";
+  if (user.userType === "merchant") return "merchant_user";
+  if (user.userType === "employee") return "employee_user";
+  if (user.userType === "slyder" || user.roles.includes("slyder")) return "slyder_user";
+  return "public_user";
+}
+
+function resolveAccountTypeLabel(user: OnboardingStore["users"][number]) {
+  if (user.roles.includes("platform_admin") || user.roles.includes("operations_admin")) return "admin account";
+  if (user.userType === "merchant") return "merchant account";
+  if (user.userType === "employee") return "employee account";
+  if (user.userType === "slyder" || user.roles.includes("slyder")) return "slyder account";
+  return "platform account";
+}
+
+function resolveProfileUrl(baseUrl: string, user: OnboardingStore["users"][number]) {
+  if (user.roles.includes("platform_admin") || user.roles.includes("operations_admin")) return `${baseUrl}/admin`;
+  if (user.userType === "merchant") return `${baseUrl}/merchant/settings`;
+  if (user.userType === "employee") return `${baseUrl}/employee/portal/profile`;
+  if (user.userType === "slyder" || user.roles.includes("slyder")) return `${baseUrl}/slyder/onboarding`;
+  return `${baseUrl}/account`;
+}
+
 export async function sendEmployeeApplicationSubmittedNotifications(store: OnboardingStore, applicationId: string) {
   const application = store.employeeApplications.find((item) => item.id === applicationId);
   if (!application) throw new Error("Employee application not found");
@@ -2177,6 +2201,77 @@ export async function sendReferrerLoginCodeNotification(input: {
     dedupeKey: `referrer_login_code_email:${input.challengeId}:${input.email.toLowerCase()}`,
     force: true,
   });
+}
+
+export async function sendUserRegistrationWelcomeNotification(
+  store: OnboardingStore,
+  userId: string,
+) {
+  const user = store.users.find((item) => item.id === userId);
+  if (!user) throw new Error("User not found for welcome notification");
+
+  const baseUrl = getWebsiteBaseUrl();
+  const actorType = resolveActorTypeForUser(user);
+  const profileUrl = resolveProfileUrl(baseUrl, user);
+  const supportUrl = `${baseUrl}/support`;
+  const becomeSlyderUrl = `${baseUrl}/become-a-slyder`;
+  const businessPartnerUrl = `${baseUrl}/for-businesses`;
+  const dispatchFromHomeUrl = `${baseUrl}/dispatch-from-home`;
+  const referUrl = `${baseUrl}/refer`;
+  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
+  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
+
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `user_registration_welcome:${user.id}:${user.userType}`,
+    actorType,
+    actorId: user.id,
+    payload: {
+      profileUrl,
+      supportUrl,
+      becomeSlyderUrl,
+      businessPartnerUrl,
+      dispatchFromHomeUrl,
+      referUrl,
+    },
+  });
+  if (isDuplicate) return null;
+
+  const result = await sendTemplateNotificationInStore(store, {
+    templateKey: "user_registration_welcome_email",
+    actorType,
+    actorId: user.id,
+    recipient: user.email,
+    recipientName: user.fullName,
+    userId: user.id,
+    variables: {
+      fullName: user.fullName,
+      accountTypeLabel: resolveAccountTypeLabel(user),
+      profileUrl,
+      supportUrl,
+      becomeSlyderUrl,
+      businessPartnerUrl,
+      dispatchFromHomeUrl,
+      referUrl,
+      supportEmail,
+      supportPhone,
+    },
+    payload: {
+      profileUrl,
+      supportUrl,
+      becomeSlyderUrl,
+      businessPartnerUrl,
+      dispatchFromHomeUrl,
+      referUrl,
+      userType: user.userType,
+      roles: user.roles,
+    },
+    triggerEventId: event.id,
+    triggerEventKey: event.eventKey,
+    dedupeKey: `user_registration_welcome:email:${user.id}:${user.userType}`,
+  });
+
+  updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
+  return result;
 }
 
 export async function sendSlyderDocumentsRequestedNotification(store: OnboardingStore, applicationId: string, _userId: string | undefined, requestedDocumentTypes: string[], notes: string) {

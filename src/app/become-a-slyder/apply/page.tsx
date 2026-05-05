@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { MultiStepForm } from "@/components/site/multi-step-form";
 import { PaymentInfoCard } from "@/components/site/payment-info-card";
 import { SectionHeading } from "@/components/site/section-heading";
 import { buildMetadata } from "@/lib/metadata";
+import { getSessionContext } from "@/server/auth/session";
 
 export const metadata: Metadata = buildMetadata(
   "Apply as a Slyder",
@@ -10,7 +12,12 @@ export const metadata: Metadata = buildMetadata(
   "/become-a-slyder/apply",
 );
 
-export default function SlyderApplyPage() {
+export default async function SlyderApplyPage() {
+  const session = await getSessionContext();
+  if (!session?.user?.isEnabled) {
+    redirect("/login?next=/become-a-slyder/apply");
+  }
+
   return (
     <section className="section-shell py-10 sm:py-12">
       <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
