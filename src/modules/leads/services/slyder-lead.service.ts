@@ -25,7 +25,7 @@ type SlyderLeadNotificationTarget = {
 function buildLeadNotificationContext(lead: SlyderLeadNotificationTarget) {
   const baseUrl = getAppBaseUrl();
   const statusUrl = `${baseUrl}/join/slyder/status?leadId=${encodeURIComponent(lead.id)}`;
-  const applicationUrl = `${baseUrl}/become-a-slyder/apply?leadId=${encodeURIComponent(lead.id)}`;
+  const applicationUrl = `${baseUrl}/join/slyder?leadId=${encodeURIComponent(lead.id)}`;
   const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
   const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
 

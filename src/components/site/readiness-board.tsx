@@ -103,8 +103,8 @@ export function ReadinessBoard() {
               Readiness combines courier pipeline strength, document review throughput, and merchant demand. SLYDE uses this posture to decide where live activation should happen next.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:shrink-0">
-              <LinkButton href="/become-a-slyder/apply" className="whitespace-nowrap sm:shrink-0">
-                Apply as a Slyder
+              <LinkButton href="/join/slyder" className="whitespace-nowrap sm:shrink-0">
+                Join as a Slyder
               </LinkButton>
               <LinkButton href="/coverage" variant="secondary" className="whitespace-nowrap sm:shrink-0">
                 Check your area <ArrowUpRight className="h-4 w-4" />

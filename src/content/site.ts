@@ -40,7 +40,7 @@ export const navItems: NavItem[] = [
 ];
 
 export const primaryCtas: CtaLink[] = [
-  { href: "/become-a-slyder/apply", label: "Apply as a Slyder", variant: "primary" },
+  { href: "/join/slyder", label: "Join as a Slyder", variant: "primary" },
   { href: "/for-businesses", label: "Partner with SLYDE", variant: "secondary" },
 ];
 

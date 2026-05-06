@@ -39,7 +39,7 @@ export default async function ReferralLandingPage({
     redirect("/refer-a-slyder");
   }
 
-  const applyUrl = `/become-a-slyder/apply?ref=${encodeURIComponent(code)}`;
+  const applyUrl = `/join/slyder?ref=${encodeURIComponent(code)}`;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-sky-950 via-sky-900 to-slate-900 px-4 py-16 text-white">

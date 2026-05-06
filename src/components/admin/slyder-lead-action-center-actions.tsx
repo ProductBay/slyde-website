@@ -49,7 +49,7 @@ const messageSuggestions = [
     title: "You are invited to continue your Slyder application",
     body: "SLYDE is ready for you to continue from your lead reservation into the full Slyder application. Use the button below only if you are ready to provide the requested application details.",
     ctaLabel: "Continue application",
-    ctaHref: "/become-a-slyder/apply",
+    ctaHref: "/join/slyder",
   },
   {
     label: "Under review",

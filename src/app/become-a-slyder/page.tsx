@@ -117,9 +117,9 @@ export default async function BecomeASlyderPage({
   const params = (await searchParams) ?? {};
   const leadId = typeof params.leadId === "string" ? params.leadId : null;
   const applyHref = leadId
-    ? `/become-a-slyder/apply?leadId=${leadId}`
-    : "/become-a-slyder/apply";
-  const applyLabel = leadId ? "Continue My SLYDE Application" : "Apply Now";
+    ? `/join/slyder?leadId=${leadId}`
+    : "/join/slyder";
+  const applyLabel = leadId ? "Continue My SLYDE Application" : "Join as a Slyder";
   return (
     <>
       <HeroSection

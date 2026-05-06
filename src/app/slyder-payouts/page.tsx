@@ -22,7 +22,7 @@ export default function SlyderPayoutsPage() {
         title="Slyder payouts, built for the road ahead"
         description="SLYDE is building a smarter payout and payment-support model for delivery partners in Jamaica. Our goal is to help Slyders operate with stronger earnings visibility, less cash-related friction, and better preparation for future-ready delivery and errand workflows. As the network grows, supported payout options and digital payment rails can help make Slyder operations more professional, more secure, and easier to manage."
         primaryCta={{ label: "Become a Slyder", href: "/become-a-slyder" }}
-        secondaryCta={{ label: "View Slyder application", href: "/become-a-slyder/apply" }}
+        secondaryCta={{ label: "Join as a Slyder", href: "/join/slyder" }}
       />
 
       <TrustPillarsRow

@@ -20,7 +20,7 @@ export default function FAQPage() {
         description="This FAQ reflects the actual public-site role of SLYDE: brand platform, recruitment funnel, business acquisition channel, and future partner integration entry point."
         actions={[
           { href: "/contact", label: "Contact SLYDE" },
-          { href: "/become-a-slyder/apply", label: "Apply as a Slyder", variant: "secondary" },
+          { href: "/join/slyder", label: "Join as a Slyder", variant: "secondary" },
         ]}
       />
       <section className="mx-auto max-w-content px-4 py-8 sm:px-6 lg:px-8">

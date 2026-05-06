@@ -7,7 +7,7 @@ const paths = [
   {
     title: "Become a Slyder",
     description: "Apply, upload documents, and move through the verified activation workflow.",
-    href: "/become-a-slyder/apply",
+    href: "/join/slyder",
     icon: UserRoundPlus,
     tone: "from-sky-500/14 via-cyan-400/10 to-transparent",
   },
@@ -42,8 +42,8 @@ export function PathSelector() {
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/become-a-slyder/apply" className="min-w-[220px] justify-between">
-              Apply as a Slyder
+            <LinkButton href="/join/slyder" className="min-w-[220px] justify-between">
+              Join as a Slyder
               <ArrowRight className="h-4 w-4" />
             </LinkButton>
             <LinkButton href="/coverage" variant="secondary" className="min-w-[180px] justify-between">

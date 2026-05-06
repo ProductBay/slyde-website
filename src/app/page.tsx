@@ -185,8 +185,8 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <LinkButton href="/become-a-slyder/apply" className="justify-center">
-                  Apply as a Slyder <ArrowRight className="h-4 w-4" />
+                <LinkButton href="/join/slyder" className="justify-center">
+                  Join as a Slyder <ArrowRight className="h-4 w-4" />
                 </LinkButton>
                 <LinkButton href="/become-a-slyder" variant="secondary" className="justify-center">
                   Learn how Slyder work works
@@ -316,8 +316,8 @@ export default function HomePage() {
             <LinkButton href="https://adash.technology" variant="secondary" className="justify-center">
               CAT
             </LinkButton>
-            <LinkButton href="/become-a-slyder/apply" variant="secondary" className="justify-center">
-              Become a Slyder
+            <LinkButton href="/join/slyder" variant="secondary" className="justify-center">
+              Join as a Slyder
             </LinkButton>
             <LinkButton href="/for-businesses" variant="secondary" className="justify-center">
               Become a Merchant
@@ -484,7 +484,7 @@ export default function HomePage() {
         title="Join the next wave of delivery in Jamaica"
         description="Whether you want to become a Slyder or prepare your business for modern delivery operations, SLYDE is building the network now."
         actions={[
-          { href: "/become-a-slyder/apply", label: "Apply as a Slyder", variant: "primary" },
+          { href: "/join/slyder", label: "Join as a Slyder", variant: "primary" },
           { href: "/for-businesses", label: "Partner with SLYDE", variant: "secondary" },
           { href: "/api-integrations", label: "Explore API Integrations", variant: "ghost" },
         ]}

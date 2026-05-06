@@ -80,7 +80,7 @@ export default function GrowYourAreaPage() {
         description="The Area Builder Rewards concept is designed to let approved Slyders help expand the network in their own towns and unlock commission-free reward windows when quality referrals become real operational couriers."
         supportText="Structured growth. Quality referrals. Stronger launch readiness."
         actions={[
-          { href: "/become-a-slyder/apply", label: "Apply to Become a Slyder" },
+          { href: "/join/slyder", label: "Join as a Slyder" },
           { href: "/coverage", label: "Check Coverage Hotspots", variant: "secondary" },
         ]}
         aside={
@@ -198,8 +198,8 @@ export default function GrowYourAreaPage() {
               <LinkButton href="/coverage" variant="secondary">
                 See Coverage Momentum
               </LinkButton>
-              <LinkButton href="/become-a-slyder/apply">
-                Start Your Slyder Application <ArrowRight className="h-4 w-4" />
+              <LinkButton href="/join/slyder">
+                Join as a Slyder <ArrowRight className="h-4 w-4" />
               </LinkButton>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function GrowYourAreaPage() {
         title="The best way to benefit later is to become an approved Slyder first"
         description="Apply now, move through onboarding, and position yourself for future network-building rewards once the program is activated inside the SLYDE app."
         actions={[
-          { href: "/become-a-slyder/apply", label: "Apply as a Slyder", variant: "primary" },
+          { href: "/join/slyder", label: "Join as a Slyder", variant: "primary" },
           { href: "/coverage", label: "Explore Coverage Areas", variant: "secondary" },
         ]}
       />

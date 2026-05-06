@@ -30,7 +30,7 @@ const globalCtas = [
   },
   {
     label: "Apply as Slyder",
-    href: "/become-a-slyder/apply",
+    href: "/join/slyder",
     icon: UserRoundCheck,
     tone: "cyan",
     kicker: "Courier path",
@@ -70,7 +70,7 @@ const slides = [
     description:
       "SLYDE connects merchants, independent couriers, and customers through a smarter, more accountable delivery operation - built for Jamaica first and designed to scale.",
     primaryCta: { label: "See how it works", href: "#how-it-works" },
-    secondaryCta: { label: "Apply as a Slyder", href: "/become-a-slyder/apply" },
+    secondaryCta: { label: "Join as a Slyder", href: "/join/slyder" },
     theme: "navy",
     fullBleed: "/images/hero-brand-network.jpg",
     objectPosition: "62% 38%",
@@ -98,7 +98,7 @@ const slides = [
     headline: "A smarter, more structured way to earn",
     description:
       "SLYDE gives independent couriers a clear path from application to activation - with digital payout support, job visibility, and a professional delivery platform behind your work.",
-    primaryCta: { label: "Become a Slyder", href: "/become-a-slyder/apply" },
+    primaryCta: { label: "Join as a Slyder", href: "/join/slyder" },
     secondaryCta: { label: "Explore Slyder payouts", href: "/slyder-payouts" },
     theme: "sky",
     fullBleed: "/images/hero-slyders-earnings.jpg",

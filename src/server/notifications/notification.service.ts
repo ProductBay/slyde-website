@@ -2142,7 +2142,7 @@ export async function sendPublicReferralInviteNotification(referral: PublicSlyde
   if (!referral.referredEmail) return null;
 
   const baseUrl = getWebsiteBaseUrl();
-  const applicationUrl = `${baseUrl}/become-a-slyder/apply?ref=${encodeURIComponent(referral.referralCode)}`;
+  const applicationUrl = `${baseUrl}/join/slyder?ref=${encodeURIComponent(referral.referralCode)}`;
 
   return sendTemplateNotification({
     templateKey: "public_referral_invite_email",

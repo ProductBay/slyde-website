@@ -208,8 +208,8 @@ export function NetworkFlipCards() {
                 ))}
               </div>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <LinkButton href="/become-a-slyder/apply" className="flex-1 justify-center">
-                  Become a Slyder <ArrowRight className="h-4 w-4" />
+                <LinkButton href="/join/slyder" className="flex-1 justify-center">
+                  Join as a Slyder <ArrowRight className="h-4 w-4" />
                 </LinkButton>
                 <LinkButton href="/slyder-payouts" variant="secondary" className="flex-1 justify-center">
                   Learn about payouts

@@ -106,7 +106,7 @@ export function LaunchCountdownBar() {
             </div>
 
             <Link
-              href="/become-a-slyder/apply"
+              href="/join/slyder"
               className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-950 px-3 text-[13px] font-semibold text-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.62)] transition hover:-translate-y-0.5 hover:bg-slate-900 sm:h-11 sm:px-4 sm:text-sm"
             >
               <span className="hidden sm:inline">Join before launch</span>
