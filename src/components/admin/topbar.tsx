@@ -1,4 +1,7 @@
-import { Bell, Menu, Search } from "lucide-react";
+"use client";
+
+import { Menu, Search } from "lucide-react";
+import { AdminLiveBell } from "@/components/admin/admin-live-bell";
 
 export function Topbar({
   title,
@@ -33,9 +36,7 @@ export function Topbar({
             <Search className="h-4 w-4 text-slate-400" />
             <input className="admin-search-input" placeholder="Search applicants, zones, or notifications" />
           </label>
-          <button className="admin-icon-button" type="button" aria-label="Notifications">
-            <Bell className="h-4 w-4" />
-          </button>
+          <AdminLiveBell />
         </div>
         <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-soft">
           {adminName} · {mode === "development" ? "Development access" : "Admin session"}
