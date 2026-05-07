@@ -34,7 +34,8 @@ export function TurnstileWidget({
   const containerId = useId().replace(/:/g, "");
 
   useEffect(() => {
-    if (!siteKey || !scriptReady || !window.turnstile || widgetIdRef.current) return;
+    if (!siteKey) return;
+    if (!scriptReady || !window.turnstile || widgetIdRef.current) return;
 
     widgetIdRef.current = window.turnstile.render(`#${containerId}`, {
       sitekey: siteKey,
@@ -55,6 +56,8 @@ export function TurnstileWidget({
   const missingSiteKey = !siteKey;
   const securityUnavailable = missingSiteKey || scriptError;
 
+  if (missingSiteKey) return null;
+
   return (
     <div className="field-shell">
       <span className="field-label">Bot protection</span>
@@ -71,12 +74,6 @@ export function TurnstileWidget({
       ) : null}
 
       {!securityUnavailable ? <div id={containerId} className="min-h-[65px]" /> : null}
-
-      {missingSiteKey ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-6 text-amber-800">
-          Security check is currently unavailable because Turnstile is not configured.
-        </p>
-      ) : null}
 
       {scriptError ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-6 text-amber-800">
