@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Info, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Info, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { courierTypes, deliveryPreferences, slyderApplicationSchema, type SlyderApplicationDraft } from "@/lib/forms";
 import { StepIndicator } from "@/components/site/step-indicator";
@@ -172,6 +172,18 @@ function issueMap(result: ReturnType<typeof validateStep>) {
   return Object.fromEntries(result.error.issues.map((issue) => [String(issue.path[0]), issue.message]));
 }
 
+function getExpiryStatus(dateStr: string): "expired" | "expiring-soon" | "ok" | "empty" {
+  if (!dateStr) return "empty";
+  const expiry = new Date(dateStr);
+  if (isNaN(expiry.getTime())) return "empty";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (expiry < today) return "expired";
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  if (expiry.getTime() - today.getTime() < thirtyDaysMs) return "expiring-soon";
+  return "ok";
+}
+
 function Field({
   label,
   name,
@@ -328,6 +340,53 @@ function Toggle({
   );
 }
 
+function ExpiryDateField({
+  label,
+  name,
+  value,
+  error,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  const status = getExpiryStatus(value);
+  return (
+    <label className="field-shell">
+      <span className="field-label">{label}</span>
+      <input
+        name={name}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="field-input"
+      />
+      {value && status === "expired" && (
+        <p className="flex items-center gap-1.5 text-sm font-medium text-rose-600">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          Expired — this must be renewed before you can apply
+        </p>
+      )}
+      {value && status === "expiring-soon" && (
+        <p className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          Expiring within 30 days — consider renewing soon
+        </p>
+      )}
+      {value && status === "ok" && (
+        <p className="flex items-center gap-1.5 text-sm text-emerald-600">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+          Valid
+        </p>
+      )}
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+    </label>
+  );
+}
+
 function ZoneCard({ zone, locationInfo, checked, onChange }: { zone: string; locationInfo: string; checked: boolean; onChange: (checked: boolean) => void }) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   return (
@@ -423,6 +482,20 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
     if (!result.success) {
       setErrors(issueMap(result));
       return;
+    }
+    // Block step 2 if any vehicle document is already expired
+    if (step === 2 && requiresVehicle(draft.courier.courierType)) {
+      const expiryErrors: Record<string, string> = {};
+      if (getExpiryStatus(draft.vehicle.registrationExpiry) === "expired")
+        expiryErrors.registrationExpiry = "Vehicle registration is expired — please renew before applying.";
+      if (getExpiryStatus(draft.vehicle.insuranceExpiry) === "expired")
+        expiryErrors.insuranceExpiry = "Insurance is expired — please renew before applying.";
+      if (getExpiryStatus(draft.vehicle.fitnessExpiry) === "expired")
+        expiryErrors.fitnessExpiry = "Fitness certificate is expired — please renew before applying.";
+      if (Object.keys(expiryErrors).length > 0) {
+        setErrors(expiryErrors);
+        return;
+      }
     }
     setErrors({});
     setStep((current) => Math.min(current + 1, stepTitles.length - 1));
@@ -654,7 +727,23 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
             <Field label="Phone number" name="phone" value={draft.personal.phone} error={errors.phone} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, phone: value } }))} />
             <Field label="Date of birth" name="dateOfBirth" type="date" value={draft.personal.dateOfBirth} error={errors.dateOfBirth} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, dateOfBirth: value } }))} />
             <SearchableSelectField label="Parish / town" name="parishTown" value={draft.personal.parishTown} error={errors.parishTown} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, parishTown: value } }))} options={parishTownOptions} placeholder="Start typing parish or town" />
-            <Field label="TRN" name="trn" value={draft.personal.trn} error={errors.trn} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, trn: value } }))} />
+            <label className="field-shell">
+              <span className="field-label">Last 4 digits of your TRN</span>
+              <input
+                name="trn"
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={draft.personal.trn}
+                onChange={(e) => setDraft((c) => ({ ...c, personal: { ...c.personal, trn: e.target.value.replace(/\D/g, "").slice(0, 4) } }))}
+                className="field-input"
+                placeholder="e.g. 7842"
+              />
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                We only collect the last 4 digits at this stage. Your full TRN is verified securely inside the SLYDE app after your application is approved.
+              </p>
+              {errors.trn ? <p className="text-sm text-rose-600">{errors.trn}</p> : null}
+            </label>
             <label className="field-shell md:col-span-2">
               <span className="field-label">Address</span>
               <textarea value={draft.personal.address} onChange={(event) => setDraft((c) => ({ ...c, personal: { ...c.personal, address: event.target.value } }))} className="field-input min-h-28" />
@@ -709,23 +798,49 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
         {step === 2 ? (
           vehicleRequired ? (
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Make" name="make" value={draft.vehicle.make} error={errors.make} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, make: value } }))} />
-              <Field label="Model" name="model" value={draft.vehicle.model} error={errors.model} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, model: value } }))} />
-              <Field label="Year" name="year" value={draft.vehicle.year} error={errors.year} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, year: value } }))} />
-              <SelectField label="Color" name="color" value={draft.vehicle.color} error={errors.color} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, color: value } }))} options={vehicleColorOptions} placeholder="Select color" />
-              <label className="field-shell">
-                <span className="field-label">Plate number</span>
-                <input
-                  name="plateNumber"
-                  value={draft.vehicle.plateNumber}
-                  className="field-input"
-                  disabled
-                  placeholder="Collected during final app onboarding"
-                />
-              </label>
-              <Field label="Registration expiry" name="registrationExpiry" type="date" value={draft.vehicle.registrationExpiry} error={errors.registrationExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, registrationExpiry: value } }))} />
-              <Field label="Insurance expiry" name="insuranceExpiry" type="date" value={draft.vehicle.insuranceExpiry} error={errors.insuranceExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, insuranceExpiry: value } }))} />
-              <Field label="Fitness expiry" name="fitnessExpiry" type="date" value={draft.vehicle.fitnessExpiry} error={errors.fitnessExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, fitnessExpiry: value } }))} />
+              {/* Info callout — what we collect here vs. what goes in the app */}
+              <div className="md:col-span-2 rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4 sm:p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">What we collect here vs. in the SLYDE app</p>
+                <div className="mt-3 grid gap-1.5 text-sm leading-6 text-sky-900/90 sm:grid-cols-2">
+                  <div>
+                    <p className="font-medium">On this form:</p>
+                    <p className="text-sky-800">Make, model, year, colour, and document expiry dates — so we can check eligibility and flag any document issues before review.</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">After approval — inside the SLYDE app:</p>
+                    <p className="text-sky-800">Plate number, full document uploads, and complete vehicle verification are all handled during your in-app onboarding.</p>
+                  </div>
+                </div>
+              </div>
+              <Field label="Make" name="make" value={draft.vehicle.make} error={errors.make} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, make: value } }))} placeholder="e.g. Honda, Toyota" />
+              <Field label="Model" name="model" value={draft.vehicle.model} error={errors.model} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, model: value } }))} placeholder="e.g. PCX, Yaris" />
+              <Field label="Year" name="year" value={draft.vehicle.year} error={errors.year} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, year: value } }))} placeholder="e.g. 2021" />
+              <SelectField label="Colour" name="color" value={draft.vehicle.color} error={errors.color} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, color: value } }))} options={vehicleColorOptions} placeholder="Select colour" />
+              <div className="md:col-span-2 rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                  <Info className="h-3.5 w-3.5 shrink-0" />
+                  Plate number is collected during your final onboarding inside the SLYDE app.
+                </p>
+              </div>
+              <ExpiryDateField label="Registration expiry" name="registrationExpiry" value={draft.vehicle.registrationExpiry} error={errors.registrationExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, registrationExpiry: value } }))} />
+              <ExpiryDateField label="Insurance expiry" name="insuranceExpiry" value={draft.vehicle.insuranceExpiry} error={errors.insuranceExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, insuranceExpiry: value } }))} />
+              <ExpiryDateField label="Fitness certificate expiry" name="fitnessExpiry" value={draft.vehicle.fitnessExpiry} error={errors.fitnessExpiry} onChange={(value) => setDraft((c) => ({ ...c, vehicle: { ...c.vehicle, fitnessExpiry: value } }))} />
+              {/* Near-expiry summary warning (shown only when at least one is expiring soon but none expired) */}
+              {((): boolean => {
+                const statuses = [
+                  getExpiryStatus(draft.vehicle.registrationExpiry),
+                  getExpiryStatus(draft.vehicle.insuranceExpiry),
+                  getExpiryStatus(draft.vehicle.fitnessExpiry),
+                ];
+                return statuses.some((s) => s === "expiring-soon") && statuses.every((s) => s !== "expired");
+              })() && (
+                <div className="md:col-span-2 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-4">
+                  <p className="flex items-start gap-2 text-sm text-amber-800">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                    One or more documents expire within 30 days. You can still apply, but we recommend renewing before your onboarding appointment so there are no delays.
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-800">
@@ -952,6 +1067,18 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
                 <li>4. Activation and login instructions are issued for the Slyder app.</li>
                 <li>5. Setup completion and readiness checks determine work eligibility.</li>
               </ol>
+            </div>
+            <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5">
+              <p className="text-sm font-semibold text-amber-900">What you complete inside the SLYDE app — after approval</p>
+              <p className="mt-2 text-sm leading-6 text-amber-800">
+                To keep this form as lean as possible, the following are collected securely inside the app only once you are approved. Nothing sensitive leaves here.
+              </p>
+              <ul className="mt-3 grid gap-2 text-sm leading-6 text-amber-800">
+                <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Full TRN (we only collected the last 4 digits on this form)</li>
+                <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Vehicle plate number</li>
+                <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Full document uploads — National ID, driver's licence, insurance, registration, fitness certificate</li>
+                <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Banking and payout account details</li>
+              </ul>
             </div>
             <TurnstileWidget onToken={setTurnstileToken} />
             {submitError ? <p className="text-sm text-rose-600">{submitError}</p> : null}
