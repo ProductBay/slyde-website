@@ -24,7 +24,7 @@ export default async function JoinSlyderPage({
   searchParams?: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const referredByCode = params?.ref;
+  const referredByCode = params?.ref?.trim().toUpperCase();
 
   return (
     <section className="section-shell py-12 sm:py-16">

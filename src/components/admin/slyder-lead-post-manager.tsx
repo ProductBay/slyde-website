@@ -1,8 +1,9 @@
 "use client";
 
+import type { ChangeEvent } from "react";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImageIcon, Megaphone, Plus, Star, Trash2 } from "lucide-react";
+import { ImageIcon, Megaphone, Plus, Star, Trash2, Upload, X } from "lucide-react";
 
 type Post = {
   id: string;
@@ -10,6 +11,8 @@ type Post = {
   body: string;
   category: string;
   imageUrl: string | null;
+  imageCropX: number;
+  imageCropY: number;
   ctaLabel: string | null;
   ctaHref: string | null;
   isPublished: boolean;
@@ -33,6 +36,8 @@ export function SlyderLeadPostManager({ posts, devAdminKey }: { posts: Post[]; d
   const [body, setBody] = useState("");
   const [category, setCategory] = useState("ANNOUNCEMENT");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageCropX, setImageCropX] = useState(50);
+  const [imageCropY, setImageCropY] = useState(50);
   const [ctaLabel, setCtaLabel] = useState("");
   const [ctaHref, setCtaHref] = useState("");
   const [isPublished, setIsPublished] = useState(true);
@@ -44,11 +49,40 @@ export function SlyderLeadPostManager({ posts, devAdminKey }: { posts: Post[]; d
     ...(devAdminKey ? { "x-slyde-admin-key": devAdminKey } : {}),
   };
 
+  function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setMessage(null);
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Please choose an image under 2 MB for the lead dashboard.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setImageUrl(reader.result);
+        setMessage("Image ready.");
+      }
+    };
+    reader.onerror = () => setError("Could not read the selected image.");
+    reader.readAsDataURL(file);
+  }
+
   function resetForm() {
     setTitle("");
     setBody("");
     setCategory("ANNOUNCEMENT");
     setImageUrl("");
+    setImageCropX(50);
+    setImageCropY(50);
     setCtaLabel("");
     setCtaHref("");
     setIsPublished(true);
@@ -62,7 +96,7 @@ export function SlyderLeadPostManager({ posts, devAdminKey }: { posts: Post[]; d
       const response = await fetch("/api/admin/slyder-lead-posts", {
         method: "POST",
         headers,
-        body: JSON.stringify({ title, body, category, imageUrl, ctaLabel, ctaHref, isPublished, isFeatured }),
+        body: JSON.stringify({ title, body, category, imageUrl, imageCropX, imageCropY, ctaLabel, ctaHref, isPublished, isFeatured }),
       });
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
       if (!response.ok) {
@@ -133,7 +167,50 @@ export function SlyderLeadPostManager({ posts, devAdminKey }: { posts: Post[]; d
             onChange={(event) => setBody(event.target.value)}
             placeholder="Post details, promotion, launch update, or reminder"
           />
-          <input className="field-input" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="Image URL, optional" />
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">Post image</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Best fit: 1600 x 700 for featured posts, 1200 x 675 for standard posts. Keep it under 2 MB.</p>
+              </div>
+              <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:border-sky-200 hover:bg-sky-50">
+                <Upload className="h-4 w-4" />
+                Choose image
+                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImageUpload} className="sr-only" />
+              </label>
+            </div>
+            {imageUrl ? (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <div className={isFeatured ? "aspect-[16/7] overflow-hidden bg-slate-100" : "aspect-[16/9] overflow-hidden bg-slate-100"}>
+                  <img src={imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: `${imageCropX}% ${imageCropY}%` }} />
+                </div>
+                <div className="grid gap-3 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold text-slate-600">
+                      Crop preview: {isFeatured ? "featured 1600 x 700" : "standard 1200 x 675"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Remove
+                    </button>
+                  </div>
+                  <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                    Horizontal focus
+                    <input type="range" min="0" max="100" value={imageCropX} onChange={(event) => setImageCropX(Number(event.target.value))} />
+                  </label>
+                  <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                    Vertical focus
+                    <input type="range" min="0" max="100" value={imageCropY} onChange={(event) => setImageCropY(Number(event.target.value))} />
+                  </label>
+                  <p className="text-xs leading-5 text-slate-500">Move the focus until the important part of the image is visible in the preview.</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <input className="field-input" value={ctaLabel} onChange={(event) => setCtaLabel(event.target.value)} placeholder="CTA label, optional" />
             <input className="field-input" value={ctaHref} onChange={(event) => setCtaHref(event.target.value)} placeholder="CTA URL, optional" />
@@ -167,7 +244,7 @@ export function SlyderLeadPostManager({ posts, devAdminKey }: { posts: Post[]; d
           <article key={post.id} className="surface-panel overflow-hidden p-0">
             {post.imageUrl ? (
               <div className="aspect-[16/7] overflow-hidden bg-slate-100">
-                <img src={post.imageUrl} alt="" className="h-full w-full object-cover" />
+                <img src={post.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: `${post.imageCropX}% ${post.imageCropY}%` }} />
               </div>
             ) : null}
             <div className="p-5">

@@ -25,6 +25,11 @@ export const createSlyderLeadSchema = z.object({
   vehicleType: z.string().trim().optional(),
   source: z.string().trim().optional(),
   referredByCode: z.string().trim().optional(),
+  joinAgreementAccepted: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the SLYDE Slyder join agreement before reserving your spot." }),
+  }),
+  agreementIpAddress: z.string().trim().optional(),
+  agreementUserAgent: z.string().trim().optional(),
 });
 
 export type CreateSlyderLeadInput = z.infer<typeof createSlyderLeadSchema>;

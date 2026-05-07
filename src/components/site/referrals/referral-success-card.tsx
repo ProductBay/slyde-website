@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export function SlyderReferralSuccessCard({
@@ -50,6 +51,29 @@ export function SlyderReferralSuccessCard({
           >
             {copied ? "Copied!" : "Copy"}
           </button>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-sky-100 bg-sky-50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Next action</p>
+        <p className="mt-2 text-sm font-semibold text-slate-950">Open your Referrer Dashboard</p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Log in with the same email you used to create this referral link. Your dashboard will show who signs up with
+          your code, their Slyder progress, and your potential JMD earnings.
+        </p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Link
+            href="/refer"
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+          >
+            Track in Referrer Dashboard
+          </Link>
+          <Link
+            href={`/refer-a-slyder/status?code=${encodeURIComponent(referralCode)}`}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5"
+          >
+            Check this referral
+          </Link>
         </div>
       </div>
 

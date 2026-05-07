@@ -15,6 +15,7 @@ import {
 } from "@/modules/referrals/repositories/referral.repository";
 import type { ReferrerRequestCodeInput, ReferrerVerifyCodeInput } from "@/modules/referrals/schemas/referrer-auth.schema";
 import { sendReferrerLoginCodeNotification } from "@/server/notifications/notification.service";
+import { listPublicSlyderReferralsByReferrerContact } from "@/modules/referrals/repositories/slyder-referral.repository";
 import { readPersistenceStore } from "@/server/persistence";
 import { REFERRER_SESSION_COOKIE, getReferrerSessionContext } from "@/server/auth/referrer-session";
 import { generateOtpCode, hashToken } from "@/server/auth/tokens";
@@ -138,12 +139,18 @@ export async function requestReferrerLoginCode(input: ReferrerRequestCodeInput) 
   const matchingReferrals = store.publicSlyderReferrals.filter(
     (referral) => referral.referrerEmail && normalizeEmail(referral.referrerEmail) === normalizedEmail,
   );
+  const matchingSlyderReferrals = await listPublicSlyderReferralsByReferrerContact({
+    referrerEmail: normalizedEmail,
+  });
 
-  if (matchingReferrals.length === 0) {
+  if (matchingReferrals.length === 0 && matchingSlyderReferrals.length === 0) {
     throw new Error("No referral dashboard account was found for that email yet.");
   }
 
-  const account = await ensureReferrerAccount(normalizedEmail, input.displayName || matchingReferrals[0]?.referrerName);
+  const account = await ensureReferrerAccount(
+    normalizedEmail,
+    input.displayName || matchingReferrals[0]?.referrerName || matchingSlyderReferrals[0]?.referrerName,
+  );
   if (!account.isEnabled) {
     throw new Error("This referrer account is currently disabled.");
   }

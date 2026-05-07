@@ -17,6 +17,8 @@ export default async function AdminSlyderLeadUpdatesPage() {
     body: post.body,
     category: post.category,
     imageUrl: post.imageUrl,
+    imageCropX: post.imageCropX,
+    imageCropY: post.imageCropY,
     ctaLabel: post.ctaLabel,
     ctaHref: post.ctaHref,
     isPublished: post.isPublished,

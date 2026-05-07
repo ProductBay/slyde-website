@@ -13,6 +13,8 @@ export const createSlyderLeadPostSchema = z.object({
   body: z.string().trim().min(8, "Post details are required"),
   category: slyderLeadPostCategorySchema.default("ANNOUNCEMENT"),
   imageUrl: z.string().trim().optional(),
+  imageCropX: z.number().int().min(0).max(100).default(50),
+  imageCropY: z.number().int().min(0).max(100).default(50),
   ctaLabel: z.string().trim().optional(),
   ctaHref: z.string().trim().optional(),
   isPublished: z.boolean().default(false),

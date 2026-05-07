@@ -10,6 +10,7 @@ import type {
   SetupStatusResponse,
   StoredUser,
 } from "@/types/backend/onboarding";
+import type { SlyderLead, SlyderReferral } from "@prisma/client";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { dispatchViaProvider } from "@/server/notifications/providers";
 import { isSmsConfigured } from "@/server/notifications/providers";
@@ -2168,6 +2169,114 @@ export async function sendPublicReferralInviteNotification(referral: PublicSlyde
     },
     dedupeKey: `public_referral_invite_email:${referral.id}:${referral.referredEmail.toLowerCase()}`,
   });
+}
+
+function buildSlyderReferralNotificationContext(referral: SlyderReferral) {
+  const baseUrl = getWebsiteBaseUrl();
+  const referralLink = referral.referralLink || `${baseUrl}/r/${encodeURIComponent(referral.referralCode)}`;
+  const dashboardUrl = `${baseUrl}/refer`;
+  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
+  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
+
+  return {
+    variables: {
+      referrerName: referral.referrerName,
+      referrerFirstName: referral.referrerName.split(" ")[0] || referral.referrerName,
+      referralCode: referral.referralCode,
+      referralLink,
+      dashboardUrl,
+      supportEmail,
+      supportPhone,
+    },
+    payload: {
+      referralId: referral.id,
+      referralCode: referral.referralCode,
+      referralLink,
+      dashboardUrl,
+    },
+  };
+}
+
+export async function sendSlyderReferralCreatedNotification(referral: SlyderReferral) {
+  if (!referral.referrerEmail) return null;
+
+  const { variables, payload } = buildSlyderReferralNotificationContext(referral);
+
+  return sendTemplateNotification({
+    templateKey: "slyder_referral_created_email",
+    actorType: "public_user",
+    actorId: referral.id,
+    recipient: referral.referrerEmail,
+    recipientName: referral.referrerName,
+    variables,
+    payload,
+    dedupeKey: `slyder_referral_created_email:${referral.id}:${referral.referrerEmail.toLowerCase()}`,
+  });
+}
+
+export async function sendSlyderReferralUsedNotifications(referral: SlyderReferral, lead: SlyderLead) {
+  const { variables: referralVariables, payload: referralPayload } = buildSlyderReferralNotificationContext(referral);
+  const referredName = [lead.firstName, lead.lastName].filter(Boolean).join(" ") || lead.firstName;
+  const statusUrl = `${getWebsiteBaseUrl()}/join/slyder/status?leadId=${encodeURIComponent(lead.id)}`;
+
+  const tasks: Promise<unknown>[] = [];
+
+  if (referral.referrerEmail) {
+    tasks.push(
+      sendTemplateNotification({
+        templateKey: "slyder_referral_used_referrer_email",
+        actorType: "public_user",
+        actorId: referral.id,
+        recipient: referral.referrerEmail,
+        recipientName: referral.referrerName,
+        variables: {
+          ...referralVariables,
+          referredName,
+          referredEmail: lead.email,
+          referredWhatsapp: lead.whatsapp,
+          statusUrl,
+        },
+        payload: {
+          ...referralPayload,
+          leadId: lead.id,
+          referredEmail: lead.email,
+          referredWhatsapp: lead.whatsapp,
+          statusUrl,
+        },
+        dedupeKey: `slyder_referral_used_referrer_email:${referral.id}:${lead.id}`,
+        force: true,
+      }),
+    );
+  }
+
+  tasks.push(
+    sendTemplateNotification({
+      templateKey: "slyder_referral_used_referee_email",
+      actorType: "slyder_applicant",
+      actorId: lead.id,
+      recipient: lead.email,
+      recipientName: referredName,
+      variables: {
+        firstName: lead.firstName,
+        fullName: referredName,
+        referrerName: referral.referrerName,
+        referralCode: referral.referralCode,
+        statusUrl,
+        supportEmail: referralVariables.supportEmail,
+        supportPhone: referralVariables.supportPhone,
+      },
+      payload: {
+        leadId: lead.id,
+        referralId: referral.id,
+        referralCode: referral.referralCode,
+        statusUrl,
+      },
+      dedupeKey: `slyder_referral_used_referee_email:${referral.id}:${lead.id}`,
+      force: true,
+    }),
+  );
+
+  return Promise.allSettled(tasks);
 }
 
 export async function sendReferrerLoginCodeNotification(input: {

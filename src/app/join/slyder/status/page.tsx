@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Bell, CheckCircle2, Clock3, Info, Mail, MessageCircle } from "lucide-react";
 import { buildMetadata } from "@/lib/metadata";
+import { SlyderLeadPushOptIn } from "@/components/site/join/slyder-lead-push-opt-in";
+import { SlyderLeadUpdatesFeed } from "@/components/site/join/slyder-lead-updates-feed";
 import { findLeadById } from "@/modules/leads/repositories/slyder-lead.repository";
 import { listPublishedSlyderLeadPosts } from "@/modules/leads/services/slyder-lead-post.service";
 
@@ -165,6 +167,12 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
   const actionCenterCtaLabel = lead.actionCenterCtaLabel || copy.action;
   const actionCenterCtaHref = lead.actionCenterCtaHref || (copy.action ? applicationHref : null);
   const actionCenterUpdatedAt = formatUpdatedAt(lead.actionCenterUpdatedAt);
+  const initialLatestPostAt =
+    posts
+      .map((post) => post.publishedAt || post.createdAt)
+      .filter((value): value is Date => Boolean(value))
+      .sort((a, b) => b.getTime() - a.getTime())[0]
+      ?.toISOString() ?? null;
 
   return (
     <section className="section-shell py-12 sm:py-16">
@@ -223,51 +231,9 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
           </div>
         </div>
 
-        {posts.length ? (
-          <section className="mt-6">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">SLYDE updates</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Promotions and launch updates</h2>
-              </div>
-              <p className="max-w-xl text-sm leading-6 text-slate-600">
-                Follow the latest SLYDE announcements while your Slyder path moves through review.
-              </p>
-            </div>
+        <SlyderLeadPushOptIn leadId={lead.id} initialLatestPostAt={initialLatestPostAt} />
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-3">
-              {posts.map((post, index) => (
-                <article
-                  key={post.id}
-                  className={index === 0 && post.isFeatured ? "overflow-hidden rounded-[1.5rem] border border-sky-100 bg-white shadow-soft lg:col-span-2" : "overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-soft"}
-                >
-                  {post.imageUrl ? (
-                    <div className={index === 0 && post.isFeatured ? "aspect-[16/7] overflow-hidden bg-slate-100" : "aspect-[16/9] overflow-hidden bg-slate-100"}>
-                      <img src={post.imageUrl} alt="" className="h-full w-full object-cover" />
-                    </div>
-                  ) : null}
-                  <div className="p-5">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">{post.category.replace(/_/g, " ")}</span>
-                      {post.isFeatured ? <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">Featured</span> : null}
-                    </div>
-                    <h3 className="mt-3 text-lg font-semibold text-slate-950">{post.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{post.body}</p>
-                    {post.ctaLabel && post.ctaHref ? (
-                      <Link
-                        href={post.ctaHref}
-                        className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 hover:underline"
-                      >
-                        {post.ctaLabel}
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        ) : null}
+        <SlyderLeadUpdatesFeed leadId={lead.id} posts={posts} />
 
         <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
           <div className="grid gap-4 md:grid-cols-3">
@@ -280,7 +246,9 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
                 <Mail className="h-4 w-4 text-sky-700" />
                 <p className="text-sm font-semibold text-slate-950">Email updates</p>
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-600">SLYDE will email important status changes or action requests to {lead.email}.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                SLYDE will send important status updates, next-step instructions, and action reminders to the email connected to this Slyder lead.
+              </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex items-center gap-2">

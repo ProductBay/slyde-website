@@ -5,7 +5,12 @@ import { createPublicReferral } from "@/modules/referrals/services/slyder-referr
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    const parsed = createPublicReferralSchema.safeParse(json);
+    const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    const parsed = createPublicReferralSchema.safeParse({
+      ...json,
+      agreementIpAddress: forwardedFor || request.headers.get("x-real-ip") || undefined,
+      agreementUserAgent: request.headers.get("user-agent") || undefined,
+    });
 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

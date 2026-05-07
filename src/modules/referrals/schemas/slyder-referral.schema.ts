@@ -25,11 +25,16 @@ export type ReferralReferrerType = (typeof REFERRER_TYPES)[number];
 export const createPublicReferralSchema = z.object({
   referrerName: z.string().min(2, "Name must be at least 2 characters"),
   referrerWhatsapp: z.string().min(7, "WhatsApp number is required"),
-  referrerEmail: z.string().email().optional().or(z.literal("")),
+  referrerEmail: z.string().email("A valid email is required so you can access your referrer dashboard"),
   referredFirstName: z.string().optional(),
   referredLastName: z.string().optional(),
   referredWhatsapp: z.string().optional(),
   referredEmail: z.string().email().optional().or(z.literal("")),
+  referralAgreementAccepted: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the SLYDE Slyder referral agreement before creating a referral link." }),
+  }),
+  agreementIpAddress: z.string().optional(),
+  agreementUserAgent: z.string().optional(),
   source: z.string().optional(),
 });
 export type CreatePublicReferralInput = z.infer<typeof createPublicReferralSchema>;

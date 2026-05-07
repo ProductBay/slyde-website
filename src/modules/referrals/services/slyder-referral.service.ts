@@ -11,6 +11,9 @@ import {
   updateSlyderReferral,
 } from "@/modules/referrals/repositories/slyder-referral.repository";
 import { prisma } from "@/server/db/prisma";
+import { sendSlyderReferralCreatedNotification } from "@/server/notifications/notification.service";
+
+export const SLYDER_REFERRAL_AGREEMENT_VERSION = "slyder-referral-v1.0";
 
 function buildReferralLink(code: string): string {
   return `${getAppBaseUrl()}/r/${code}`;
@@ -78,6 +81,18 @@ export async function createPublicReferral(input: CreatePublicReferralInput) {
     referredLastName: input.referredLastName,
     referredEmail: input.referredEmail || undefined,
     referredWhatsapp: input.referredWhatsapp,
+    agreementAccepted: true,
+    agreementVersion: SLYDER_REFERRAL_AGREEMENT_VERSION,
+    agreementAcceptedAt: new Date(),
+    agreementIpAddress: input.agreementIpAddress,
+    agreementUserAgent: input.agreementUserAgent,
+  });
+
+  await sendSlyderReferralCreatedNotification(referral).catch((error) => {
+    console.error("[slyder-referral] created notification failed", {
+      referralId: referral.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
   });
 
   return { referralCode, referralLink, referralId: referral.id };

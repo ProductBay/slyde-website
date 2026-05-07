@@ -39,6 +39,11 @@ export async function createSlyderReferral(data: {
   referredLastName?: string;
   referredEmail?: string;
   referredWhatsapp?: string;
+  agreementAccepted?: boolean;
+  agreementVersion?: string;
+  agreementAcceptedAt?: Date;
+  agreementIpAddress?: string;
+  agreementUserAgent?: string;
 }) {
   return prisma.slyderReferral.create({ data });
 }
@@ -81,6 +86,32 @@ export async function findSlyderReferralByReferredApplicationId(applicationId: s
 export async function listSlyderReferralsByReferrerSlyderId(referrerSlyderId: string) {
   return prisma.slyderReferral.findMany({
     where: { referrerSlyderId },
+    include: { payouts: { orderBy: { cycleNumber: "asc" } } },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function listPublicSlyderReferralsByReferrerContact(input: {
+  referrerEmail?: string | null;
+  referrerWhatsapp?: string | null;
+}) {
+  const or: Array<Record<string, unknown>> = [];
+
+  if (input.referrerEmail) {
+    or.push({ referrerEmail: { equals: input.referrerEmail, mode: "insensitive" } });
+  }
+
+  if (input.referrerWhatsapp) {
+    or.push({ referrerWhatsapp: input.referrerWhatsapp });
+  }
+
+  if (or.length === 0) return [];
+
+  return prisma.slyderReferral.findMany({
+    where: {
+      referrerType: "PUBLIC",
+      OR: or,
+    },
     include: { payouts: { orderBy: { cycleNumber: "asc" } } },
     orderBy: { createdAt: "desc" },
   });
