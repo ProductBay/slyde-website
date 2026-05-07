@@ -5,7 +5,12 @@ import { createSlyderLead } from "@/modules/leads/services/slyder-lead.service";
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    const parsed = createSlyderLeadSchema.safeParse(json);
+    const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    const parsed = createSlyderLeadSchema.safeParse({
+      ...json,
+      agreementIpAddress: forwardedFor || request.headers.get("x-real-ip") || undefined,
+      agreementUserAgent: request.headers.get("user-agent") || undefined,
+    });
 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -13,6 +18,13 @@ export async function POST(request: Request) {
 
     // TODO: analytics hook — slyder_lead_submitted
     const result = await createSlyderLead(parsed.data);
+
+    if (result.duplicate) {
+      return NextResponse.json(
+        { ok: true, leadId: result.leadId, referralCode: result.referralCode, duplicate: true },
+        { status: 200 },
+      );
+    }
 
     return NextResponse.json({ ok: true, leadId: result.leadId, referralCode: result.referralCode }, { status: 201 });
   } catch (error) {

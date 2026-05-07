@@ -34,6 +34,11 @@ export async function createLead(data: CreateSlyderLeadInput) {
       source: data.source,
       referredByCode: data.referredByCode,
       referralCode,
+      agreementAccepted: true,
+      agreementVersion: "slyder-join-v1.0",
+      agreementAcceptedAt: new Date(),
+      agreementIpAddress: data.agreementIpAddress,
+      agreementUserAgent: data.agreementUserAgent,
     },
   });
 }
@@ -66,6 +71,19 @@ export async function findLeadById(id: string) {
   return prisma.slyderLead.findUnique({
     where: { id },
     include: { qualification: true },
+  });
+}
+
+export async function findLeadByEmailOrWhatsapp(email: string, whatsapp: string) {
+  const normalizedWhatsapp = whatsapp.replace(/\D/g, "");
+  return prisma.slyderLead.findFirst({
+    where: {
+      OR: [
+        { email: { equals: email, mode: "insensitive" } },
+        { whatsapp: { contains: normalizedWhatsapp } },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
   });
 }
 

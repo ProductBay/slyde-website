@@ -1830,10 +1830,20 @@ model SlyderLead {
   actionCenterCtaLabel  String?
   actionCenterCtaHref   String?
   actionCenterUpdatedAt DateTime?
+  agreementAccepted     Boolean          @default(false)
+  agreementVersion      String?
+  agreementAcceptedAt   DateTime?
+  agreementIpAddress    String?
+  agreementUserAgent    String?
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
-  qualification SlyderQualification?
+  qualification     SlyderQualification?
+  pushSubscriptions SlyderLeadPushSubscription[]
+
+  @@unique([email])
+  @@index([whatsapp])
+  @@index([status, createdAt(sort: Desc)])
 }
 
 model SlyderQualification {
@@ -1854,6 +1864,26 @@ model SlyderQualification {
   lead SlyderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
+model SlyderLeadPushSubscription {
+  id           String    @id @default(cuid())
+  leadId       String
+  endpoint     String    @unique
+  p256dh       String
+  auth         String
+  userAgent    String?
+  isActive     Boolean   @default(true)
+  failureCount Int       @default(0)
+  lastSeenAt   DateTime  @default(now())
+  lastSentAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  lead SlyderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, isActive])
+  @@index([isActive, updatedAt])
+}
+
 enum SlyderLeadPostCategory {
   ANNOUNCEMENT
   PROMOTION
@@ -1868,6 +1898,8 @@ model SlyderLeadPost {
   body        String
   category    SlyderLeadPostCategory @default(ANNOUNCEMENT)
   imageUrl    String?
+  imageCropX  Int                    @default(50)
+  imageCropY  Int                    @default(50)
   ctaLabel    String?
   ctaHref     String?
   isPublished Boolean                @default(false)
@@ -2203,6 +2235,11 @@ model SlyderReferral {
   rentCyclesCompleted   Int                  @default(0)
   qualificationNotes    String?
   adminNotes            String?
+  agreementAccepted     Boolean              @default(false)
+  agreementVersion      String?
+  agreementAcceptedAt   DateTime?
+  agreementIpAddress    String?
+  agreementUserAgent    String?
   firstRentPaidAt       DateTime?
   rewardActivatedAt     DateTime?
   paidOutAt             DateTime?

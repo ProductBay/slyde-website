@@ -7,9 +7,11 @@ import type {
 } from "@/modules/leads/schemas/slyder-lead.schema";
 import type { CreateSlyderQualificationInput } from "@/modules/leads/schemas/slyder-qualification.schema";
 import * as repo from "@/modules/leads/repositories/slyder-lead.repository";
+import { attachReferralToLead } from "@/modules/referrals/services/slyder-referral.service";
+import { findSlyderReferralByCode } from "@/modules/referrals/repositories/slyder-referral.repository";
 import { getAppBaseUrl } from "@/lib/app-base-url";
 import { buildWhatsappWebUrl } from "@/server/notifications/providers";
-import { sendTemplateNotification } from "@/server/notifications/notification.service";
+import { sendSlyderReferralUsedNotifications, sendTemplateNotification } from "@/server/notifications/notification.service";
 
 type SlyderLeadNotificationTarget = {
   id: string;
@@ -162,13 +164,61 @@ async function sendSlyderLeadActionCenterNotifications(
 }
 
 export async function createSlyderLead(input: CreateSlyderLeadInput) {
-  const lead = await repo.createLead(input);
+  const referredByCode = input.referredByCode?.trim().toUpperCase();
+  const normalizedInput = {
+    ...input,
+    ...(referredByCode ? { referredByCode } : {}),
+  };
+
+  const referral = referredByCode ? await findSlyderReferralByCode(referredByCode) : null;
+  if (referredByCode && !referral) {
+    throw new Error("Referral code not found.");
+  }
+
+  if (referral && referral.referrerWhatsapp.replace(/\D/g, "") === input.whatsapp.replace(/\D/g, "")) {
+    throw new Error("A referrer cannot use their own referral code.");
+  }
+
+  // Duplicate check — return existing lead instead of creating a second registration
+  const existing = await repo.findLeadByEmailOrWhatsapp(input.email, input.whatsapp);
+  if (existing) {
+    return {
+      leadId: existing.id,
+      referralCode: existing.referralCode,
+      duplicate: true,
+    };
+  }
+
+  const lead = await repo.createLead(normalizedInput);
+
+  let attachedReferral = null;
+  if (referredByCode) {
+    attachedReferral = await attachReferralToLead({
+      referralCode: referredByCode,
+      leadId: lead.id,
+      referredFirstName: lead.firstName,
+      referredLastName: lead.lastName || undefined,
+      referredEmail: lead.email,
+      referredWhatsapp: lead.whatsapp,
+    });
+  }
+
   await sendSlyderLeadReceivedNotifications(lead).catch((error) => {
     console.error("[slyder-lead] welcome notifications failed", {
       leadId: lead.id,
       error: error instanceof Error ? error.message : String(error),
     });
   });
+
+  if (attachedReferral) {
+    await sendSlyderReferralUsedNotifications(attachedReferral, lead).catch((error) => {
+      console.error("[slyder-lead] referral-used notifications failed", {
+        leadId: lead.id,
+        referralId: attachedReferral.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }
 
   return {
     leadId: lead.id,
