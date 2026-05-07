@@ -23,6 +23,8 @@ export async function generateUniqueReferralCode(): Promise<string> {
 
 export async function createLead(data: CreateSlyderLeadInput) {
   const referralCode = await generateUniqueReferralCode();
+  const agreementIpAddress = data.agreementIpAddress ?? null;
+  const agreementUserAgent = data.agreementUserAgent ?? null;
   return prisma.slyderLead.create({
     data: {
       firstName: data.firstName,
@@ -37,8 +39,8 @@ export async function createLead(data: CreateSlyderLeadInput) {
       agreementAccepted: true,
       agreementVersion: "slyder-join-v1.0",
       agreementAcceptedAt: new Date(),
-      agreementIpAddress: data.agreementIpAddress,
-      agreementUserAgent: data.agreementUserAgent,
+      agreementIpAddress,
+      agreementUserAgent,
     },
   });
 }
