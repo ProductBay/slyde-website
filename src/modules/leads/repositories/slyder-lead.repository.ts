@@ -1,6 +1,20 @@
 import { prisma } from "@/server/db/prisma";
-import type { CreateSlyderLeadInput, UpdateSlyderLeadInput, ListSlyderLeadsQuery } from "@/modules/leads/schemas/slyder-lead.schema";
+import type { UpdateSlyderLeadInput, ListSlyderLeadsQuery } from "@/modules/leads/schemas/slyder-lead.schema";
 import type { CreateSlyderQualificationInput } from "@/modules/leads/schemas/slyder-qualification.schema";
+
+// Explicit type — avoids Zod inference ambiguity in the repository layer
+export interface CreateLeadRepositoryInput {
+  firstName: string;
+  lastName?: string | null;
+  email: string;
+  whatsapp: string;
+  parish?: string | null;
+  vehicleType?: string | null;
+  source?: string | null;
+  referredByCode?: string | null;
+  agreementIpAddress?: string | null;
+  agreementUserAgent?: string | null;
+}
 
 function generateReferralCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -21,26 +35,24 @@ export async function generateUniqueReferralCode(): Promise<string> {
   return `SL-${Date.now().toString(36).toUpperCase().slice(-6)}`;
 }
 
-export async function createLead(data: CreateSlyderLeadInput) {
+export async function createLead(data: CreateLeadRepositoryInput) {
   const referralCode = await generateUniqueReferralCode();
-  const agreementIpAddress = data.agreementIpAddress ?? null;
-  const agreementUserAgent = data.agreementUserAgent ?? null;
   return prisma.slyderLead.create({
     data: {
       firstName: data.firstName,
-      lastName: data.lastName,
+      lastName: data.lastName ?? null,
       email: data.email,
       whatsapp: data.whatsapp,
-      parish: data.parish,
-      vehicleType: data.vehicleType,
-      source: data.source,
-      referredByCode: data.referredByCode,
+      parish: data.parish ?? null,
+      vehicleType: data.vehicleType ?? null,
+      source: data.source ?? null,
+      referredByCode: data.referredByCode ?? null,
       referralCode,
       agreementAccepted: true,
       agreementVersion: "slyder-join-v1.0",
       agreementAcceptedAt: new Date(),
-      agreementIpAddress,
-      agreementUserAgent,
+      agreementIpAddress: data.agreementIpAddress ?? null,
+      agreementUserAgent: data.agreementUserAgent ?? null,
     },
   });
 }
