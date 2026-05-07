@@ -34,6 +34,11 @@ export async function registerUser(input: RegisterUserInput) {
   const result = await withPersistenceTransaction(async (store) => {
     const existing = findUserByEmailOrPhone(store, normalizedEmail) ?? findUserByEmailOrPhone(store, normalizedPhone);
     if (existing) {
+      if (existing.userType !== "platform") {
+        throw new Error(
+          "This email or phone is already linked to a Slyder, merchant, or staff account. Please use a different email to create a customer account, or contact support.",
+        );
+      }
       throw new Error("An account with that email or phone already exists");
     }
 
@@ -78,7 +83,25 @@ export async function loginUser(input: LoginUserInput) {
   const normalizedEmail = normalizeEmail(email);
   const user = findUserByEmailOrPhone(store, normalizedEmail);
 
-  if (!user || user.userType !== "platform" || hasRole(user, ["platform_admin", "operations_admin"])) {
+  if (!user) {
+    throw new Error("No account found with those credentials");
+  }
+
+  if (user.userType !== "platform") {
+    const typeLabel =
+      user.userType === "slyder"
+        ? "Slyder courier"
+        : user.userType === "merchant"
+          ? "merchant"
+          : user.userType === "employee"
+            ? "staff"
+            : "non-customer";
+    throw new Error(
+      `This email is linked to a ${typeLabel} account, not a customer account. Please use the appropriate login for your account type, or register with a different email.`,
+    );
+  }
+
+  if (hasRole(user, ["platform_admin", "operations_admin"])) {
     throw new Error("No account found with those credentials");
   }
 

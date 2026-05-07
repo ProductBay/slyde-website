@@ -5,6 +5,7 @@ import { BrandingOptions } from "@/components/site/vehicle-branding/branding-opt
 import { BrandingTrustSection } from "@/components/site/vehicle-branding/branding-trust-section";
 import { HowBrandingWorks } from "@/components/site/vehicle-branding/how-branding-works";
 import { VehicleBrandingHero } from "@/components/site/vehicle-branding/vehicle-branding-hero";
+import { VehicleShowcaseBanner } from "@/components/site/vehicle-branding/vehicle-showcase-banner";
 import { buildMetadata } from "@/lib/metadata";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ export default function VehicleBrandingPage() {
   return (
     <>
       <VehicleBrandingHero />
+      <VehicleShowcaseBanner />
       <BrandingTrustSection />
       <BrandingBannerStrip />
       <BrandingOptions />
