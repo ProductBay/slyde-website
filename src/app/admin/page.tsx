@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BadgeCheck, MessageCircle } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { DataTable, TableCell, TableHeaderCell } from "@/components/admin/data-table";
 import { KpiStatCard } from "@/components/admin/kpi-stat-card";
@@ -7,10 +8,17 @@ import { NotificationStatusList } from "@/components/admin/notification-status-l
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ZoneReadinessCard } from "@/components/admin/zone-readiness-card";
 import { getAdminDashboardData } from "@/modules/admin/services/admin-control-tower.service";
+import { listVehicleBrandingLeads } from "@/modules/vehicle-branding/services/vehicle-branding.service";
 import { getAdminPageContext } from "@/server/admin/admin-page";
 
 export default async function AdminDashboardPage() {
-  const [{ user, mode }, dashboard] = await Promise.all([getAdminPageContext(), getAdminDashboardData()]);
+  const [{ user, mode }, dashboard, vehicleBrandingLeads] = await Promise.all([
+    getAdminPageContext(),
+    getAdminDashboardData(),
+    listVehicleBrandingLeads({}),
+  ]);
+  const openBrandingLeads = vehicleBrandingLeads.filter((lead) => !["COMPLETED", "ARCHIVED"].includes(lead.status)).length;
+  const newestBrandingLead = vehicleBrandingLeads[0];
 
   return (
     <AdminShell
@@ -23,6 +31,52 @@ export default async function AdminDashboardPage() {
         {dashboard.kpis.map((kpi) => (
           <KpiStatCard key={kpi.label} {...kpi} />
         ))}
+      </section>
+
+      <section className="mt-8">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-panel">
+          <div className="grid gap-0 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="p-6 sm:p-7">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-sky-100 bg-sky-50 text-sky-700">
+                  <BadgeCheck className="h-6 w-6" />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">Vehicle Branding Submissions</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-950">SLYDE Verified Vehicle Branding leads</h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+                    Review Slyders who requested branding info, update lead status, add notes, and open a WhatsApp follow-up with the default program message.
+                  </p>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Total leads</p>
+                      <p className="mt-1 text-2xl font-semibold text-slate-950">{vehicleBrandingLeads.length}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Open leads</p>
+                      <p className="mt-1 text-2xl font-semibold text-slate-950">{openBrandingLeads}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Newest</p>
+                      <p className="mt-1 truncate text-sm font-semibold text-slate-950">
+                        {newestBrandingLead ? newestBrandingLead.fullName : "No submissions yet"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-slate-200 p-6 sm:p-7 lg:border-l lg:border-t-0">
+              <Link
+                href="/admin/vehicle-branding-leads"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-sm font-semibold text-white shadow-glow transition hover:-translate-y-0.5 hover:bg-slate-800"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Open branding leads
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="mt-8 grid gap-8 2xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,0.8fr)]">

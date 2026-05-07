@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { BriefcaseBusiness, Clock3, Network, Route } from "lucide-react";
+import { BriefcaseBusiness, Clock3, Network, Route, BadgeCheck } from "lucide-react";
 import { lifecycleTimeline, primaryCtas, slyderTypes, zoneStatusMessages } from "@/content/site";
 import { CTASection } from "@/components/site/cta-section";
 import { HeroSection } from "@/components/site/hero-section";
@@ -436,6 +436,28 @@ export default async function BecomeASlyderPage({
               >
                 Learn about Area Builder Rewards
               </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-shell py-10">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-panel">
+          <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
+            <div className="bg-slate-950 p-6 text-white sm:p-8">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10 text-cyan-200">
+                <BadgeCheck className="h-6 w-6" />
+              </span>
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">Verified branding</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-[2.25rem]">Brand Your Vehicle with SLYDE</h2>
+            </div>
+            <div className="p-6 sm:p-8">
+              <p className="text-sm leading-7 text-slate-600 sm:text-base">
+                Approved Slyders may request SLYDE branding for their vehicle, bike box, helmet, or delivery setup. Branding helps customers identify you, builds trust with merchants, and gives your work a more professional presence.
+              </p>
+              <div className="mt-6">
+                <LinkButton href="/vehicle-branding">Learn About Vehicle Branding</LinkButton>
+              </div>
             </div>
           </div>
         </div>
