@@ -10,6 +10,21 @@ import { getLeadCountsByParish, normalizeParishKey } from "@/modules/leads/repos
 // Medals for top-3
 const MEDALS = ["🥇", "🥈", "🥉"];
 
+// The 14 valid Jamaican parishes (normalised lowercase)
+const VALID_PARISHES = new Set([
+  "kingston", "st andrew", "st thomas", "portland", "st mary",
+  "st ann", "trelawny", "st james", "hanover", "westmoreland",
+  "st elizabeth", "manchester", "clarendon", "st catherine",
+]);
+
+// Canonical zone IDs seeded in DEFAULT_ZONE_SEEDS — one per parish
+const CANONICAL_ZONE_IDS = new Set([
+  "11111111-1111-4111-8111-111111111111",
+  "st-andrew", "morant-bay", "port-antonio", "port-maria",
+  "ochos-rios", "falmouth", "montego-bay", "lucea",
+  "savanna-la-mar", "black-river", "mandeville", "may-pen", "spanish-town",
+]);
+
 // All 14 Jamaican parishes mapped to their major towns (keyed by normalised parish name)
 const PARISH_TOWNS: Record<string, string[]> = {
   "kingston":     ["New Kingston", "Downtown Kingston", "Cross Roads"],
@@ -27,6 +42,32 @@ const PARISH_TOWNS: Record<string, string[]> = {
   "clarendon":    ["May Pen", "Chapelton", "Lionel Town"],
   "st catherine": ["Spanish Town", "Portmore", "Old Harbour", "Linstead"],
 };
+
+// Deduplicate zones by parish: keep the canonical seed zone, merge lead counts,
+// and drop any zone whose parish value is not a real Jamaican parish
+// (e.g. "santa cruz" is a town in St Elizabeth, not a parish).
+function deduplicateByParish<T extends { id: string; parish: string; leadCount: number }>(zones: T[]): T[] {
+  const byParish = new Map<string, T>();
+
+  for (const zone of zones) {
+    const key = normalizeParishKey(zone.parish);
+    if (!VALID_PARISHES.has(key)) continue; // drop invalid parish values
+
+    const existing = byParish.get(key);
+    if (!existing) {
+      byParish.set(key, zone);
+    } else {
+      // Prefer the canonical seed zone; otherwise keep the one with more applicant data
+      const preferNew = CANONICAL_ZONE_IDS.has(zone.id) && !CANONICAL_ZONE_IDS.has(existing.id);
+      const keeper = preferNew ? zone : existing;
+      const other = preferNew ? existing : zone;
+      // Merge lead counts so no submission data is lost in the display
+      byParish.set(key, { ...keeper, leadCount: keeper.leadCount + other.leadCount });
+    }
+  }
+
+  return Array.from(byParish.values());
+}
 
 function buildInsight(
   top3: { parish: string; zone: string; count: number }[],
@@ -65,8 +106,11 @@ export default async function CoverageZonesPage() {
     };
   });
 
+  // One row per parish — drop bad parish values and merge duplicate zones
+  const dedupedZones = deduplicateByParish(zonesWithLeads);
+
   // Top-3 zones by lead count (only those with at least 1)
-  const top3 = [...zonesWithLeads]
+  const top3 = [...dedupedZones]
     .filter((z) => z.leadCount > 0)
     .sort((a, b) => b.leadCount - a.leadCount)
     .slice(0, 3)
@@ -137,7 +181,7 @@ export default async function CoverageZonesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
-            {zonesWithLeads.map((zone) => (
+            {dedupedZones.map((zone) => (
               <tr key={zone.id}>
                 <TableCell className="font-medium text-slate-950">{zone.name}</TableCell>
                 <TableCell>{zone.parish}</TableCell>
