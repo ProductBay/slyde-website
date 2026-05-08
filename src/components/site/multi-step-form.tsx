@@ -173,6 +173,30 @@ function issueMap(result: ReturnType<typeof validateStep>) {
   return Object.fromEntries(result.error.issues.map((issue) => [String(issue.path[0]), issue.message]));
 }
 
+function getStepErrors(step: number, draft: SlyderApplicationDraft) {
+  const result = validateStep(step, draft);
+  if (!result.success) return issueMap(result);
+
+  if (step !== 2 || !requiresVehicle(draft.courier.courierType)) return {};
+
+  const expiryErrors: Record<string, string> = {};
+  if (getExpiryStatus(draft.vehicle.registrationExpiry) === "expired")
+    expiryErrors.registrationExpiry = "Vehicle registration is expired — please renew before applying.";
+  if (getExpiryStatus(draft.vehicle.insuranceExpiry) === "expired")
+    expiryErrors.insuranceExpiry = "Insurance is expired — please renew before applying.";
+  if (getExpiryStatus(draft.vehicle.fitnessExpiry) === "expired")
+    expiryErrors.fitnessExpiry = "Fitness certificate is expired — please renew before applying.";
+  return expiryErrors;
+}
+
+function findFirstInvalidStep(draft: SlyderApplicationDraft) {
+  for (let index = 0; index < stepTitles.length - 1; index += 1) {
+    const errors = getStepErrors(index, draft);
+    if (Object.keys(errors).length) return { step: index, errors };
+  }
+  return null;
+}
+
 function getExpiryStatus(dateStr: string): "expired" | "expiring-soon" | "ok" | "empty" {
   if (!dateStr) return "empty";
   const expiry = new Date(dateStr);
@@ -479,9 +503,10 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
   }, [draft.referral.landingPage, draft.referral.referralCode, draft.referral.inviteToken, draft.referral.capturedAt]);
 
   function nextStep() {
-    const result = validateStep(step, draft);
-    if (!result.success) {
-      setErrors(issueMap(result));
+    const stepErrors = getStepErrors(step, draft);
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors);
+      setSubmitError(null);
       return;
     }
     // Block step 2 if any vehicle document is already expired
@@ -499,6 +524,7 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
       }
     }
     setErrors({});
+    setSubmitError(null);
     setStep((current) => Math.min(current + 1, stepTitles.length - 1));
   }
 
@@ -600,10 +626,11 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
       return;
     }
 
-    const result = slyderApplicationSchema.safeParse(draft);
-    if (!result.success) {
-      setErrors(issueMap(validateStep(step, draft)));
-      setSubmitError("Please review the application before submitting.");
+    const invalidStep = findFirstInvalidStep(draft);
+    if (invalidStep) {
+      setStep(invalidStep.step);
+      setErrors(invalidStep.errors);
+      setSubmitError(`${stepTitles[invalidStep.step]} needs attention: ${Object.values(invalidStep.errors)[0]}`);
       return;
     }
 
@@ -612,7 +639,7 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
 
     startTransition(async () => {
       const payload = {
-        ...result.data,
+        ...draft,
         leadId: leadId ?? window.localStorage.getItem("slyde-slyder-lead-id"),
         workflow: {
           stage: "application_submitted",
