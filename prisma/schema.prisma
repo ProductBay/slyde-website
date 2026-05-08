@@ -1820,6 +1820,41 @@ enum VehicleBrandingLeadStatus {
   ARCHIVED
 }
 
+enum FleetLeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PARTNERSHIP_REVIEW
+  APPROVED
+  NOT_READY
+  ARCHIVED
+}
+
+model FleetLead {
+  id                  String          @id @default(cuid())
+  ownerName           String
+  companyName         String
+  whatsapp            String
+  email               String?
+  parish              String?
+  operatingAreas      String[]
+  fleetSize           String?
+  driverCount         String?
+  vehicleTypes        String[]
+  hasDispatchSystem   String?
+  partnershipInterest String?
+  notes               String?
+  status              FleetLeadStatus @default(NEW)
+  contactedAt         DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([status])
+  @@index([whatsapp])
+  @@index([parish])
+  @@index([createdAt])
+}
+
 model SlyderLead {
   id                          String           @id @default(cuid())
   firstName                   String

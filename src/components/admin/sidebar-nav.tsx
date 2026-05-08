@@ -19,6 +19,7 @@ const navItems = [
   { href: "/admin/referral-payouts", label: "Referral Payouts", icon: Banknote },
   { href: "/admin/employee-applications", label: "Employee Applications", icon: UserSquare2 },
   { href: "/admin/merchant-leads", label: "Merchant Leads", icon: Store },
+  { href: "/admin/fleet-leads", label: "Fleet Leads", icon: Waypoints },
   { href: "/admin/merchant-applications", label: "Merchant Applications", icon: Store },
   { href: "/admin/partner-carriers", label: "Partner Carriers", icon: Waypoints },
   { href: "/admin/out-of-parish-deliveries", label: "Out-of-Parish", icon: Waypoints },

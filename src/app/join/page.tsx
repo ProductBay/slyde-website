@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Building2, HeartHandshake, MapPin, MessageCircle, PackageSearch, Truck, Zap } from "lucide-react";
+import { ArrowRight, Building2, HeartHandshake, MapPin, MessageCircle, Network, PackageSearch, Truck, Zap } from "lucide-react";
 import { buildMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = buildMetadata(
@@ -97,7 +97,7 @@ export default function JoinPage() {
 
       {/* ── Primary conversion cards ── */}
       <section className="relative z-10 mx-auto max-w-content px-4 pb-8 sm:px-6 lg:px-8">
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-3">
 
           {/* ── Slyder Card (strongest) ── */}
           <div className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-sky-500/30 bg-gradient-to-b from-slate-900 to-slate-950 p-7 shadow-[0_0_60px_-10px_rgba(14,165,233,0.18)] sm:p-9">
@@ -167,6 +167,53 @@ export default function JoinPage() {
           </div>
 
           {/* ── Merchant Card ── */}
+          <div className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-emerald-500/20 bg-gradient-to-b from-slate-900/80 to-slate-950 p-7 shadow-soft sm:p-9">
+            <div className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-emerald-500/8 blur-[80px]" />
+
+            <div className="relative flex h-full flex-col">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex h-13 w-13 items-center justify-center rounded-2xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-400">
+                  <Network className="h-7 w-7" />
+                </div>
+                <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300">
+                  Fleet partners
+                </span>
+              </div>
+
+              <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-400">
+                For Fleet Owners
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[1.75rem]">
+                Register a Fleet or Delivery Company
+              </h2>
+              <p className="mt-3 flex-1 text-sm leading-7 text-slate-400">
+                Share your vehicle capacity, operating areas, and partnership interest if you manage drivers, vehicles, or courier operations.
+              </p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {["Fleet capacity", "Driver teams", "Transfer partners", "Final-mile support"].map((tag) => (
+                  <span key={tag} className="rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-xs text-slate-400">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <p className="mt-4 text-xs text-slate-500">
+                Built for company owners, courier operators, and fleet coordinators.
+              </p>
+
+              <div className="mt-7">
+                <Link
+                  href="/join/fleet"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_4px_24px_-6px_rgba(16,185,129,0.45)] transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-400"
+                >
+                  Register Fleet Interest
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
           <div className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-cyan-500/20 bg-gradient-to-b from-slate-900/80 to-slate-950 p-7 shadow-soft sm:p-9">
             <div className="pointer-events-none absolute -top-20 -left-20 h-64 w-64 rounded-full bg-cyan-500/8 blur-[80px]" />
 
