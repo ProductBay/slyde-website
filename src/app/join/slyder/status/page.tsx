@@ -94,6 +94,35 @@ function formatUpdatedAt(value: Date | null) {
   }).format(value);
 }
 
+function isStartedOrBeyond(status: string) {
+  return ["STARTED_APPLICATION", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "ACTIVATED", "LIVE"].includes(status);
+}
+
+function shouldUseCanonicalApplicationHref(input: {
+  status: string;
+  applicationInviteUnlocked: boolean;
+  ctaLabel: string | null | undefined;
+  ctaHref: string | null | undefined;
+  actionTitle: string | null | undefined;
+}) {
+  if (!input.applicationInviteUnlocked || isStartedOrBeyond(input.status)) return false;
+
+  const label = input.ctaLabel?.toLowerCase() || "";
+  const title = input.actionTitle?.toLowerCase() || "";
+  const href = input.ctaHref?.toLowerCase() || "";
+
+  return (
+    !href ||
+    href === "/join/slyder" ||
+    href.startsWith("/join/slyder?") ||
+    href === "/become-a-slyder" ||
+    href === "/become-a-slyder/apply" ||
+    href.includes("/become-a-slyder/apply") ||
+    label.includes("application") ||
+    title.includes("application step")
+  );
+}
+
 function ProgressStep({ label, complete }: { label: string; complete: boolean }) {
   return (
     <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
@@ -176,7 +205,16 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
   const actionCenterTitle = lead.actionCenterTitle || "Next action center";
   const actionCenterBody = lead.actionCenterBody || copy.nextAction;
   const actionCenterCtaLabel = lead.actionCenterCtaLabel || copy.action;
-  const actionCenterCtaHref = lead.actionCenterCtaHref || (copy.action ? applicationHref : null);
+  const savedActionCenterCtaHref = lead.actionCenterCtaHref || (copy.action ? applicationHref : null);
+  const actionCenterCtaHref = shouldUseCanonicalApplicationHref({
+    status: lead.status,
+    applicationInviteUnlocked: lead.applicationInviteUnlocked,
+    ctaLabel: actionCenterCtaLabel,
+    ctaHref: savedActionCenterCtaHref,
+    actionTitle: actionCenterTitle,
+  })
+    ? applicationHref
+    : savedActionCenterCtaHref;
   const actionCenterUpdatedAt = formatUpdatedAt(lead.actionCenterUpdatedAt);
   const actionCtaIsApplication =
     Boolean(actionCenterCtaHref) &&
@@ -186,7 +224,7 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
     { label: "Spot reserved", complete: true },
     { label: "Qualification reviewed", complete: ["QUALIFIED", "STARTED_APPLICATION", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "ACTIVATED", "LIVE"].includes(lead.status) },
     { label: "Admin next step sent", complete: lead.applicationInviteUnlocked },
-    { label: "Application started", complete: ["STARTED_APPLICATION", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "ACTIVATED", "LIVE"].includes(lead.status) },
+    { label: "Application started", complete: isStartedOrBeyond(lead.status) },
   ];
   const progressPercent = Math.round((progressSteps.filter((step) => step.complete).length / progressSteps.length) * 100);
   const initialLatestPostAt =

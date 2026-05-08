@@ -309,9 +309,7 @@ export async function updateSlyderLeadActionCenter(
   const actionCenterCtaLabel = input.unlockApplicationInvite
     ? input.actionCenterCtaLabel || "Start Slyder application"
     : input.actionCenterCtaLabel || "";
-  const actionCenterCtaHref = input.unlockApplicationInvite
-    ? input.actionCenterCtaHref || baseApplicationHref
-    : input.actionCenterCtaHref || "";
+  const actionCenterCtaHref = input.unlockApplicationInvite ? baseApplicationHref : input.actionCenterCtaHref || "";
 
   const lead = await repo.updateLead(id, {
     ...(input.status ? { status: input.status } : {}),
