@@ -44,6 +44,8 @@ export const updateSlyderLeadSchema = createSlyderLeadSchema.partial().extend({
   actionCenterCtaLabel: z.string().trim().optional(),
   actionCenterCtaHref: z.string().trim().optional(),
   actionCenterUpdatedAt: z.string().datetime().optional(),
+  applicationInviteUnlocked: z.boolean().optional(),
+  applicationInviteUnlockedAt: z.string().datetime().optional(),
 });
 
 export type UpdateSlyderLeadInput = z.infer<typeof updateSlyderLeadSchema>;
@@ -54,6 +56,7 @@ export const slyderLeadActionCenterSchema = z.object({
   actionCenterBody: z.string().trim().min(8, "Action details are required"),
   actionCenterCtaLabel: z.string().trim().optional(),
   actionCenterCtaHref: z.string().trim().optional(),
+  unlockApplicationInvite: z.boolean().default(false),
   notifyEmail: z.boolean().default(true),
   notifyWhatsapp: z.boolean().default(true),
 });

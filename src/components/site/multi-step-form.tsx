@@ -612,6 +612,7 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
     startTransition(async () => {
       const payload = {
         ...result.data,
+        leadId: leadId ?? window.localStorage.getItem("slyde-slyder-lead-id"),
         workflow: {
           stage: "application_submitted",
           nextExpectedStage: "admin_review",
@@ -654,8 +655,8 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
         return;
       }
 
-      const responseData = (await response.json().catch(() => null)) as { id?: string } | null;
-      const applicationId = responseData?.id;
+      const responseData = (await response.json().catch(() => null)) as { id?: string; applicationId?: string } | null;
+      const applicationId = responseData?.applicationId ?? responseData?.id;
 
       // Convert lead to submitted state if we have a lead ID
       const activeLeadId = leadId ?? window.localStorage.getItem("slyde-slyder-lead-id");

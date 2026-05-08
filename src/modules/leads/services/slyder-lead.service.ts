@@ -292,27 +292,57 @@ export async function updateSlyderLeadActionCenter(
   const existingLead = await repo.findLeadById(id);
   if (!existingLead) throw new Error("Slyder lead not found");
 
+  const now = new Date().toISOString();
+  const baseApplicationHref = `/become-a-slyder/apply?leadId=${encodeURIComponent(id)}`;
+  const actionCenterCtaLabel = input.unlockApplicationInvite
+    ? input.actionCenterCtaLabel || "Start Slyder application"
+    : input.actionCenterCtaLabel || "";
+  const actionCenterCtaHref = input.unlockApplicationInvite
+    ? input.actionCenterCtaHref || baseApplicationHref
+    : input.actionCenterCtaHref || "";
+
   const lead = await repo.updateLead(id, {
     ...(input.status ? { status: input.status } : {}),
     actionCenterTitle: input.actionCenterTitle,
     actionCenterBody: input.actionCenterBody,
-    actionCenterCtaLabel: input.actionCenterCtaLabel || "",
-    actionCenterCtaHref: input.actionCenterCtaHref || "",
-    actionCenterUpdatedAt: new Date().toISOString(),
-    lastContactedAt: new Date().toISOString(),
+    actionCenterCtaLabel,
+    actionCenterCtaHref,
+    actionCenterUpdatedAt: now,
+    lastContactedAt: now,
+    ...(input.unlockApplicationInvite
+      ? {
+          applicationInviteUnlocked: true,
+          applicationInviteUnlockedAt: now,
+        }
+      : {}),
   });
 
-  const notifications = await sendSlyderLeadActionCenterNotifications(lead, input, { triggeredByUserId });
+  const notifications = await sendSlyderLeadActionCenterNotifications(
+    lead,
+    {
+      ...input,
+      actionCenterCtaLabel,
+      actionCenterCtaHref,
+    },
+    { triggeredByUserId },
+  );
 
   return {
     leadId: lead.id,
     status: lead.status,
     actionCenterUpdatedAt: lead.actionCenterUpdatedAt?.toISOString() ?? null,
+    applicationInviteUnlocked: lead.applicationInviteUnlocked,
     notifications,
   };
 }
 
 export async function convertSlyderLead(input: ConvertSlyderLeadInput) {
+  const lead = await repo.findLeadById(input.leadId);
+  if (!lead) throw new Error("Slyder lead not found");
+  if (!lead.applicationInviteUnlocked) {
+    throw new Error("This Slyder lead has not been invited to continue the full application yet.");
+  }
+
   const updateData: UpdateSlyderLeadInput = {
     status: input.status,
     ...(input.applicationId ? { applicationId: input.applicationId } : {}),

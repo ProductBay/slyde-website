@@ -362,7 +362,13 @@ export async function listAdminApplications(filters: {
   }
   if (filters.status) items = items.filter((item) => item.applicationStatus === filters.status);
   if (filters.parish) items = items.filter((item) => item.parish === filters.parish);
-  if (filters.zone) items = items.filter((item) => item.zoneId === filters.zone);
+  if (filters.zone) {
+    const selectedZone = store.coverageZones.find((zone) => zone.id === filters.zone);
+    items = items.filter((item) =>
+      item.zoneId === filters.zone ||
+      (selectedZone ? item.zoneName.toLowerCase() === selectedZone.name.toLowerCase() : false),
+    );
+  }
   if (filters.courierType) items = items.filter((item) => item.courierType === filters.courierType);
   if (filters.notificationStatus) {
     items = items.filter((item) => item.whatsappStatus === filters.notificationStatus || item.emailStatus === filters.notificationStatus);

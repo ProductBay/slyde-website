@@ -8,6 +8,7 @@ import {
 } from "@/modules/onboarding/services/slyde-app-sync-queue.service";
 import { shouldSyncToExternalSlydeApp } from "@/modules/onboarding/services/slyde-app-sync.service";
 import { protectPublicRoute } from "@/server/security/public-route-protection";
+import { findLeadById } from "@/modules/leads/repositories/slyder-lead.repository";
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +21,16 @@ export async function POST(request: Request) {
     if (protection) return protection;
 
     const json = await request.json();
+    const leadId = typeof json?.leadId === "string" ? json.leadId : "";
+    if (!leadId) {
+      return NextResponse.json({ error: "A SLYDE admin invite is required before submitting the full Slyder application." }, { status: 403 });
+    }
+
+    const lead = await findLeadById(leadId);
+    if (!lead?.applicationInviteUnlocked) {
+      return NextResponse.json({ error: "Your full Slyder application is not unlocked yet. Please wait for SLYDE to send your next step." }, { status: 403 });
+    }
+
     const parsed = publicSlyderApplicationSchema.safeParse(json);
 
     if (!parsed.success) {

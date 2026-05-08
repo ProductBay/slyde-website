@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BellRing, Send, X } from "lucide-react";
+import { BellRing, CheckCircle2, Lock, Send, X } from "lucide-react";
 
 const statuses = [
   "NEW",
@@ -46,10 +46,11 @@ const messageSuggestions = [
   {
     label: "Invite to apply",
     status: "QUALIFIED",
-    title: "You are invited to continue your Slyder application",
-    body: "SLYDE is ready for you to continue from your lead reservation into the full Slyder application. Use the button below only if you are ready to provide the requested application details.",
-    ctaLabel: "Continue application",
-    ctaHref: "/join/slyder",
+    title: "Your next Slyder application step is unlocked",
+    body: "SLYDE has reviewed your lead reservation and is ready for you to continue into the full Slyder application. Use the button below to complete the next step. Please avoid duplicate submissions and use this official link.",
+    ctaLabel: "Start Slyder application",
+    ctaHref: "",
+    unlockApplicationInvite: true,
   },
   {
     label: "Under review",
@@ -76,6 +77,7 @@ type SlyderLeadActionCenterActionsProps = {
   currentBody?: string | null;
   currentCtaLabel?: string | null;
   currentCtaHref?: string | null;
+  applicationInviteUnlocked?: boolean;
   devAdminKey?: string;
 };
 
@@ -86,6 +88,7 @@ export function SlyderLeadActionCenterActions({
   currentBody,
   currentCtaLabel,
   currentCtaHref,
+  applicationInviteUnlocked = false,
   devAdminKey,
 }: SlyderLeadActionCenterActionsProps) {
   const router = useRouter();
@@ -96,6 +99,7 @@ export function SlyderLeadActionCenterActions({
   const [body, setBody] = useState(currentBody || "");
   const [ctaLabel, setCtaLabel] = useState(currentCtaLabel || "");
   const [ctaHref, setCtaHref] = useState(currentCtaHref || "");
+  const [unlockApplicationInvite, setUnlockApplicationInvite] = useState(applicationInviteUnlocked);
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifyWhatsapp, setNotifyWhatsapp] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -114,6 +118,7 @@ export function SlyderLeadActionCenterActions({
     setBody(suggestion.body);
     setCtaLabel(suggestion.ctaLabel);
     setCtaHref(suggestion.ctaHref);
+    setUnlockApplicationInvite("unlockApplicationInvite" in suggestion ? suggestion.unlockApplicationInvite : false);
     setError(null);
     setMessage(null);
   }
@@ -132,6 +137,7 @@ export function SlyderLeadActionCenterActions({
           actionCenterBody: body,
           actionCenterCtaLabel: ctaLabel || undefined,
           actionCenterCtaHref: ctaHref || undefined,
+          unlockApplicationInvite,
           notifyEmail,
           notifyWhatsapp,
         }),
@@ -181,6 +187,37 @@ export function SlyderLeadActionCenterActions({
       </div>
 
       <div className="mt-4 grid gap-3">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${unlockApplicationInvite ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-500"}`}>
+              {unlockApplicationInvite ? <CheckCircle2 className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <label className="flex cursor-pointer items-center justify-between gap-3">
+                <span>
+                  <span className="block text-sm font-semibold text-slate-950">Trigger next step</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-600">
+                    Unlock the full Slyder application for this lead and send the CTA to their dashboard, email, and WhatsApp.
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={unlockApplicationInvite}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setUnlockApplicationInvite(checked);
+                    if (checked) {
+                      setStatus("QUALIFIED");
+                      setCtaLabel((current) => current || "Start Slyder application");
+                      setCtaHref("");
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-2">
           <p className="text-xs font-semibold text-slate-600">Auto message suggestions</p>
           <div className="flex flex-wrap gap-2">

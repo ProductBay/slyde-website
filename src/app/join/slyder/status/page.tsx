@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Bell, CheckCircle2, Clock3, Info, Mail, MessageCircle } from "lucide-react";
+import { ArrowRight, Bell, CheckCircle2, Clock3, Info, Lock, Mail, MessageCircle } from "lucide-react";
 import { buildMetadata } from "@/lib/metadata";
 import { SlyderLeadPushOptIn } from "@/components/site/join/slyder-lead-push-opt-in";
 import { SlyderLeadUpdatesFeed } from "@/components/site/join/slyder-lead-updates-feed";
@@ -94,6 +94,17 @@ function formatUpdatedAt(value: Date | null) {
   }).format(value);
 }
 
+function ProgressStep({ label, complete }: { label: string; complete: boolean }) {
+  return (
+    <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${complete ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+        {complete ? <CheckCircle2 className="h-4 w-4" /> : <Clock3 className="h-4 w-4" />}
+      </span>
+      {label}
+    </div>
+  );
+}
+
 export default async function SlyderLeadStatusPage({ searchParams }: { searchParams?: SearchParams }) {
   const params = (await searchParams) ?? {};
   const leadId = readSingle(params.leadId);
@@ -161,12 +172,23 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
     body: "No action is needed right now. SLYDE will contact you if there is a next step.",
     nextAction: "Watch this page, email, and WhatsApp for official SLYDE updates.",
   };
-  const applicationHref = `/join/slyder?leadId=${encodeURIComponent(lead.id)}`;
+  const applicationHref = `/become-a-slyder/apply?leadId=${encodeURIComponent(lead.id)}`;
   const actionCenterTitle = lead.actionCenterTitle || "Next action center";
   const actionCenterBody = lead.actionCenterBody || copy.nextAction;
   const actionCenterCtaLabel = lead.actionCenterCtaLabel || copy.action;
   const actionCenterCtaHref = lead.actionCenterCtaHref || (copy.action ? applicationHref : null);
   const actionCenterUpdatedAt = formatUpdatedAt(lead.actionCenterUpdatedAt);
+  const actionCtaIsApplication =
+    Boolean(actionCenterCtaHref) &&
+    (actionCenterCtaHref?.startsWith("/become-a-slyder/apply") || actionCenterCtaHref?.includes("/become-a-slyder/apply"));
+  const actionCtaEnabled = Boolean(actionCenterCtaLabel && actionCenterCtaHref) && (!actionCtaIsApplication || lead.applicationInviteUnlocked);
+  const progressSteps = [
+    { label: "Spot reserved", complete: true },
+    { label: "Qualification reviewed", complete: ["QUALIFIED", "STARTED_APPLICATION", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "ACTIVATED", "LIVE"].includes(lead.status) },
+    { label: "Admin next step sent", complete: lead.applicationInviteUnlocked },
+    { label: "Application started", complete: ["STARTED_APPLICATION", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "ACTIVATED", "LIVE"].includes(lead.status) },
+  ];
+  const progressPercent = Math.round((progressSteps.filter((step) => step.complete).length / progressSteps.length) * 100);
   const initialLatestPostAt =
     posts
       .map((post) => post.publishedAt || post.createdAt)
@@ -204,6 +226,29 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
             </div>
           </div>
 
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Slyder onboarding progress</p>
+                <p className="mt-1 text-sm font-semibold text-slate-950">
+                  {lead.applicationInviteUnlocked ? "Your next step is open" : "Your next step is waiting for SLYDE confirmation"}
+                </p>
+              </div>
+              <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${lead.applicationInviteUnlocked ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                {lead.applicationInviteUnlocked ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                {lead.applicationInviteUnlocked ? "Next step unlocked" : "Next step locked"}
+              </span>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-full rounded-full bg-sky-500" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {progressSteps.map((step) => (
+                <ProgressStep key={step.label} label={step.label} complete={step.complete} />
+              ))}
+            </div>
+          </div>
+
           <div className="mt-8 rounded-2xl border border-sky-100 bg-sky-50 p-5">
             <div className="flex items-start gap-3">
               <Bell className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" />
@@ -218,6 +263,7 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
                 </div>
                 <p className="mt-1 text-sm leading-6 text-slate-700">{actionCenterBody}</p>
                 {actionCenterCtaLabel && actionCenterCtaHref ? (
+                  actionCtaEnabled ? (
                   <Link
                     href={actionCenterCtaHref}
                     className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition duration-200 hover:-translate-y-0.5"
@@ -225,6 +271,17 @@ export default async function SlyderLeadStatusPage({ searchParams }: { searchPar
                     {actionCenterCtaLabel}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
+                  ) : (
+                    <div className="mt-4 inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-400">
+                      <Lock className="h-4 w-4" />
+                      {actionCenterCtaLabel}
+                    </div>
+                  )
+                ) : null}
+                {!lead.applicationInviteUnlocked && actionCtaIsApplication ? (
+                  <p className="mt-3 text-xs font-semibold text-amber-700">
+                    SLYDE must unlock this application step before the button becomes active.
+                  </p>
                 ) : null}
               </div>
             </div>

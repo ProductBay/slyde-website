@@ -5,6 +5,7 @@ import { PaymentInfoCard } from "@/components/site/payment-info-card";
 import { SectionHeading } from "@/components/site/section-heading";
 import { buildMetadata } from "@/lib/metadata";
 import { getSessionContext } from "@/server/auth/session";
+import { findLeadById } from "@/modules/leads/repositories/slyder-lead.repository";
 
 export const metadata: Metadata = buildMetadata(
   "Apply as a Slyder",
@@ -19,10 +20,19 @@ export default async function SlyderApplyPage({
 }) {
   const params = (await searchParams) ?? {};
   const leadId = typeof params.leadId === "string" ? params.leadId : null;
+  const lead = leadId ? await findLeadById(leadId).catch(() => null) : null;
+
+  if (!leadId || !lead) {
+    redirect("/join/slyder");
+  }
+
+  if (!lead.applicationInviteUnlocked) {
+    redirect(`/join/slyder/status?leadId=${encodeURIComponent(lead.id)}`);
+  }
 
   const session = await getSessionContext();
   if (!session?.user?.isEnabled) {
-    redirect("/login?next=/become-a-slyder/apply");
+    redirect(`/login?next=${encodeURIComponent(`/become-a-slyder/apply?leadId=${lead.id}`)}`);
   }
 
   return (

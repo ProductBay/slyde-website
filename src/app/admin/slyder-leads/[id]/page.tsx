@@ -138,6 +138,7 @@ export default async function AdminSlyderLeadDetailPage({ params }: { params: Pr
               currentBody={lead.actionCenterBody}
               currentCtaLabel={lead.actionCenterCtaLabel}
               currentCtaHref={lead.actionCenterCtaHref}
+              applicationInviteUnlocked={lead.applicationInviteUnlocked}
               devAdminKey={devAdminKey}
             />
           </div>

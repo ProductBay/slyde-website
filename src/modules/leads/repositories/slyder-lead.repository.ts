@@ -77,6 +77,8 @@ export async function updateLead(id: string, data: UpdateSlyderLeadInput) {
       ...(data.actionCenterCtaLabel !== undefined ? { actionCenterCtaLabel: data.actionCenterCtaLabel } : {}),
       ...(data.actionCenterCtaHref !== undefined ? { actionCenterCtaHref: data.actionCenterCtaHref } : {}),
       ...(data.actionCenterUpdatedAt !== undefined ? { actionCenterUpdatedAt: new Date(data.actionCenterUpdatedAt) } : {}),
+      ...(data.applicationInviteUnlocked !== undefined ? { applicationInviteUnlocked: data.applicationInviteUnlocked } : {}),
+      ...(data.applicationInviteUnlockedAt !== undefined ? { applicationInviteUnlockedAt: new Date(data.applicationInviteUnlockedAt) } : {}),
     },
   });
 }
@@ -203,12 +205,91 @@ export async function getFunnelMetrics() {
 }
 
 /**
- * Normalise a parish name for comparison:
- * lowercase, remove dots, collapse whitespace.
- * e.g. "St. James" → "st james", "St. Andrew" → "st andrew"
+ * Normalise a parish or major town name for comparison:
+ * lowercase, remove dots, collapse whitespace, and map major towns to parish keys.
+ * e.g. "St. James" -> "st james", "Spanish Town" -> "st catherine"
  */
+const PARISH_ALIASES: Record<string, string> = {
+  kingston: "kingston",
+  "new kingston": "kingston",
+  "downtown kingston": "kingston",
+  "cross roads": "kingston",
+  "st andrew": "st andrew",
+  "saint andrew": "st andrew",
+  "half way tree": "st andrew",
+  "half-way tree": "st andrew",
+  "constant spring": "st andrew",
+  liguanea: "st andrew",
+  papine: "st andrew",
+  "st thomas": "st thomas",
+  "saint thomas": "st thomas",
+  "morant bay": "st thomas",
+  yallahs: "st thomas",
+  "port morant": "st thomas",
+  portland: "portland",
+  "port antonio": "portland",
+  "buff bay": "portland",
+  manchioneal: "portland",
+  "st mary": "st mary",
+  "saint mary": "st mary",
+  "port maria": "st mary",
+  "annotto bay": "st mary",
+  oracabessa: "st mary",
+  "st ann": "st ann",
+  "saint ann": "st ann",
+  "ocho rios": "st ann",
+  "ochos rios": "st ann",
+  "st anns bay": "st ann",
+  "st ann's bay": "st ann",
+  "saint anns bay": "st ann",
+  "brown's town": "st ann",
+  "browns town": "st ann",
+  "runaway bay": "st ann",
+  trelawny: "trelawny",
+  falmouth: "trelawny",
+  "clarks town": "trelawny",
+  "clark's town": "trelawny",
+  wakefield: "trelawny",
+  "st james": "st james",
+  "saint james": "st james",
+  "montego bay": "st james",
+  ironshore: "st james",
+  "rose hall": "st james",
+  hanover: "hanover",
+  lucea: "hanover",
+  "green island": "hanover",
+  "sandy bay": "hanover",
+  westmoreland: "westmoreland",
+  westmorelan: "westmoreland",
+  "savanna la mar": "westmoreland",
+  "savanna-la-mar": "westmoreland",
+  negril: "westmoreland",
+  whithorn: "westmoreland",
+  "st elizabeth": "st elizabeth",
+  "saint elizabeth": "st elizabeth",
+  "black river": "st elizabeth",
+  "santa cruz": "st elizabeth",
+  junction: "st elizabeth",
+  manchester: "manchester",
+  mandeville: "manchester",
+  christiana: "manchester",
+  porus: "manchester",
+  clarendon: "clarendon",
+  "may pen": "clarendon",
+  chapelton: "clarendon",
+  "lionel town": "clarendon",
+  "st catherine": "st catherine",
+  "saint catherine": "st catherine",
+  "spanish town": "st catherine",
+  portmore: "st catherine",
+  "old harbour": "st catherine",
+  "old harbor": "st catherine",
+  linstead: "st catherine",
+};
+
 export function normalizeParishKey(p: string): string {
-  return p.toLowerCase().replace(/\./g, "").replace(/\s+/g, " ").trim();
+  const normalized = p.toLowerCase().replace(/\./g, "").replace(/\s+/g, " ").trim();
+  return PARISH_ALIASES[normalized] ?? normalized;
 }
 
 /**
