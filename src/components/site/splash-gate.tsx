@@ -143,6 +143,19 @@ export function SplashGate() {
           0%,100% { filter:drop-shadow(0 0 22px rgba(0,132,194,0.38)); }
           50%      { filter:drop-shadow(0 0 50px rgba(0,132,194,0.70)); }
         }
+        @keyframes sg-glide-in {
+          0%   { opacity:0; transform:translateY(28px) scale(0.78); filter:drop-shadow(0 0 0 rgba(34,197,94,0)); }
+          62%  { opacity:1; transform:translateY(-4px) scale(1.04); filter:drop-shadow(0 28px 46px rgba(34,197,94,0.22)); }
+          100% { opacity:1; transform:translateY(0) scale(1); filter:drop-shadow(0 24px 40px rgba(14,165,233,0.25)); }
+        }
+        @keyframes sg-glide-hover {
+          0%,100% { transform:translateY(0); }
+          50%     { transform:translateY(-10px); }
+        }
+        @keyframes sg-glide-aura {
+          0%,100% { opacity:0.34; transform:scale(0.92); }
+          50%     { opacity:0.72; transform:scale(1.08); }
+        }
         @keyframes sg-ring1 {
           0%   { transform:scale(0.82); opacity:0.65; }
           100% { transform:scale(1.85); opacity:0; }
@@ -200,7 +213,7 @@ export function SplashGate() {
         role="dialog"
         aria-modal="true"
         aria-label="Welcome to SLYDE"
-        className="fixed inset-0 z-[9999] flex flex-col items-center justify-start overflow-y-auto bg-[#050c18] sm:justify-center"
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-y-auto bg-[#050c18] p-3 sm:p-4"
         style={{
           animation: phase === "exit" ? "sg-fade-out 0.56s ease forwards" : "none",
         }}
@@ -232,7 +245,7 @@ export function SplashGate() {
 
         {/* ── SPLASH PHASE ── */}
         <div
-          className="relative flex flex-col items-center"
+          className="relative flex w-full max-w-5xl flex-col items-center px-4 py-6 sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-10"
           style={{
             opacity: phase !== "splash" ? 0 : 1,
             transform: phase !== "splash" ? "scale(0.9) translateY(-24px)" : "scale(1)",
@@ -276,71 +289,122 @@ export function SplashGate() {
             ))}
           </div>
 
-          {/* Logo */}
-          <div
-            style={{
-              animation: "sg-logo-in 1.15s cubic-bezier(0.22,1,0.36,1) forwards, sg-breathe 3.2s ease-in-out 1.3s infinite",
-            }}
-          >
-            <Image
-              src="/images/slyde-logo.png"
-              alt="SLYDE Logistics"
-              width={240}
-              height={170}
-              priority
-              className="block brightness-0 invert"
-            />
-          </div>
-
-          {/* Tagline */}
-          <p
-            className="mt-5 text-[11px] font-bold uppercase tracking-[0.36em] text-sky-400/75"
-            style={{ animation: "sg-tagline 0.7s ease 1.1s both" }}
-          >
-            Jamaica-first logistics network
-          </p>
-
-          {/* Progress bar */}
-          <div className="mt-9 h-[2px] w-44 overflow-hidden rounded-full bg-white/8">
+          <div className="relative z-10 flex flex-col items-center sm:items-start">
+            {/* Logo */}
             <div
-              className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
-              style={{ animation: "sg-progress 2.7s linear 0.25s both" }}
-            />
+              style={{
+                animation: "sg-logo-in 1.15s cubic-bezier(0.22,1,0.36,1) forwards, sg-breathe 3.2s ease-in-out 1.3s infinite",
+              }}
+            >
+              <Image
+                src="/images/slyde-logo.png"
+                alt="SLYDE Logistics"
+                width={240}
+                height={170}
+                priority
+                className="block brightness-0 invert"
+              />
+            </div>
+
+            {/* Tagline */}
+            <p
+              className="mt-5 text-center text-[11px] font-bold uppercase tracking-[0.36em] text-sky-400/75 sm:text-left"
+              style={{ animation: "sg-tagline 0.7s ease 1.1s both" }}
+            >
+              Jamaica-first logistics network
+            </p>
+
+            <div
+              className="mt-4 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-center text-xs font-semibold text-slate-200 shadow-[0_18px_45px_-28px_rgba(14,165,233,0.7)] backdrop-blur sm:text-left"
+              style={{ animation: "sg-tagline 0.7s ease 1.35s both" }}
+            >
+              Glide is ready to help you join the network.
+            </div>
+
+            {/* Progress bar */}
+            <div className="mt-8 h-[2px] w-44 overflow-hidden rounded-full bg-white/8">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
+                style={{ animation: "sg-progress 2.7s linear 0.25s both" }}
+              />
+            </div>
+
+            {/* Skip hint */}
+            <button
+              onClick={dismiss}
+              className="mt-6 text-[11px] font-medium text-slate-500 transition hover:text-slate-300"
+              style={{ animation: "sg-skip 0.6s ease 1.8s both" }}
+            >
+              Skip intro
+            </button>
           </div>
 
-          {/* Skip hint */}
-          <button
-            onClick={dismiss}
-            className="mt-6 text-[11px] font-medium text-slate-500 transition hover:text-slate-300"
-            style={{ animation: "sg-skip 0.6s ease 1.8s both" }}
+          <div
+            className="relative z-10 mt-6 h-64 w-56 sm:mt-0 sm:h-[360px] sm:w-[310px] lg:h-[390px] lg:w-[330px]"
+            style={{ animation: "sg-glide-in 1.05s cubic-bezier(0.22,1,0.36,1) 0.35s both" }}
+            aria-hidden="true"
           >
-            Skip intro
-          </button>
+            <div
+              className="absolute inset-x-7 bottom-5 h-24 rounded-full bg-green-400/20 blur-3xl"
+              style={{ animation: "sg-glide-aura 2.8s ease-in-out 1.2s infinite" }}
+            />
+            <div style={{ animation: "sg-glide-hover 3.6s ease-in-out 1.4s infinite" }}>
+              <Image
+                src="/images/glide-whatsapp-cta.png"
+                alt=""
+                width={430}
+                height={560}
+                priority
+                className="h-full w-full object-cover object-[50%_20%]"
+              />
+            </div>
+            <div className="absolute bottom-6 right-1 rounded-full border border-green-300/40 bg-green-500 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_12px_26px_-12px_rgba(34,197,94,0.9)] sm:bottom-12 sm:right-0">
+              Meet Glide
+            </div>
+          </div>
         </div>
 
         {/* ── MODAL PHASE ── */}
         {phase !== "splash" && (
           <div
-            className="relative w-full max-w-[820px] px-3 py-4 sm:px-5 sm:py-6"
+            className="relative flex min-h-full w-full max-w-[860px] items-center px-0 py-2 sm:px-2"
             style={{ animation: "sg-modal-up 0.52s cubic-bezier(0.22,1,0.36,1) both" }}
           >
             {/* Sheet */}
-            <div className="overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[#0b1626]/95 shadow-[0_48px_140px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+            <div className="max-h-[calc(100dvh-1.5rem)] w-full overflow-y-auto overflow-x-hidden rounded-[1.5rem] border border-white/[0.07] bg-[#0b1626]/95 shadow-[0_48px_140px_rgba(0,0,0,0.75)] backdrop-blur-xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem]">
 
               {/* Header */}
-              <div className="border-b border-white/[0.07] px-4 py-4 sm:px-8 sm:py-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-sky-400">
-                  Welcome to SLYDE
-                </p>
-                <h2 className="mt-2 text-xl font-extrabold leading-tight text-white sm:text-2xl">
-                  Join Jamaica&apos;s New Delivery Infrastructure
-                </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  Earn independently as a Slyder or power deliveries for your business.
-                </p>
+              <div className="relative border-b border-white/[0.07] px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
+                <div className="grid items-center gap-4 sm:grid-cols-[1fr_112px]">
+                  <div className="relative z-10 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-sky-400">
+                      Welcome to SLYDE
+                    </p>
+                    <h2 className="mt-2 text-xl font-extrabold leading-tight text-white sm:text-2xl lg:text-[1.7rem]">
+                      Glide is here to get you moving
+                    </h2>
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-400">
+                      Join Jamaica&apos;s delivery infrastructure as a Slyder, merchant, or supporter of the network.
+                    </p>
+                  </div>
+                  <div className="pointer-events-none hidden justify-self-end sm:block" aria-hidden="true">
+                    <div className="relative h-24 w-24 overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-[0_20px_42px_-24px_rgba(34,197,94,0.8)] lg:h-28 lg:w-28">
+                      <Image
+                        src="/images/glide-whatsapp-cta.png"
+                        alt=""
+                        width={150}
+                        height={150}
+                        className="h-full w-full scale-[1.55] object-cover object-[50%_18%]"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent px-2 pb-1.5 pt-6 text-center text-[9px] font-black uppercase tracking-[0.18em] text-green-300">
+                        Glide
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="p-3 sm:p-6">
+              <div className="p-3 sm:p-4 lg:p-5">
                 {/* ── Featured two (highlighted) ── */}
                 <div className="mb-3 grid gap-2.5 sm:grid-cols-2">
                   {FEATURED.map((s, i) => {
@@ -350,14 +414,14 @@ export function SplashGate() {
                         <div
                           key={s.id}
                           style={{ animation: `sg-card-in 0.48s ease ${0.08 + i * 0.1}s both` }}
-                          className={`group relative overflow-hidden rounded-2xl border-2 p-4 sm:p-5 transition duration-200 hover:-translate-y-0.5 shadow-[0_0_40px_-8px_rgba(14,165,233,0.35)] ${s.border}`}
+                          className={`group relative overflow-hidden rounded-2xl border-2 p-4 transition duration-200 hover:-translate-y-0.5 shadow-[0_0_40px_-8px_rgba(14,165,233,0.35)] lg:p-5 ${s.border}`}
                         >
                           <div className={`absolute inset-0 bg-gradient-to-br ${s.card}`} />
                           {/* Top glow line */}
                           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
                           <div className="relative">
                             <div className="flex items-start justify-between gap-3">
-                              <span className={`inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl shadow-[0_0_20px_-4px_rgba(14,165,233,0.5)] ${s.iconRing}`}>
+                              <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl shadow-[0_0_20px_-4px_rgba(14,165,233,0.5)] lg:h-12 lg:w-12 ${s.iconRing}`}>
                                 <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                               </span>
                               <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] ${s.badge}`}>
@@ -366,7 +430,7 @@ export function SplashGate() {
                               </span>
                             </div>
                             <h3 className="mt-3 text-base font-extrabold text-white sm:mt-4 sm:text-lg">{s.title}</h3>
-                            <p className="mt-1 hidden text-xs leading-[1.6] text-slate-300 sm:block">{s.description}</p>
+                            <p className="mt-1 text-xs leading-[1.55] text-slate-300 sm:block">{s.description}</p>
                             {/* Founding counter — visible on all screen sizes */}
                             <div className="mt-3">
                               <div className="mb-1.5 flex items-center justify-between text-[10px] text-slate-400">
@@ -404,14 +468,14 @@ export function SplashGate() {
                       <div
                         key={s.id}
                         style={{ animation: `sg-card-in 0.48s ease ${0.08 + i * 0.1}s both` }}
-                        className={`group relative overflow-hidden rounded-2xl border-2 p-4 sm:p-5 transition duration-200 hover:-translate-y-0.5 shadow-[0_0_32px_-8px_rgba(16,185,129,0.25)] ${s.border}`}
+                        className={`group relative overflow-hidden rounded-2xl border-2 p-4 transition duration-200 hover:-translate-y-0.5 shadow-[0_0_32px_-8px_rgba(16,185,129,0.25)] lg:p-5 ${s.border}`}
                       >
                         <div className={`absolute inset-0 bg-gradient-to-br ${s.card}`} />
                         {/* Top glow line */}
                         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent" />
                         <div className="relative">
                           <div className="flex items-start justify-between gap-3">
-                            <span className={`inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl shadow-[0_0_20px_-4px_rgba(16,185,129,0.4)] ${s.iconRing}`}>
+                            <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl shadow-[0_0_20px_-4px_rgba(16,185,129,0.4)] lg:h-12 lg:w-12 ${s.iconRing}`}>
                               <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                             </span>
                             <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] ${s.badge}`}>
@@ -419,7 +483,7 @@ export function SplashGate() {
                             </span>
                           </div>
                           <h3 className="mt-3 text-base font-extrabold text-white sm:mt-4 sm:text-lg">{s.title}</h3>
-                          <p className="mt-1 hidden text-xs leading-[1.6] text-slate-300 sm:block">{s.description}</p>
+                          <p className="mt-1 text-xs leading-[1.55] text-slate-300 sm:block">{s.description}</p>
                           <p className="mt-2 text-[10px] font-medium text-emerald-400/80">No commitment required &middot; Full onboarding comes after &middot; WhatsApp updates</p>
                           <div className="mt-3 grid grid-cols-2 gap-2">
                             <Link
@@ -447,7 +511,7 @@ export function SplashGate() {
                 </div>
 
                 {/* ── Secondary four ── */}
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                   {SECONDARY.map((s, i) => {
                     const Icon = s.icon;
                     return (
@@ -456,7 +520,7 @@ export function SplashGate() {
                         href={s.href}
                         onClick={dismiss}
                         style={{ animation: `sg-card-in 0.48s ease ${0.28 + i * 0.07}s both` }}
-                        className={`group relative overflow-hidden rounded-xl border p-3 sm:p-4 transition duration-200 hover:-translate-y-0.5 ${s.border}`}
+                        className={`group relative overflow-hidden rounded-xl border p-3 transition duration-200 hover:-translate-y-0.5 lg:p-4 ${s.border}`}
                       >
                         <div className={`absolute inset-0 bg-gradient-to-br ${s.card}`} />
                         <div className="relative">
@@ -464,7 +528,7 @@ export function SplashGate() {
                             <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           </span>
                           <h3 className="mt-2 text-[11px] font-bold text-white leading-snug sm:mt-3 sm:text-sm">{s.title}</h3>
-                          <p className="mt-1 hidden text-[11px] leading-[1.55] text-slate-500 sm:block">{s.description}</p>
+                          <p className="mt-1 hidden text-[11px] leading-[1.55] text-slate-500 md:block">{s.description}</p>
                           <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-sky-400 transition-all duration-150 group-hover:gap-2 sm:mt-3 sm:text-[11px]">
                             {s.cta}
                             <ArrowRight className="h-3 w-3" />

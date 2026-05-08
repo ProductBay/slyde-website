@@ -8,7 +8,6 @@ import type {
   OnboardingStore,
   PublicSlyderReferral,
   SetupStatusResponse,
-  StoredUser,
 } from "@/types/backend/onboarding";
 import type { SlyderLead, SlyderReferral } from "@prisma/client";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
@@ -2143,7 +2142,7 @@ export async function sendPublicReferralInviteNotification(referral: PublicSlyde
   if (!referral.referredEmail) return null;
 
   const baseUrl = getWebsiteBaseUrl();
-  const applicationUrl = `${baseUrl}/join/slyder?ref=${encodeURIComponent(referral.referralCode)}`;
+  const applicationUrl = `${baseUrl}/become-a-slyder/apply?ref=${encodeURIComponent(referral.referralCode)}`;
 
   return sendTemplateNotification({
     templateKey: "public_referral_invite_email",
@@ -2320,63 +2319,10 @@ export async function sendUserRegistrationWelcomeNotification(
   const user = store.users.find((item) => item.id === userId);
   if (!user) throw new Error("User not found for welcome notification");
 
-  const actorType = resolveActorTypeForUser(user);
-  const { variables, payload } = buildUserRegistrationWelcomeContext(user);
-
-  const { event, isDuplicate } = createTriggerEvent(store, {
-    eventKey: `user_registration_welcome:${user.id}:${user.userType}`,
-    actorType,
-    actorId: user.id,
-    payload,
-  });
-  if (isDuplicate) return null;
-
-  const results = await Promise.all([
-    sendTemplateNotificationInStore(store, {
-      templateKey: "user_registration_welcome_email",
-      actorType,
-      actorId: user.id,
-      recipient: user.email,
-      recipientName: user.fullName,
-      userId: user.id,
-      variables,
-      payload,
-      triggerEventId: event.id,
-      triggerEventKey: event.eventKey,
-      dedupeKey: `user_registration_welcome:email:${user.id}:${user.userType}`,
-    }),
-    sendTemplateNotificationInStore(store, {
-      templateKey: "user_registration_welcome_whatsapp",
-      actorType,
-      actorId: user.id,
-      recipient: user.phone,
-      recipientName: user.fullName,
-      userId: user.id,
-      variables,
-      payload,
-      triggerEventId: event.id,
-      triggerEventKey: event.eventKey,
-      dedupeKey: `user_registration_welcome:whatsapp:${user.id}:${user.userType}`,
-    }),
-  ]);
-
-  updateTriggerStatus(
-    store,
-    event.id,
-    results.some((result) => result.status === "failed") ? "partially_processed" : "processed",
-    results.find((result) => result.status === "failed")?.failureReason,
-  );
-  return results;
-}
-
-function buildUserRegistrationWelcomeContext(user: StoredUser) {
   const baseUrl = getWebsiteBaseUrl();
+  const actorType = resolveActorTypeForUser(user);
   const profileUrl = resolveProfileUrl(baseUrl, user);
   const supportUrl = `${baseUrl}/support`;
-  const joinSlyderUrl = `${baseUrl}/join/slyder`;
-  const merchantSignupUrl = `${baseUrl}/join/merchant`;
-  const trackUrl = `${baseUrl}/track`;
-  const coverageUrl = `${baseUrl}/coverage`;
   const becomeSlyderUrl = `${baseUrl}/become-a-slyder`;
   const businessPartnerUrl = `${baseUrl}/for-businesses`;
   const dispatchFromHomeUrl = `${baseUrl}/dispatch-from-home`;
@@ -2384,32 +2330,88 @@ function buildUserRegistrationWelcomeContext(user: StoredUser) {
   const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
   const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
 
-  const variables = {
-    fullName: user.fullName,
-    accountTypeLabel: resolveAccountTypeLabel(user),
-    profileUrl,
-    supportUrl,
-    joinSlyderUrl,
-    merchantSignupUrl,
-    trackUrl,
-    coverageUrl,
-    becomeSlyderUrl,
-    businessPartnerUrl,
-    dispatchFromHomeUrl,
-    referUrl,
-    supportEmail,
-    supportPhone,
-  };
-
-  return {
-    variables,
+  const { event, isDuplicate } = createTriggerEvent(store, {
+    eventKey: `user_registration_welcome:${user.id}:${user.userType}`,
+    actorType,
+    actorId: user.id,
     payload: {
       profileUrl,
       supportUrl,
-      joinSlyderUrl,
-      merchantSignupUrl,
-      trackUrl,
-      coverageUrl,
+      becomeSlyderUrl,
+      businessPartnerUrl,
+      dispatchFromHomeUrl,
+      referUrl,
+    },
+  });
+  if (isDuplicate) return null;
+
+  const result = await sendTemplateNotificationInStore(store, {
+    templateKey: "user_registration_welcome_email",
+    actorType,
+    actorId: user.id,
+    recipient: user.email,
+    recipientName: user.fullName,
+    userId: user.id,
+    variables: {
+      fullName: user.fullName,
+      accountTypeLabel: resolveAccountTypeLabel(user),
+      profileUrl,
+      supportUrl,
+      becomeSlyderUrl,
+      businessPartnerUrl,
+      dispatchFromHomeUrl,
+      referUrl,
+      supportEmail,
+      supportPhone,
+    },
+    payload: {
+      profileUrl,
+      supportUrl,
+      becomeSlyderUrl,
+      businessPartnerUrl,
+      dispatchFromHomeUrl,
+      referUrl,
+      userType: user.userType,
+      roles: user.roles,
+    },
+    triggerEventId: event.id,
+    triggerEventKey: event.eventKey,
+    dedupeKey: `user_registration_welcome:email:${user.id}:${user.userType}`,
+  });
+
+  updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
+  return result;
+}
+
+function buildUserRegistrationWelcomeContext(user: OnboardingStore["users"][number]) {
+  const baseUrl = getWebsiteBaseUrl();
+  const actorType = resolveActorTypeForUser(user);
+  const profileUrl = resolveProfileUrl(baseUrl, user);
+  const supportUrl = `${baseUrl}/support`;
+  const becomeSlyderUrl = `${baseUrl}/become-a-slyder`;
+  const businessPartnerUrl = `${baseUrl}/for-businesses`;
+  const dispatchFromHomeUrl = `${baseUrl}/dispatch-from-home`;
+  const referUrl = `${baseUrl}/refer`;
+  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
+  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
+
+  return {
+    actorType,
+    variables: {
+      fullName: user.fullName,
+      accountTypeLabel: resolveAccountTypeLabel(user),
+      profileUrl,
+      supportUrl,
+      becomeSlyderUrl,
+      businessPartnerUrl,
+      dispatchFromHomeUrl,
+      referUrl,
+      supportEmail,
+      supportPhone,
+    },
+    payload: {
+      profileUrl,
+      supportUrl,
       becomeSlyderUrl,
       businessPartnerUrl,
       dispatchFromHomeUrl,
@@ -2428,8 +2430,7 @@ export async function resendUserRegistrationWelcomeEmail(
   const user = store.users.find((item) => item.id === userId);
   if (!user) throw new Error("User not found for welcome notification");
 
-  const actorType = resolveActorTypeForUser(user);
-  const { variables, payload } = buildUserRegistrationWelcomeContext(user);
+  const { actorType, variables, payload } = buildUserRegistrationWelcomeContext(user);
 
   return sendTemplateNotificationInStore(store, {
     templateKey: "user_registration_welcome_email",
@@ -2440,6 +2441,7 @@ export async function resendUserRegistrationWelcomeEmail(
     userId: user.id,
     variables,
     payload,
+    dedupeKey: `user_registration_welcome:email:${user.id}:${user.userType}:resend:${Date.now()}`,
     triggeredByUserId,
     createdBySystem: false,
     force: true,
@@ -2452,10 +2454,7 @@ export function getUserRegistrationWelcomeWhatsappMessage(store: OnboardingStore
 
   const { variables } = buildUserRegistrationWelcomeContext(user);
   const { body } = renderTemplate(store, "user_registration_welcome_whatsapp", variables);
-  return {
-    recipient: user.phone,
-    body,
-  };
+  return { recipient: user.phone, body };
 }
 
 export async function sendSlyderDocumentsRequestedNotification(store: OnboardingStore, applicationId: string, _userId: string | undefined, requestedDocumentTypes: string[], notes: string) {

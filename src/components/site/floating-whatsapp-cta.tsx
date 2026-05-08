@@ -12,7 +12,7 @@ export function FloatingWhatsAppCta() {
   return (
     <div className="pointer-events-none fixed bottom-5 right-4 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
       <div className="hidden rounded-full border border-emerald-100 bg-white/95 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)] backdrop-blur md:block">
-        Questions? Chat with Glide
+        Questions? Chat with GLYDE
       </div>
       <a
         href={whatsappHref}
@@ -25,13 +25,12 @@ export function FloatingWhatsAppCta() {
         <span className="relative inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-900/10 bg-slate-950 sm:h-16 sm:w-16">
           <span className="absolute inset-[-8px] rounded-full bg-green-300/25 opacity-0 transition group-hover:opacity-100 sm:animate-[whatsappPulse_2.6s_ease-out_infinite]" />
           <Image
-            src="/images/glide-whatsapp-cta.png"
-            alt=""
+            src="/images/glyde-whatsapp-cta.png"
+            alt="GLYDE SLYDE assistant"
             width={96}
             height={96}
             className="relative h-full w-full scale-[1.9] object-cover object-[50%_24%]"
             priority={false}
-            aria-hidden="true"
           />
           <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-green-500 text-[9px] font-black leading-none text-white shadow-md">
             WA

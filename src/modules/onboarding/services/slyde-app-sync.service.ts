@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import type { PublicSlyderApplicationInput } from "@/modules/onboarding/schemas/onboarding.schemas";
 import { resolveUploadPath } from "@/server/uploads/storage";
+import type { OnboardingStore, SetupStatusResponse, SlyderApplication, SlyderProfile, StoredUser } from "@/types/backend/onboarding";
 
 export type SyncedSlydeAppApplication = {
   userId: string;
@@ -18,12 +19,50 @@ export type SyncedSlydeAppReviewDecision = {
   syncedAt: string;
 };
 
+export type SlydeAppLifecycleEventType =
+  | "slyder_activation_completed"
+  | "slyder_legal_accepted"
+  | "slyder_setup_updated"
+  | "slyder_readiness_updated"
+  | "slyder_onboarding_state_changed"
+  | "slyder_onboarding_completed";
+
+export type SlydeAppLifecycleEventPayload = {
+  eventId: string;
+  eventType: SlydeAppLifecycleEventType;
+  occurredAt: string;
+  sourceSystem: "slyde_website";
+  correlationId: string;
+  idempotencyKey: string;
+  applicationId: string;
+  linkedUserId?: string;
+  linkedSlyderProfileId?: string;
+  email?: string;
+  accountStatus: string;
+  onboardingStatus: string;
+  readinessStatus: string;
+  canGoOnline: boolean;
+  canReceiveOrders: boolean;
+  metadata?: Record<string, unknown>;
+};
+
+const DEV_SYNC_SECRET = "slyde-public-sync-dev-key";
+const DEFAULT_DEV_SYNC_BASE_URL = "http://localhost:3000";
+
+function isDevelopmentRuntime() {
+  return process.env.NODE_ENV !== "production";
+}
+
 function getAppSyncConfig() {
-  const baseUrl = process.env.SLYDE_APP_SYNC_BASE_URL || "http://localhost:3000";
-  const secret = process.env.SLYDE_APP_SYNC_SECRET || "slyde-public-sync-dev-key";
+  const configuredBaseUrl = process.env.SLYDE_APP_SYNC_BASE_URL?.trim();
+  const configuredSecret = process.env.SLYDE_APP_SYNC_SECRET?.trim();
+  const baseUrl = configuredBaseUrl || (isDevelopmentRuntime() ? DEFAULT_DEV_SYNC_BASE_URL : "");
+  const secret = configuredSecret || (isDevelopmentRuntime() ? DEV_SYNC_SECRET : "");
   return {
     baseUrl: baseUrl.replace(/\/+$/, ""),
     secret,
+    configuredBaseUrl,
+    configuredSecret,
   };
 }
 
@@ -38,9 +77,58 @@ function originFromUrl(value?: string) {
 }
 
 export function shouldSyncToExternalSlydeApp() {
-  const appSyncOrigin = originFromUrl(getAppSyncConfig().baseUrl);
+  return getSlydeAppSyncReadiness().enabled;
+}
+
+function isLocalOrigin(origin?: string) {
+  return Boolean(origin && /localhost|127\.0\.0\.1|\[::1\]/i.test(origin));
+}
+
+export function getSlydeAppSyncReadiness() {
+  const config = getAppSyncConfig();
+  const appSyncOrigin = originFromUrl(config.baseUrl);
   const websiteOrigin = originFromUrl(process.env.SLYDE_WEBSITE_BASE_URL);
-  return Boolean(appSyncOrigin && appSyncOrigin !== websiteOrigin);
+  const reasons: string[] = [];
+  const warnings: string[] = [];
+  const production = process.env.NODE_ENV === "production";
+
+  if (!appSyncOrigin) {
+    reasons.push("SLYDE_APP_SYNC_BASE_URL is missing or invalid.");
+  }
+  if (!config.secret) {
+    reasons.push("SLYDE_APP_SYNC_SECRET is missing.");
+  }
+  if (appSyncOrigin && websiteOrigin && appSyncOrigin === websiteOrigin) {
+    reasons.push("SLYDE_APP_SYNC_BASE_URL points to this website, so outbound app sync is disabled.");
+  }
+  if (production && !config.configuredBaseUrl) {
+    reasons.push("SLYDE_APP_SYNC_BASE_URL must be explicitly configured in production.");
+  }
+  if (production && !config.configuredSecret) {
+    reasons.push("SLYDE_APP_SYNC_SECRET must be explicitly configured in production.");
+  }
+  if (production && config.secret === DEV_SYNC_SECRET) {
+    reasons.push("SLYDE_APP_SYNC_SECRET is still the development default.");
+  }
+  if (production && isLocalOrigin(appSyncOrigin)) {
+    reasons.push("SLYDE_APP_SYNC_BASE_URL points to a local address in production.");
+  }
+  if (!production && !config.configuredBaseUrl) {
+    warnings.push("Using development default SLYDE_APP_SYNC_BASE_URL.");
+  }
+  if (!production && !config.configuredSecret) {
+    warnings.push("Using development default SLYDE_APP_SYNC_SECRET.");
+  }
+
+  return {
+    enabled: reasons.length === 0,
+    baseUrl: config.baseUrl || undefined,
+    baseUrlConfigured: Boolean(config.configuredBaseUrl),
+    secretConfigured: Boolean(config.configuredSecret),
+    usingDevelopmentDefaults: !production && (!config.configuredBaseUrl || !config.configuredSecret),
+    reasons,
+    warnings,
+  };
 }
 
 async function buildFileDataUrl(file: {
@@ -91,6 +179,9 @@ async function withDocumentDataUrls(input: PublicSlyderApplicationInput) {
 
 export async function syncPublicSlyderApplicationToSlydeApp(input: PublicSlyderApplicationInput) {
   const config = getAppSyncConfig();
+  if (!shouldSyncToExternalSlydeApp()) {
+    throw new Error("SLYDE app sync is not enabled or configured.");
+  }
   const payload = await withDocumentDataUrls(input);
 
   console.info("[slyde-app-sync] public application sync starting", {
@@ -143,6 +234,9 @@ export async function syncPublicSlyderReviewDecisionToSlydeApp(input: {
   reviewerLabel?: string;
 }) {
   const config = getAppSyncConfig();
+  if (!shouldSyncToExternalSlydeApp()) {
+    throw new Error("SLYDE app review sync is not enabled or configured.");
+  }
   const payload = {
     email: input.email,
     decision: input.decision,
@@ -194,4 +288,162 @@ export async function syncPublicSlyderReviewDecisionToSlydeApp(input: {
     responseStatus: response.status,
     syncedAt,
   } satisfies SyncedSlydeAppReviewDecision;
+}
+
+export async function syncSlydeAppLifecycleEvent(input: SlydeAppLifecycleEventPayload) {
+  const config = getAppSyncConfig();
+  if (!shouldSyncToExternalSlydeApp()) {
+    throw new Error("SLYDE app lifecycle sync is not enabled or configured.");
+  }
+
+  console.info("[slyde-app-sync] lifecycle event sync starting", {
+    eventId: input.eventId,
+    eventType: input.eventType,
+    applicationId: input.applicationId,
+    linkedUserId: input.linkedUserId,
+    linkedSlyderProfileId: input.linkedSlyderProfileId,
+  });
+
+  const response = await fetch(`${config.baseUrl}/api/internal/slyder-lifecycle-events`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-slyde-integration-key": config.secret,
+      "idempotency-key": input.idempotencyKey,
+    },
+    body: JSON.stringify(input),
+    cache: "no-store",
+  });
+
+  const json = (await response.json().catch(() => null)) as { error?: string } | null;
+
+  if (!response.ok) {
+    console.error("[slyde-app-sync] lifecycle event sync failed", {
+      eventId: input.eventId,
+      eventType: input.eventType,
+      applicationId: input.applicationId,
+      responseStatus: response.status,
+      error: json?.error || "Unknown sync failure",
+    });
+    throw new Error(json?.error || `Unable to sync ${input.eventType} lifecycle event into the SLYDE app.`);
+  }
+
+  const syncedAt = new Date().toISOString();
+  console.info("[slyde-app-sync] lifecycle event sync succeeded", {
+    eventId: input.eventId,
+    eventType: input.eventType,
+    applicationId: input.applicationId,
+    responseStatus: response.status,
+    syncedAt,
+  });
+
+  return {
+    eventId: input.eventId,
+    eventType: input.eventType,
+    responseStatus: response.status,
+    syncedAt,
+  };
+}
+
+function lifecycleIdempotencyKey(input: {
+  eventType: SlydeAppLifecycleEventType;
+  applicationId: string;
+  userId?: string;
+  profileId?: string;
+  status?: SetupStatusResponse;
+  metadata?: Record<string, unknown>;
+}) {
+  const statusKey = input.status
+    ? [
+        input.status.accountStatus,
+        input.status.onboardingStatus,
+        input.status.readinessStatus,
+        input.status.canGoOnline,
+        input.status.canReceiveOrders,
+      ].join(":")
+    : "status-unavailable";
+  const metadataKey = input.metadata ? JSON.stringify(input.metadata) : "none";
+  return [
+    "slyde_website",
+    input.eventType,
+    input.applicationId,
+    input.userId || "no-user",
+    input.profileId || "no-profile",
+    statusKey,
+    metadataKey,
+  ].join(":");
+}
+
+export function buildSlydeAppLifecycleEventPayload(input: {
+  store: OnboardingStore;
+  eventType: SlydeAppLifecycleEventType;
+  applicationId: string;
+  userId?: string;
+  profileId?: string;
+  status: SetupStatusResponse;
+  occurredAt?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  const application = input.store.applications.find((item) => item.id === input.applicationId);
+  const profile =
+    (input.profileId ? input.store.slyderProfiles.find((item) => item.id === input.profileId) : undefined) ??
+    input.store.slyderProfiles.find((item) => item.applicationId === input.applicationId);
+  const user =
+    (input.userId ? input.store.users.find((item) => item.id === input.userId) : undefined) ??
+    (profile ? input.store.users.find((item) => item.id === profile.userId) : undefined);
+
+  if (!application) {
+    throw new Error("Application not found for lifecycle sync payload.");
+  }
+
+  return buildSlydeAppLifecycleEventPayloadFromRecords({
+    eventType: input.eventType,
+    application,
+    profile,
+    user,
+    status: input.status,
+    occurredAt: input.occurredAt,
+    metadata: input.metadata,
+  });
+}
+
+export function buildSlydeAppLifecycleEventPayloadFromRecords(input: {
+  eventType: SlydeAppLifecycleEventType;
+  application: SlyderApplication;
+  profile?: SlyderProfile;
+  user?: StoredUser;
+  status: SetupStatusResponse;
+  occurredAt?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  const occurredAt = input.occurredAt ?? new Date().toISOString();
+  const linkedUserId = input.user?.id ?? input.application.linkedUserId;
+  const linkedSlyderProfileId = input.profile?.id ?? input.application.linkedSlyderProfileId;
+  const idempotencyKey = lifecycleIdempotencyKey({
+    eventType: input.eventType,
+    applicationId: input.application.id,
+    userId: linkedUserId,
+    profileId: linkedSlyderProfileId,
+    status: input.status,
+    metadata: input.metadata,
+  });
+
+  return {
+    eventId: crypto.randomUUID(),
+    eventType: input.eventType,
+    occurredAt,
+    sourceSystem: "slyde_website",
+    correlationId: input.application.id,
+    idempotencyKey,
+    applicationId: input.application.id,
+    linkedUserId,
+    linkedSlyderProfileId,
+    email: input.user?.email ?? input.profile?.email ?? input.application.email,
+    accountStatus: input.status.accountStatus,
+    onboardingStatus: input.status.onboardingStatus,
+    readinessStatus: input.status.readinessStatus,
+    canGoOnline: input.status.canGoOnline,
+    canReceiveOrders: input.status.canReceiveOrders,
+    metadata: input.metadata,
+  } satisfies SlydeAppLifecycleEventPayload;
 }

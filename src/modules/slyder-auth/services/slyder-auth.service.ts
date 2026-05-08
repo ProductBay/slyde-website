@@ -10,9 +10,26 @@ import { generateOtpCode, hashToken } from "@/server/auth/tokens";
 import { sendSlyderOtpNotification, sendUserRegistrationWelcomeNotification } from "@/server/notifications/notification.service";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { completeSlyderOnboardingSetup, getSlyderOnboardingStatus } from "@/modules/slyder-auth/services/slyder-onboarding.service";
+import { buildSlydeAppLifecycleEventPayload, type SlydeAppLifecycleEventPayload } from "@/modules/onboarding/services/slyde-app-sync.service";
+import { enqueueSlydeAppLifecycleSyncEvents, processPendingSlydeAppSyncQueue } from "@/modules/onboarding/services/slyde-app-sync-queue.service";
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+async function queueLifecycleSyncEvents(events: SlydeAppLifecycleEventPayload[]) {
+  if (events.length === 0) return;
+
+  try {
+    await enqueueSlydeAppLifecycleSyncEvents(events);
+    void processPendingSlydeAppSyncQueue({ batchSize: 10 });
+  } catch (error) {
+    console.error("[slyder-auth.service] lifecycle sync queue failed", {
+      eventTypes: events.map((event) => event.eventType),
+      applicationIds: Array.from(new Set(events.map((event) => event.applicationId))),
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 function otpDeliveryChannel() {
@@ -74,7 +91,7 @@ export async function activateSlyder(token: string) {
 }
 
 export async function setSlyderPassword(token: string, password: string) {
-  return withPersistenceTransaction(async (store) => {
+  const result = await withPersistenceTransaction(async (store) => {
     const activation = store.activationTokens.find(
       (item) => item.tokenHash === hashToken(token) && !item.consumedAt && new Date(item.expiresAt) > new Date(),
     );
@@ -91,13 +108,47 @@ export async function setSlyderPassword(token: string, password: string) {
     upsertUser(store, user);
 
     const profile = findProfileByUserId(store, user.id);
+    let lifecycleEvents: SlydeAppLifecycleEventPayload[] = [];
     if (profile) {
+      const previousOnboardingStatus = profile.onboardingStatus;
       profile.accountStatus = "active";
       profile.activatedAt = nowIso();
       profile.onboardingStatus = "contract_pending";
       profile.updatedAt = nowIso();
       upsertSlyderProfile(store, profile);
-      evaluateReadinessForProfile(store, profile.id);
+      const status = evaluateReadinessForProfile(store, profile.id);
+      const application = store.applications.find((item) => item.id === profile.applicationId);
+      if (application) {
+        lifecycleEvents = [
+          buildSlydeAppLifecycleEventPayload({
+            store,
+            eventType: "slyder_activation_completed",
+            applicationId: application.id,
+            userId: user.id,
+            profileId: profile.id,
+            status,
+            metadata: { activationTokenId: activation.id },
+          }),
+        ];
+
+        if (previousOnboardingStatus !== status.onboardingStatus) {
+          lifecycleEvents.push(
+            buildSlydeAppLifecycleEventPayload({
+              store,
+              eventType: "slyder_onboarding_state_changed",
+              applicationId: application.id,
+              userId: user.id,
+              profileId: profile.id,
+              status,
+              metadata: {
+                previousOnboardingStatus,
+                onboardingStatus: status.onboardingStatus,
+                trigger: "activation_completed",
+              },
+            }),
+          );
+        }
+      }
     }
 
     activation.consumedAt = nowIso();
@@ -113,8 +164,11 @@ export async function setSlyderPassword(token: string, password: string) {
 
     await sendUserRegistrationWelcomeNotification(store, user.id);
 
-    return { userId: user.id, accountStatus: user.accountStatus };
+    return { response: { userId: user.id, accountStatus: user.accountStatus }, lifecycleEvents };
   });
+
+  await queueLifecycleSyncEvents(result.lifecycleEvents);
+  return result.response;
 }
 
 export async function loginSlyder(identifier: string, password: string) {

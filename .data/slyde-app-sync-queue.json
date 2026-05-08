@@ -761,12 +761,12 @@
       }
     },
     "status": "retrying",
-    "retryCount": 1,
-    "nextAttemptAt": "2026-04-03T11:10:42.066Z",
+    "retryCount": 3,
+    "nextAttemptAt": "2026-05-08T01:31:06.526Z",
     "createdAt": "2026-03-24T01:52:04.286Z",
-    "updatedAt": "2026-04-03T11:09:42.066Z",
-    "lastAttemptAt": "2026-04-03T11:09:36.890Z",
-    "lastError": "Unable to sync the application into the SLYDE app approval queue."
+    "updatedAt": "2026-05-08T01:16:06.526Z",
+    "lastAttemptAt": "2026-05-08T01:10:58.529Z",
+    "lastError": "fetch failed"
   },
   {
     "id": "aee2a16a-3015-484b-9346-c3ff00cadff5",
@@ -775,47 +775,50 @@
       "fullName": "Ashandie Powell",
       "email": "ashandiepowell86@gmail.com",
       "phone": "8767834525",
-      "dateOfBirth": "2003-06-03",
-      "parish": "Manchester",
-      "address": "Mayfield Blvd",
-      "trn": "45896685",
-      "emergencyContactName": "876555555",
+      "dateOfBirth": "1997-01-07",
+      "parish": "Mandeville",
+      "address": "526 moorland's estate",
+      "trn": "0000",
+      "emergencyContactName": "1555555555",
       "emergencyContactPhone": "8767834525",
-      "courierType": "van",
+      "courierType": "motorcycle",
       "vehicle": {
-        "make": "Nissan",
-        "model": "X5",
-        "year": "888888888888",
-        "color": "Grey",
+        "make": "Honda",
+        "model": "Fit Shuttle",
+        "year": "2200",
+        "color": "Silver",
         "plateNumber": "",
-        "registrationExpiry": "2026-04-23",
-        "insuranceExpiry": "2026-04-21",
-        "fitnessExpiry": "2026-04-29"
+        "registrationExpiry": "2026-05-15",
+        "insuranceExpiry": "2026-05-22",
+        "fitnessExpiry": "2026-05-27"
       },
       "workTypePreference": "part-time",
       "availability": "Weekdays (daytime)",
       "preferredZones": [
-        "Kingston"
+        "Kingston",
+        "New Kingston"
       ],
       "deliveryTypePreferences": [
         "food",
-        "documents",
-        "retail",
-        "pharmacy",
-        "bulk",
-        "errands"
+        "retail"
       ],
       "maxTravelComfort": "Up to 10 km",
-      "peakHours": "Weekend peak",
-      "smartphoneType": "iPhone",
-      "whatsappNumber": "187659475555",
+      "peakHours": "Late evenings",
+      "smartphoneType": "Android",
+      "whatsappNumber": "18765947320",
       "gpsConfirmed": true,
       "internetConfirmed": true,
       "readinessAnswers": {
         "safetyGear": true,
         "insulatedBag": true,
-        "helmetReady": false,
-        "readinessNotes": ""
+        "helmetReady": true,
+        "readinessNotes": "",
+        "documentDeclarations": {
+          "hasValidDriversLicense": true,
+          "hasValidVehicleRegistration": true,
+          "hasValidInsurance": true,
+          "hasValidFitness": true
+        }
       },
       "agreementsAccepted": {
         "privacyConsent": true,
@@ -825,69 +828,96 @@
         "platformTermsAcceptance": true
       },
       "documents": {
-        "nationalId": [
-          {
-            "name": "ChatGPT Image Mar 29, 2026, 04_55_27 AM.png",
-            "size": 2467860,
-            "type": "image/png",
-            "fileUrl": "/uploads/slyder-intake/2026-04-03/93281ffe-6819-44d5-bd22-6fc22fa1b696-chatgpt-image-mar-29-2026-04-55-27-am.png",
-            "storageKey": "slyder-intake/2026-04-03/93281ffe-6819-44d5-bd22-6fc22fa1b696-chatgpt-image-mar-29-2026-04-55-27-am.png"
-          }
-        ],
-        "driversLicense": [
-          {
-            "name": "ChatGPT Image Mar 26, 2026, 07_45_48 PM.png",
-            "size": 1835431,
-            "type": "image/png",
-            "fileUrl": "/uploads/slyder-intake/2026-04-03/4876f8bc-f29f-4f3b-b97b-1d2a6754b3e6-chatgpt-image-mar-26-2026-07-45-48-pm.png",
-            "storageKey": "slyder-intake/2026-04-03/4876f8bc-f29f-4f3b-b97b-1d2a6754b3e6-chatgpt-image-mar-26-2026-07-45-48-pm.png"
-          }
-        ],
-        "vehicleRegistration": [
-          {
-            "name": "ChatGPT Image Mar 19, 2026, 09_59_18 PM.png",
-            "size": 246814,
-            "type": "image/png",
-            "fileUrl": "/uploads/slyder-intake/2026-04-03/fa2d33da-2ffe-49e4-913e-0f0862993c48-chatgpt-image-mar-19-2026-09-59-18-pm.png",
-            "storageKey": "slyder-intake/2026-04-03/fa2d33da-2ffe-49e4-913e-0f0862993c48-chatgpt-image-mar-19-2026-09-59-18-pm.png"
-          }
-        ],
-        "insurance": [
-          {
-            "name": "ChatGPT Image Mar 26, 2026, 05_15_40 PM.png",
-            "size": 844958,
-            "type": "image/png",
-            "fileUrl": "/uploads/slyder-intake/2026-04-03/44fa439e-9b8e-4f49-b1a6-f73e5e56f559-chatgpt-image-mar-26-2026-05-15-40-pm.png",
-            "storageKey": "slyder-intake/2026-04-03/44fa439e-9b8e-4f49-b1a6-f73e5e56f559-chatgpt-image-mar-26-2026-05-15-40-pm.png"
-          }
-        ],
-        "fitness": [
-          {
-            "name": "ChatGPT Image Mar 26, 2026, 05_17_56 PM.png",
-            "size": 1051462,
-            "type": "image/png",
-            "fileUrl": "/uploads/slyder-intake/2026-04-03/c2c97c35-b0e6-4a29-806e-a570f5f36b33-chatgpt-image-mar-26-2026-05-17-56-pm.png",
-            "storageKey": "slyder-intake/2026-04-03/c2c97c35-b0e6-4a29-806e-a570f5f36b33-chatgpt-image-mar-26-2026-05-17-56-pm.png"
-          }
-        ],
-        "profilePhoto": [
-          {
-            "name": "ChatGPT Image Mar 26, 2026, 05_29_14 PM.png",
-            "size": 1259826,
-            "type": "image/png",
-            "fileUrl": "/uploads/slyder-intake/2026-04-03/2c7df862-f4be-444c-bb62-2c524cbe087a-chatgpt-image-mar-26-2026-05-29-14-pm.png",
-            "storageKey": "slyder-intake/2026-04-03/2c7df862-f4be-444c-bb62-2c524cbe087a-chatgpt-image-mar-26-2026-05-29-14-pm.png"
-          }
-        ],
+        "nationalId": [],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [],
+        "supporting": []
+      }
+    },
+    "status": "retrying",
+    "retryCount": 3,
+    "nextAttemptAt": "2026-05-08T01:36:12.226Z",
+    "createdAt": "2026-04-03T11:09:36.855Z",
+    "updatedAt": "2026-05-08T01:21:12.226Z",
+    "lastAttemptAt": "2026-05-08T01:16:06.543Z",
+    "lastError": "fetch failed"
+  },
+  {
+    "id": "763adcca-af09-44c8-9476-35aa18466d9c",
+    "applicationId": "83e76002-3a4f-423e-a9bc-df7c0ab83a4d",
+    "payload": {
+      "fullName": "Smoke Verify 1778202647934",
+      "email": "smoke-1778202647934@example.com",
+      "phone": "8765939220",
+      "dateOfBirth": "1997-04-12",
+      "parish": "Kingston",
+      "address": "12 Smoke Test Avenue, Kingston",
+      "trn": "1234",
+      "emergencyContactName": "Smoke Contact",
+      "emergencyContactPhone": "8765939220",
+      "courierType": "walker",
+      "vehicle": {
+        "make": "",
+        "model": "",
+        "year": "",
+        "color": "",
+        "plateNumber": "",
+        "registrationExpiry": "",
+        "insuranceExpiry": "",
+        "fitnessExpiry": ""
+      },
+      "workTypePreference": "part-time",
+      "availability": "Weekdays (daytime)",
+      "preferredZones": [
+        "Kingston"
+      ],
+      "deliveryTypePreferences": [
+        "food"
+      ],
+      "maxTravelComfort": "Up to 10 km",
+      "peakHours": "Lunch rush",
+      "smartphoneType": "Android",
+      "whatsappNumber": "8765939220",
+      "gpsConfirmed": true,
+      "internetConfirmed": true,
+      "readinessAnswers": {
+        "safetyGear": true,
+        "insulatedBag": false,
+        "helmetReady": false,
+        "readinessNotes": "smoke verify",
+        "documentDeclarations": {
+          "hasValidDriversLicense": false,
+          "hasValidVehicleRegistration": false,
+          "hasValidInsurance": false,
+          "hasValidFitness": false
+        }
+      },
+      "agreementsAccepted": {
+        "privacyConsent": true,
+        "onboardingConsent": true,
+        "documentReviewConsent": true,
+        "contractorAcknowledgement": true,
+        "platformTermsAcceptance": true
+      },
+      "documents": {
+        "nationalId": [],
+        "driversLicense": [],
+        "vehicleRegistration": [],
+        "insurance": [],
+        "fitness": [],
+        "profilePhoto": [],
         "supporting": []
       }
     },
     "status": "retrying",
     "retryCount": 1,
-    "nextAttemptAt": "2026-04-03T11:10:42.591Z",
-    "createdAt": "2026-04-03T11:09:36.855Z",
-    "updatedAt": "2026-04-03T11:09:42.591Z",
-    "lastAttemptAt": "2026-04-03T11:09:42.112Z",
-    "lastError": "Unable to sync the application into the SLYDE app approval queue."
+    "nextAttemptAt": "2026-05-08T01:27:15.861Z",
+    "createdAt": "2026-05-08T01:10:58.423Z",
+    "updatedAt": "2026-05-08T01:26:15.861Z",
+    "lastAttemptAt": "2026-05-08T01:21:12.333Z",
+    "lastError": "fetch failed"
   }
 ]

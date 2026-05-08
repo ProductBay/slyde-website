@@ -4,49 +4,98 @@
 
    ▲ Next.js 15.5.7
    - Local:        http://localhost:4007
-   - Network:      http://10.93.27.245:4007
+   - Network:      http://10.193.234.245:4007
    - Environments: .env
 
  ✓ Starting...
- ✓ Ready in 10.3s
+ ✓ Ready in 4.1s
  ○ Compiling / ...
- ✓ Compiled / in 11.4s (821 modules)
- GET / 200 in 4000ms
- GET / 200 in 805ms
- ✓ Compiled in 1144ms (821 modules)
- GET / 200 in 1606ms
- GET / 200 in 2510ms
- GET / 200 in 1606ms
- ○ Compiling /icon.svg ...
- ✓ Compiled /icon.svg in 924ms (529 modules)
- GET /icon.svg 200 in 1312ms
- ✓ Compiled in 1454ms (821 modules)
- GET / 200 in 654ms
- GET / 200 in 916ms
- GET / 200 in 1238ms
- ○ Compiling /icon.svg ...
- ✓ Compiled /icon.svg in 551ms (529 modules)
- GET /icon.svg 200 in 873ms
- GET / 200 in 1715ms
- GET /icon.svg 200 in 135ms
- ✓ Compiled in 1381ms (823 modules)
- GET / 200 in 647ms
- ✓ Compiled /icon.svg in 242ms (530 modules)
- GET /icon.svg 200 in 569ms
- GET /icon.svg 200 in 97ms
- GET /icon.svg 200 in 104ms
- GET /icon.svg 200 in 201ms
- GET / 200 in 1216ms
- ○ Compiling /for-businesses/status ...
- ✓ Compiled /for-businesses/status in 1701ms (825 modules)
- GET /for-businesses/status 200 in 2289ms
- GET / 200 in 1565ms
- ○ Compiling /icon.svg ...
- ✓ Compiled /icon.svg in 644ms (540 modules)
- GET /icon.svg 200 in 1012ms
- GET /for-businesses/status 200 in 581ms
- GET / 200 in 455ms
- ○ Compiling /become-a-slyder/apply ...
- ✓ Compiled /become-a-slyder/apply in 4.2s (899 modules)
- GET /become-a-slyder/apply 200 in 5378ms
- GET /become-a-slyder/apply 200 in 305ms
+ ✓ Compiled / in 2.4s (882 modules)
+ GET / 200 in 5554ms
+ ○ Compiling /api/public/slyder-leads ...
+ ✓ Compiled /api/public/slyder-leads in 1387ms (470 modules)
+[SLYDE WhatsApp Web] {"channel":"whatsapp","recipient":"8765939220","body":"Hi Smoke, this is SLYDE. Your Founding Slyder spot has been reserved.\n\nCheck your Slyder status and next step here: https://slydenetwork.com/join/slyder/status?leadId=cmow7y2bf0000hwdmtfbzwm39\n\nReferral code: SL-T6V84V\n\nNeed help? 876-594-7320","whatsappUrl":"https://web.whatsapp.com/send?phone=18765939220&text=Hi%20Smoke%2C%20this%20is%20SLYDE.%20Your%20Founding%20Slyder%20spot%20has%20been%20reserved.%0A%0ACheck%20your%20Slyder%20status%20and%20next%20step%20here%3A%20https%3A%2F%2Fslydenetwork.com%2Fjoin%2Fslyder%2Fstatus%3FleadId%3Dcmow7y2bf0000hwdmtfbzwm39%0A%0AReferral%20code%3A%20SL-T6V84V%0A%0ANeed%20help%3F%20876-594-7320"}
+ POST /api/public/slyder-leads 201 in 3890ms
+ ○ Compiling /api/admin/slyder-leads/[id]/action-center ...
+ ✓ Compiled /api/admin/slyder-leads/[id]/action-center in 870ms (485 modules)
+ POST /api/admin/slyder-leads/cmow7y2bf0000hwdmtfbzwm39/action-center 200 in 4046ms
+ ○ Compiling /api/public/slyder-applications ...
+ ✓ Compiled /api/public/slyder-applications in 1019ms (502 modules)
+[SLYDE WhatsApp Web] {"channel":"whatsapp","recipient":"8765939220","body":"Hi Smoke, SLYDE has received your application (SLY-2026-02BC52B4).\n\nWe are building the network region by region across Jamaica, and your application is now in structured review for Kingston.\n\nYou will receive updates by WhatsApp and email if we need more information or when your application moves forward.\n\nSupport: 876-594-7320","whatsappUrl":"https://web.whatsapp.com/send?phone=18765939220&text=Hi%20Smoke%2C%20SLYDE%20has%20received%20your%20application%20(SLY-2026-02BC52B4).%0A%0AWe%20are%20building%20the%20network%20region%20by%20region%20across%20Jamaica%2C%20and%20your%20application%20is%20now%20in%20structured%20review%20for%20Kingston.%0A%0AYou%20will%20receive%20updates%20by%20WhatsApp%20and%20email%20if%20we%20need%20more%20information%20or%20when%20your%20application%20moves%20forward.%0A%0ASupport%3A%20876-594-7320"}
+ POST /api/public/slyder-applications 201 in 2478ms
+[slyde-app-sync] public application sync starting {
+  email: 'smoke-rejected-1774317122725@example.com',
+  documentCounts: {
+    nationalId: 1,
+    driversLicense: 0,
+    vehicleRegistration: 0,
+    insurance: 0,
+    fitness: 0,
+    profilePhoto: 1,
+    supporting: 0
+  }
+}
+ ○ Compiling /api/admin/slyder-applications ...
+ ✓ Compiled /api/admin/slyder-applications in 520ms (504 modules)
+ GET /api/admin/slyder-applications?page=1&pageSize=250&sortBy=submittedAt&sortDirection=desc 400 in 1081ms
+ GET /api/admin/slyder-applications?page=1&pageSize=100&sortBy=submittedAt&sortDirection=desc 200 in 845ms
+ GET /api/admin/slyder-applications?page=1&pageSize=100&status=submitted&sortBy=submittedAt&sortDirection=desc 200 in 691ms
+ ○ Compiling /admin/slyder-applications ...
+ ✓ Compiled /admin/slyder-applications in 4.7s (975 modules)
+ GET /admin/slyder-applications?zone=11111111-1111-4111-8111-111111111111 200 in 7767ms
+[slyde-app-sync] public application sync starting {
+  email: 'ashandiepowell86@gmail.com',
+  documentCounts: {
+    nationalId: 0,
+    driversLicense: 0,
+    vehicleRegistration: 0,
+    insurance: 0,
+    fitness: 0,
+    profilePhoto: 0,
+    supporting: 0
+  }
+}
+[slyde-app-sync] public application sync starting {
+  email: 'smoke-1778202647934@example.com',
+  documentCounts: {
+    nationalId: 0,
+    driversLicense: 0,
+    vehicleRegistration: 0,
+    insurance: 0,
+    fitness: 0,
+    profilePhoto: 0,
+    supporting: 0
+  }
+}
+ ✓ Compiled in 6.3s (363 modules)
+ ✓ Compiled in 1003ms (363 modules)
+ ✓ Compiled in 809ms (363 modules)
+ ✓ Compiled in 1699ms (363 modules)
+ ✓ Compiled in 1350ms (363 modules)
+ ✓ Compiled in 1955ms (363 modules)
+ ✓ Compiled in 1050ms (363 modules)
+ ✓ Compiled in 825ms (363 modules)
+ ✓ Compiled in 1758ms (363 modules)
+ ✓ Compiled in 999ms (363 modules)
+ ✓ Compiled in 1105ms (362 modules)
+ ✓ Compiled in 818ms (362 modules)
+ ✓ Compiled in 1324ms (362 modules)
+ ✓ Compiled in 2.1s (362 modules)
+ ✓ Compiled in 1887ms (362 modules)
+ ✓ Compiled in 1948ms (362 modules)
+ ✓ Compiled in 2.4s (362 modules)
+ ✓ Compiled in 2s (362 modules)
+ ✓ Compiled in 8.9s (362 modules)
+ ✓ Compiled in 1820ms (362 modules)
+ ✓ Compiled in 1903ms (362 modules)
+ ✓ Compiled in 1459ms (362 modules)
+ ✓ Compiled in 1287ms (362 modules)
+ ✓ Compiled in 1187ms (362 modules)
+ ✓ Compiled in 1216ms (362 modules)
+ ✓ Compiled in 941ms (362 modules)
+ ✓ Compiled in 2.5s (362 modules)
+ ✓ Compiled in 1362ms (362 modules)
+ ✓ Compiled in 1305ms (362 modules)
+ ✓ Compiled in 1444ms (362 modules)
+ ✓ Compiled in 1108ms (362 modules)
+ ✓ Compiled in 1134ms (362 modules)

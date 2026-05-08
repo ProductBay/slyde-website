@@ -4,7 +4,6 @@ import { DataTable, TableCell, TableHeaderCell } from "@/components/admin/data-t
 import { FilterBar } from "@/components/admin/filter-bar";
 import { KpiStatCard } from "@/components/admin/kpi-stat-card";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { UserMessageActions } from "@/components/admin/user-message-actions";
 import { listAdminUsers } from "@/modules/admin/services/admin-users.service";
 import { getAdminPageContext } from "@/server/admin/admin-page";
 
@@ -38,7 +37,6 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
 
   const enabledCount = rows.filter((item) => item.isEnabled).length;
   const disabledCount = rows.length - enabledCount;
-  const devAdminKey = mode === "development" ? process.env.SLYDE_ADMIN_DEV_KEY || "dev-admin-key" : undefined;
 
   return (
     <AdminShell
@@ -101,7 +99,6 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
               <TableHeaderCell>Account Status</TableHeaderCell>
               <TableHeaderCell>Signup Date</TableHeaderCell>
               <TableHeaderCell>Last Login / Session Activity</TableHeaderCell>
-              <TableHeaderCell>Messages</TableHeaderCell>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
@@ -125,14 +122,11 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
                     <p className="mt-1 text-xs text-slate-500">Last login: {item.lastLoginAt ? new Date(item.lastLoginAt).toLocaleString("en-JM") : "Never"}</p>
                     <p className="mt-1 text-xs text-slate-500">Active sessions: {item.activeSessionCount}</p>
                   </TableCell>
-                  <TableCell>
-                    <UserMessageActions userId={item.id} devAdminKey={devAdminKey} />
-                  </TableCell>
                 </tr>
               ))
             ) : (
               <tr>
-                <td className="px-4 py-6 text-center text-sm text-slate-500" colSpan={8}>
+                <td className="px-4 py-6 text-center text-sm text-slate-500" colSpan={7}>
                   No registered users match these filters.
                 </td>
               </tr>

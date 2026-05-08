@@ -21,9 +21,38 @@ import {
   sendTemplateNotificationInStore,
 } from "@/server/notifications/notification.service";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
+import {
+  buildSlydeAppLifecycleEventPayload,
+  type SlydeAppLifecycleEventPayload,
+} from "@/modules/onboarding/services/slyde-app-sync.service";
+import { enqueueSlydeAppLifecycleSyncEvents, processPendingSlydeAppSyncQueue } from "@/modules/onboarding/services/slyde-app-sync-queue.service";
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+async function queueLifecycleSyncEvents(events: SlydeAppLifecycleEventPayload[]) {
+  if (events.length === 0) return;
+
+  try {
+    await enqueueSlydeAppLifecycleSyncEvents(events);
+    void processPendingSlydeAppSyncQueue({ batchSize: 10 });
+  } catch (error) {
+    console.error("[slyder-onboarding.service] lifecycle sync queue failed", {
+      eventTypes: events.map((event) => event.eventType),
+      applicationIds: Array.from(new Set(events.map((event) => event.applicationId))),
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+function userControlledCompletionReached(status: SetupStatusResponse) {
+  return (
+    Boolean(status.activationCompleted) &&
+    (status.pendingLegalDocuments?.length ?? 0) === 0 &&
+    Boolean(status.setupCompletedAt) &&
+    status.readinessChecklist.overallStatus === "passed"
+  );
 }
 
 function mapPendingDocuments(documents: Array<{ id: string; title: string; slug: string; version: string; documentType: LegalDocumentType }>) {
@@ -113,13 +142,7 @@ async function sendSlyderOnboardingCompletedEmailIfNeeded(
     return;
   }
 
-  const userControlledCompletionReached =
-    Boolean(status.activationCompleted) &&
-    (status.pendingLegalDocuments?.length ?? 0) === 0 &&
-    Boolean(status.setupCompletedAt) &&
-    status.readinessChecklist.overallStatus === "passed";
-
-  if (!userControlledCompletionReached) {
+  if (!userControlledCompletionReached(status)) {
     return;
   }
 
@@ -233,10 +256,11 @@ export async function acceptSlyderActivationLegal(
   input: SlyderActivationLegalAcceptanceInput,
   metadata?: { ipAddress?: string; userAgent?: string },
 ) {
-  return withPersistenceTransaction(async (store) => {
+  const result = await withPersistenceTransaction(async (store) => {
     const user = findUserById(store, userId);
     const profile = findProfileByUserId(store, userId);
     if (!user || !profile) throw new Error("Slyder activation context not found");
+    const previousOnboardingStatus = profile.onboardingStatus;
 
     await recordMultipleLegalAcceptancesInStore(store, {
       actorType: "slyder_user",
@@ -317,14 +341,72 @@ export async function acceptSlyderActivationLegal(
       metadata: { acceptedDocumentTypes: input.acceptedDocumentTypes },
     });
 
-    return evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
+    const status = evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
+    const application = findApplication(store, profile.applicationId);
+    const lifecycleEvents: SlydeAppLifecycleEventPayload[] = [];
+
+    if (application) {
+      lifecycleEvents.push(
+        buildSlydeAppLifecycleEventPayload({
+          store,
+          eventType: "slyder_legal_accepted",
+          applicationId: application.id,
+          userId,
+          profileId: profile.id,
+          status,
+          metadata: {
+            acceptedDocumentTypes: input.acceptedDocumentTypes,
+            understandZoneDependency: input.understandZoneDependency,
+            understandSetupRequired: input.understandSetupRequired,
+          },
+        }),
+      );
+
+      if (previousOnboardingStatus !== status.onboardingStatus) {
+        lifecycleEvents.push(
+          buildSlydeAppLifecycleEventPayload({
+            store,
+            eventType: "slyder_onboarding_state_changed",
+            applicationId: application.id,
+            userId,
+            profileId: profile.id,
+            status,
+            metadata: {
+              previousOnboardingStatus,
+              onboardingStatus: status.onboardingStatus,
+              trigger: "legal_acceptance",
+            },
+          }),
+        );
+      }
+
+      if (userControlledCompletionReached(status)) {
+        lifecycleEvents.push(
+          buildSlydeAppLifecycleEventPayload({
+            store,
+            eventType: "slyder_onboarding_completed",
+            applicationId: application.id,
+            userId,
+            profileId: profile.id,
+            status,
+            metadata: { trigger: "legal_acceptance" },
+          }),
+        );
+      }
+    }
+
+    return { status, lifecycleEvents };
   });
+
+  await queueLifecycleSyncEvents(result.lifecycleEvents);
+  return result.status;
 }
 
 export async function updateSlyderOnboardingSetup(userId: string, payload: SlyderSetupUpdateInput | CompleteSetupInput) {
-  return withPersistenceTransaction(async (store) => {
+  const result = await withPersistenceTransaction(async (store) => {
     const profile = findProfileByUserId(store, userId);
     if (!profile) throw new Error("Slyder profile not found");
+    const previousOnboardingStatus = profile.onboardingStatus;
 
     if (payload.profileComplete !== undefined) profile.profileComplete = payload.profileComplete;
     if (payload.payoutSetupComplete !== undefined) profile.payoutSetupComplete = payload.payoutSetupComplete;
@@ -369,8 +451,60 @@ export async function updateSlyderOnboardingSetup(userId: string, payload: Slyde
 
     const status = evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
     await sendSlyderOnboardingCompletedEmailIfNeeded(store, userId, status);
-    return status;
+    const application = findApplication(store, profile.applicationId);
+    const lifecycleEvents: SlydeAppLifecycleEventPayload[] = [];
+
+    if (application) {
+      lifecycleEvents.push(
+        buildSlydeAppLifecycleEventPayload({
+          store,
+          eventType: "slyder_setup_updated",
+          applicationId: application.id,
+          userId,
+          profileId: profile.id,
+          status,
+          metadata: { updatedFields: Object.keys(payload) },
+        }),
+      );
+
+      if (previousOnboardingStatus !== status.onboardingStatus) {
+        lifecycleEvents.push(
+          buildSlydeAppLifecycleEventPayload({
+            store,
+            eventType: "slyder_onboarding_state_changed",
+            applicationId: application.id,
+            userId,
+            profileId: profile.id,
+            status,
+            metadata: {
+              previousOnboardingStatus,
+              onboardingStatus: status.onboardingStatus,
+              trigger: "setup_update",
+            },
+          }),
+        );
+      }
+
+      if (userControlledCompletionReached(status)) {
+        lifecycleEvents.push(
+          buildSlydeAppLifecycleEventPayload({
+            store,
+            eventType: "slyder_onboarding_completed",
+            applicationId: application.id,
+            userId,
+            profileId: profile.id,
+            status,
+            metadata: { trigger: "setup_update" },
+          }),
+        );
+      }
+    }
+
+    return { status, lifecycleEvents };
   });
+
+  await queueLifecycleSyncEvents(result.lifecycleEvents);
+  return result.status;
 }
 
 export async function completeSlyderOnboardingSetup(userId: string) {
@@ -384,9 +518,10 @@ export async function completeSlyderOnboardingSetup(userId: string) {
 }
 
 export async function updateSlyderReadiness(userId: string, payload: SlyderReadinessUpdateInput) {
-  return withPersistenceTransaction(async (store) => {
+  const result = await withPersistenceTransaction(async (store) => {
     const profile = findProfileByUserId(store, userId);
     if (!profile) throw new Error("Slyder profile not found");
+    const previousOnboardingStatus = profile.onboardingStatus;
 
     profile.readinessChecklist = profile.readinessChecklist || {
       profileConfirmed: profile.profileComplete,
@@ -455,8 +590,60 @@ export async function updateSlyderReadiness(userId: string, payload: SlyderReadi
 
     const status = evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
     await sendSlyderOnboardingCompletedEmailIfNeeded(store, userId, status);
-    return status;
+    const application = findApplication(store, profile.applicationId);
+    const lifecycleEvents: SlydeAppLifecycleEventPayload[] = [];
+
+    if (application) {
+      lifecycleEvents.push(
+        buildSlydeAppLifecycleEventPayload({
+          store,
+          eventType: "slyder_readiness_updated",
+          applicationId: application.id,
+          userId,
+          profileId: profile.id,
+          status,
+          metadata: { updatedFields: Object.keys(payload) },
+        }),
+      );
+
+      if (previousOnboardingStatus !== status.onboardingStatus) {
+        lifecycleEvents.push(
+          buildSlydeAppLifecycleEventPayload({
+            store,
+            eventType: "slyder_onboarding_state_changed",
+            applicationId: application.id,
+            userId,
+            profileId: profile.id,
+            status,
+            metadata: {
+              previousOnboardingStatus,
+              onboardingStatus: status.onboardingStatus,
+              trigger: "readiness_update",
+            },
+          }),
+        );
+      }
+
+      if (userControlledCompletionReached(status)) {
+        lifecycleEvents.push(
+          buildSlydeAppLifecycleEventPayload({
+            store,
+            eventType: "slyder_onboarding_completed",
+            applicationId: application.id,
+            userId,
+            profileId: profile.id,
+            status,
+            metadata: { trigger: "readiness_update" },
+          }),
+        );
+      }
+    }
+
+    return { status, lifecycleEvents };
   });
+
+  await queueLifecycleSyncEvents(result.lifecycleEvents);
+  return result.status;
 }
 
 export async function completeSlyderReadiness(userId: string) {
@@ -477,11 +664,37 @@ export async function completeSlyderReadiness(userId: string) {
 }
 
 export async function evaluateSlyderEligibilityForUser(userId: string) {
-  return withPersistenceTransaction(async (store) => {
+  const result = await withPersistenceTransaction(async (store) => {
     const profile = findProfileByUserId(store, userId);
     if (!profile) throw new Error("Slyder profile not found");
-    return evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
+    const previousOnboardingStatus = profile.onboardingStatus;
+    const status = evaluateSlyderOperationalEligibility(store, profile.id, getPendingActivationLegalDocumentsFromStore(store, userId));
+    const application = findApplication(store, profile.applicationId);
+    const lifecycleEvents: SlydeAppLifecycleEventPayload[] = [];
+
+    if (application && previousOnboardingStatus !== status.onboardingStatus) {
+      lifecycleEvents.push(
+        buildSlydeAppLifecycleEventPayload({
+          store,
+          eventType: "slyder_onboarding_state_changed",
+          applicationId: application.id,
+          userId,
+          profileId: profile.id,
+          status,
+          metadata: {
+            previousOnboardingStatus,
+            onboardingStatus: status.onboardingStatus,
+            trigger: "eligibility_recalculation",
+          },
+        }),
+      );
+    }
+
+    return { status, lifecycleEvents };
   });
+
+  await queueLifecycleSyncEvents(result.lifecycleEvents);
+  return result.status;
 }
 
 export async function resendSlyderActivationInvite(userId: string, channel: "email" | "sms" | "whatsapp" = "email") {

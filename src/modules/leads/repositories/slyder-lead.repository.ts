@@ -127,7 +127,7 @@ export async function listLeads(filters: ListSlyderLeadsQuery) {
   return prisma.slyderLead.findMany({
     where,
     include: { qualification: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
   });
 }
 

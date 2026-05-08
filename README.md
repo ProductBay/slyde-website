@@ -253,6 +253,51 @@ Major groups:
 - `api/admin/*`
   - protected admin control tower actions
 
+## SLYDE App Sync Operations
+
+Website-side outbound sync is handled by:
+
+- [src/modules/onboarding/services/slyde-app-sync.service.ts](/c:/Users/ashan/A%20Dash%20Software%20projects/SLYDE%20Website/src/modules/onboarding/services/slyde-app-sync.service.ts)
+- [src/modules/onboarding/services/slyde-app-sync-queue.service.ts](/c:/Users/ashan/A%20Dash%20Software%20projects/SLYDE%20Website/src/modules/onboarding/services/slyde-app-sync-queue.service.ts)
+- [src/app/api/internal/slyde-app-sync/process/route.ts](/c:/Users/ashan/A%20Dash%20Software%20projects/SLYDE%20Website/src/app/api/internal/slyde-app-sync/process/route.ts)
+
+Required environment variables for deployed sync:
+
+- `SLYDE_APP_SYNC_BASE_URL`: base URL of the SLYDE app receiving internal sync calls.
+- `SLYDE_APP_SYNC_SECRET`: integration key sent as `x-slyde-integration-key`.
+- `SLYDE_QUEUE_PROCESSOR_SECRET`: key accepted by the website queue processor route. `CRON_SECRET` is also accepted as a fallback.
+- `SLYDE_WEBSITE_BASE_URL`: website origin, used to prevent accidental self-sync.
+
+Local development can run without explicit sync variables. In production, sync is disabled unless the app URL and secret are explicitly set, the secret is not the development default, and the app URL does not point back to this website or localhost.
+
+Queued sync types:
+
+- public Slyder application submit sync
+- admin approve/reject review decision sync
+- Slyder lifecycle events: activation completed, legal accepted, setup updated, readiness updated, onboarding state changed, onboarding completed
+
+Queue behavior:
+
+- Durable queue file: `.data/slyde-app-sync-queue.json`, or `${SLYDE_DATA_DIRECTORY}/slyde-app-sync-queue.json`.
+- Items move through `queued`, `processing`, `synced`, `retrying`, and `failed`.
+- Retries use exponential/backoff scheduling with a max retry cap.
+- `lastError`, `lastAttemptAt`, `nextAttemptAt`, `idempotencyKey`, and timestamps are retained for inspection.
+- Failed items remain in the queue and are not dropped silently.
+
+Processor trigger:
+
+```bash
+curl -X POST "$SLYDE_WEBSITE_BASE_URL/api/internal/slyde-app-sync/process" \
+  -H "x-slyde-processor-key: $SLYDE_QUEUE_PROCESSOR_SECRET"
+```
+
+Run that endpoint from a scheduler every 1-5 minutes. Submit/review/onboarding flows also make a fire-and-forget processor call as a fast path, but the scheduled trigger is what guarantees retries continue autonomously.
+
+Inspection:
+
+- `/api/internal/health` reports sync readiness, queue counts by status/type, due item count, and the queue file path.
+- Operators can inspect the queue file directly. Do not edit it while a processor run is active.
+
 ## UI Component Organization
 
 Located under [src/components](/c:/Users/ashan/SLYDE%20Website/src/components).

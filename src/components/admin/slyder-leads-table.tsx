@@ -27,6 +27,7 @@ type Lead = {
   applicationInviteUnlocked: boolean;
   applicationInviteUnlockedAt: string | null;
   createdAt: string;
+  updatedAt: string;
 };
 
 export function SlyderLeadsTable({ leads, devAdminKey }: { leads: Lead[]; devAdminKey?: string }) {
@@ -55,6 +56,7 @@ export function SlyderLeadsTable({ leads, devAdminKey }: { leads: Lead[]; devAdm
               <TableHeaderCell>Vehicle</TableHeaderCell>
               <TableHeaderCell>Status</TableHeaderCell>
               <TableHeaderCell>Score</TableHeaderCell>
+              <TableHeaderCell>Activity</TableHeaderCell>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
@@ -94,6 +96,9 @@ export function SlyderLeadsTable({ leads, devAdminKey }: { leads: Lead[]; devAdm
                     ) : (
                       <span className="text-slate-400">-</span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-xs text-slate-500">
+                    {new Date(lead.updatedAt).toLocaleDateString("en-JM")}
                   </TableCell>
                 </tr>
               );

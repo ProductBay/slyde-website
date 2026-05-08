@@ -5,6 +5,8 @@ import { readPersistenceStore } from "@/server/persistence";
 import { getPersistenceDriver } from "@/server/persistence/repository";
 import { getTurnstileConfig } from "@/server/security/turnstile";
 import { getDataDirectory, getUploadsDirectory } from "@/server/storage-paths";
+import { getSlydeAppSyncReadiness } from "@/modules/onboarding/services/slyde-app-sync.service";
+import { getSlydeAppSyncQueueSummary } from "@/modules/onboarding/services/slyde-app-sync-queue.service";
 
 function isLocalLikeUrl(value: string | undefined) {
   if (!value) return true;
@@ -19,6 +21,10 @@ export async function getSystemHealthSummary() {
   const websiteBaseUrl = process.env.SLYDE_WEBSITE_BASE_URL;
   const slydeAppSyncBaseUrl = process.env.SLYDE_APP_SYNC_BASE_URL;
   const nodeEnv = process.env.NODE_ENV || "development";
+  const appSyncReadiness = getSlydeAppSyncReadiness();
+  const appSyncQueue = await getSlydeAppSyncQueueSummary().catch((error) => ({
+    error: error instanceof Error ? error.message : "Unable to read SLYDE app sync queue.",
+  }));
 
   let persistenceStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
   let persistenceMessage = "Persistence is available.";
@@ -114,7 +120,11 @@ export async function getSystemHealthSummary() {
       secretKeyPresent: Boolean(turnstile.secretKey),
     },
     integration: {
-      slydeAppSyncConfigured: Boolean(process.env.SLYDE_APP_SYNC_BASE_URL && process.env.SLYDE_APP_SYNC_SECRET),
+      slydeAppSyncConfigured: appSyncReadiness.baseUrlConfigured && appSyncReadiness.secretConfigured,
+      slydeAppSyncEnabled: appSyncReadiness.enabled,
+      slydeAppSyncReadiness: appSyncReadiness,
+      slydeAppSyncQueue: appSyncQueue,
+      queueProcessorConfigured: Boolean(process.env.SLYDE_QUEUE_PROCESSOR_SECRET || process.env.CRON_SECRET),
     },
     env: {
       missingCriticalEnv,

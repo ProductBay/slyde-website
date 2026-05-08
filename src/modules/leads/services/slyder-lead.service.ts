@@ -63,7 +63,10 @@ function toAbsoluteAppUrl(value: string | undefined, fallback: string) {
   return `${baseUrl}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
-async function sendSlyderLeadReceivedNotifications(lead: SlyderLeadNotificationTarget, options?: { force?: boolean; triggeredByUserId?: string }) {
+async function sendSlyderLeadReceivedNotifications(
+  lead: SlyderLeadNotificationTarget,
+  options?: { force?: boolean; triggeredByUserId?: string },
+) {
   const { variables, payload } = buildLeadNotificationContext(lead);
 
   const [email, whatsapp] = await Promise.all([
@@ -182,6 +185,15 @@ export async function createSlyderLead(input: CreateSlyderLeadInput) {
   // Duplicate check — return existing lead instead of creating a second registration
   const existing = await repo.findLeadByEmailOrWhatsapp(input.email, input.whatsapp);
   if (existing) {
+    await repo.updateLead(existing.id, {
+      firstName: input.firstName,
+      ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
+      ...(input.parish !== undefined ? { parish: input.parish } : {}),
+      ...(input.vehicleType !== undefined ? { vehicleType: input.vehicleType } : {}),
+      ...(input.source !== undefined ? { source: input.source } : {}),
+      lastContactedAt: new Date().toISOString(),
+    });
+
     return {
       leadId: existing.id,
       referralCode: existing.referralCode,
