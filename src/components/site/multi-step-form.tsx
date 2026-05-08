@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Info, Sparkles } from "lucide-react";
@@ -1069,7 +1070,21 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
                 <li>5. Setup completion and readiness checks determine work eligibility.</li>
               </ol>
             </div>
-            <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5">
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-amber-200 bg-[#fff7df] p-4 shadow-soft sm:p-5">
+              <div className="grid gap-4 sm:grid-cols-[8.5rem_1fr] sm:items-end">
+                <div className="relative mx-auto h-36 w-32 sm:h-44 sm:w-36">
+                  <div className="absolute inset-x-2 bottom-0 h-28 rounded-full bg-amber-200/60 blur-2xl" aria-hidden="true" />
+                  <Image
+                    src="/images/glyde-whatsapp-cta.png"
+                    alt="GLYDE presenting the SLYDE app checklist"
+                    fill
+                    sizes="144px"
+                    className="relative z-10 object-contain object-bottom drop-shadow-xl"
+                  />
+                </div>
+                <div className="relative rounded-[1.35rem] border border-amber-300 bg-white p-4 shadow-[0_18px_40px_rgba(146,64,14,0.12)] sm:p-5">
+                  <span className="absolute -left-3 top-10 hidden h-6 w-6 rotate-45 border-b border-l border-amber-300 bg-white sm:block" aria-hidden="true" />
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">GLYDE app note</p>
               <p className="text-sm font-semibold text-amber-900">What you complete inside the SLYDE app — after approval</p>
               <p className="mt-2 text-sm leading-6 text-amber-800">
                 To keep this form as lean as possible, the following are collected securely inside the app only once you are approved. Nothing sensitive leaves here.
@@ -1080,6 +1095,8 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
                 <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Full document uploads — National ID, driver's licence, insurance, registration, fitness certificate</li>
                 <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Banking and payout account details</li>
               </ul>
+                </div>
+              </div>
             </div>
             <TurnstileWidget onToken={setTurnstileToken} />
             {submitError ? <p className="text-sm text-rose-600">{submitError}</p> : null}
