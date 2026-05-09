@@ -1409,6 +1409,7 @@ export async function onSlyderApplicationSubmitted(store: OnboardingStore, appli
     fullName: application.fullName,
     applicationCode: application.applicationCode,
     zoneName: getApplicationZoneName(store, application.id),
+    onboardingUrl: `${getWebsiteBaseUrl()}/slyder/onboarding`,
     supportContact: "876-594-7320",
     supportEmail: "info@slyde.app",
     supportPhone: "876-594-7320",
