@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 const PARISHES = [
@@ -44,6 +45,7 @@ export function SlyderLeadForm({ referredByCode }: { referredByCode?: string }) 
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reservation, setReservation] = useState<{ leadId: string; referralCode: string | null } | null>(null);
   const lockedReferralCode = referredByCode?.trim().toUpperCase();
   const [joinAgreementAccepted, setJoinAgreementAccepted] = useState(false);
   const [agreementOpen, setAgreementOpen] = useState(false);
@@ -90,13 +92,24 @@ export function SlyderLeadForm({ referredByCode }: { referredByCode?: string }) 
         localStorage.setItem("slyde-slyder-referral-code", data.referralCode);
       }
 
-      router.push(`/join/slyder/qualify?leadId=${data.leadId}`);
+      setReservation({
+        leadId: data.leadId,
+        referralCode: data.referralCode ?? null,
+      });
     } catch {
       setError("Could not connect. Please check your connection and try again.");
     } finally {
       setPending(false);
     }
   }
+
+  const qualificationHref = reservation ? `/join/slyder/qualify?leadId=${reservation.leadId}` : "";
+  const siteOrigin = typeof window !== "undefined" ? window.location.origin : "https://slydenetwork.com";
+  const referralLink = reservation?.referralCode
+    ? `${siteOrigin}/join/slyder?ref=${encodeURIComponent(reservation.referralCode)}`
+    : `${siteOrigin}/refer-a-slyder`;
+  const referralMessage = `I just reserved my SLYDE Slyder spot. Join the SLYDE network with my referral link: ${referralLink}`;
+  const whatsappShareHref = `https://wa.me/?text=${encodeURIComponent(referralMessage)}`;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -317,6 +330,99 @@ export function SlyderLeadForm({ referredByCode }: { referredByCode?: string }) 
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {reservation ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="slyder-referral-promo-title"
+        >
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-6">
+            <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+              <div className="relative overflow-hidden rounded-3xl border border-sky-100 bg-slate-950 p-5 text-white">
+                <div className="absolute inset-x-0 top-0 h-24 bg-sky-500/20" />
+                <div className="relative mx-auto flex max-w-[260px] justify-center">
+                  <Image
+                    src="/images/glyde-whatsapp-cta.png"
+                    alt="GLYDE holding the SLYDE referral invite"
+                    width={320}
+                    height={320}
+                    className="h-auto w-full drop-shadow-2xl"
+                    priority
+                  />
+                </div>
+                <div className="relative mt-4 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">
+                    GLYDE tip
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-white">
+                    Share your SLYDE link now. The faster your area fills with reliable Slyders, the faster the network becomes stronger for everyone.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
+                  Slyder spot reserved
+                </p>
+                <h3 id="slyder-referral-promo-title" className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                  Earn, refer, and help build the SLYDE network faster.
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  You are now in the Slyder join path. Before you continue, share your referral link with reliable riders and drivers in your parish so they can reserve a spot too.
+                </p>
+
+                {reservation.referralCode ? (
+                  <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">Your referral code</p>
+                    <p className="mt-1 font-mono text-2xl font-bold text-slate-950">{reservation.referralCode}</p>
+                    <p className="mt-2 break-all text-xs font-medium text-slate-600">{referralLink}</p>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  {[
+                    "Earn when qualified referral rewards are active.",
+                    "Help your parish reach launch readiness faster.",
+                    "Bring trusted people into the SLYDE network early.",
+                  ].map((item) => (
+                    <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs font-semibold leading-5 text-slate-700">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <a
+                    href={whatsappShareHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-full bg-green-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-700"
+                  >
+                    Share on WhatsApp
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => router.push(qualificationHref)}
+                    className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5"
+                  >
+                    Continue my Slyder steps
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => router.push(qualificationHref)}
+                  className="mt-4 text-sm font-semibold text-slate-500 underline-offset-4 hover:text-slate-950 hover:underline"
+                >
+                  Skip sharing for now
+                </button>
+              </div>
             </div>
           </div>
         </div>
