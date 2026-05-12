@@ -1,11 +1,8 @@
 import { UserRoleCode, UserType } from "@prisma/client";
+import { getAppBaseUrl } from "@/lib/app-base-url";
+import { sendTemplateNotification } from "@/server/notifications/notification.service";
 import { buildWhatsappWebUrl } from "@/server/notifications/providers";
-import {
-  getUserRegistrationWelcomeWhatsappMessage,
-  resendUserRegistrationWelcomeEmail,
-} from "@/server/notifications/notification.service";
 import { prisma } from "@/server/db/prisma";
-import { withPersistenceTransaction } from "@/server/persistence";
 
 export type AdminUserStatusFilter = "enabled" | "disabled";
 
@@ -114,16 +111,87 @@ export async function listAdminUsers(filters: AdminUserFilters): Promise<AdminUs
   });
 }
 
+function resolveAccountTypeLabel(userType: UserType) {
+  if (userType === UserType.slyder) return "Slyder";
+  if (userType === UserType.merchant) return "Merchant";
+  return "SLYDE user";
+}
+
 export async function resendAdminUserRegistrationEmail(userId: string, triggeredByUserId?: string) {
-  return withPersistenceTransaction((store) => resendUserRegistrationWelcomeEmail(store, userId, triggeredByUserId));
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      userType: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  const baseUrl = getAppBaseUrl();
+  const notification = await sendTemplateNotification({
+    templateKey: "user_registration_welcome_email",
+    actorType: "public_user",
+    actorId: user.id,
+    recipient: user.email,
+    recipientName: user.fullName,
+    variables: {
+      fullName: user.fullName,
+      accountTypeLabel: resolveAccountTypeLabel(user.userType),
+      profileUrl: `${baseUrl}/account`,
+      supportUrl: `${baseUrl}/support`,
+      becomeSlyderUrl: `${baseUrl}/become-a-slyder`,
+      businessPartnerUrl: `${baseUrl}/for-businesses`,
+      dispatchFromHomeUrl: `${baseUrl}/dispatch-from-home`,
+      referUrl: `${baseUrl}/refer`,
+      supportEmail: process.env.RESEND_FROM_EMAIL || "info@slyde.app",
+      supportPhone: process.env.SLYDE_SUPPORT_PHONE || "876-594-7320",
+    },
+    payload: {
+      userId: user.id,
+      source: "admin_resend_registration",
+    },
+    dedupeKey: `admin_resend_registration_email:${user.id}:${Date.now()}`,
+    force: true,
+    triggeredByUserId,
+    createdBySystem: !triggeredByUserId,
+  });
+
+  return notification;
 }
 
 export async function getAdminUserRegistrationWhatsappUrl(userId: string) {
-  const { recipient, body } = await withPersistenceTransaction((store) =>
-    getUserRegistrationWelcomeWhatsappMessage(store, userId),
-  );
-  const whatsappUrl = buildWhatsappWebUrl(recipient, body);
-  if (!whatsappUrl) throw new Error("A valid WhatsApp phone number is required.");
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phone: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  const baseUrl = getAppBaseUrl();
+  const firstName = user.fullName.split(" ")[0] || "there";
+  const body = [
+    `Hi ${firstName}, your SLYDE registration link is ready.`,
+    `Create or complete your account here: ${baseUrl}/login?tab=register`,
+    `Sign in anytime here: ${baseUrl}/login`,
+    `Need help? ${process.env.SLYDE_SUPPORT_PHONE || "876-594-7320"}`,
+  ].join("\n\n");
+
+  const whatsappUrl = buildWhatsappWebUrl(user.phone, body);
+  if (!whatsappUrl) {
+    throw new Error("A valid phone number is required to build the WhatsApp message.");
+  }
 
   return { whatsappUrl };
 }

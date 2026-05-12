@@ -3,6 +3,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { DataTable, TableCell, TableHeaderCell } from "@/components/admin/data-table";
 import { EmptyState } from "@/components/admin/empty-state";
 import { FilterBar } from "@/components/admin/filter-bar";
+import { SlyderAppActivationButton } from "@/components/admin/slyder-app-activation-button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { getAdminPageContext } from "@/server/admin/admin-page";
 import { listAdminApplications } from "@/modules/admin/services/admin-control-tower.service";
@@ -25,6 +26,7 @@ export default async function AdminApplicationsPage({
       sort: typeof params.sort === "string" ? (params.sort as "newest" | "oldest" | "zone" | "readiness") : undefined,
     }),
   ]);
+  const devAdminKey = mode === "development" ? process.env.SLYDE_ADMIN_DEV_KEY || "dev-admin-key" : undefined;
 
   return (
     <AdminShell
@@ -116,9 +118,16 @@ export default async function AdminApplicationsPage({
                   <TableCell><StatusBadge status={item.emailStatus} /></TableCell>
                   <TableCell><StatusBadge status={item.accountStatus} /></TableCell>
                   <TableCell>
-                    <Link href={`/admin/slyder-applications/${item.id}`} className="text-sm font-semibold text-sky-700">
-                      View application
-                    </Link>
+                    <div className="flex flex-col items-start gap-3">
+                      <Link href={`/admin/slyder-applications/${item.id}`} className="text-sm font-semibold text-sky-700">
+                        View application
+                      </Link>
+                      <SlyderAppActivationButton
+                        applicationId={item.id}
+                        applicationStatus={item.applicationStatus}
+                        devAdminKey={devAdminKey}
+                      />
+                    </div>
                   </TableCell>
                 </tr>
               ))}

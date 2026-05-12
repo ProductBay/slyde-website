@@ -4,10 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Info, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { courierTypes, deliveryPreferences, slyderApplicationSchema, type SlyderApplicationDraft } from "@/lib/forms";
 import { StepIndicator } from "@/components/site/step-indicator";
 import { TurnstileWidget } from "@/components/site/turnstile-widget";
+import { ReferralPersuasionModal } from "@/components/slyder/referral-persuasion-modal";
 
 const STORAGE_KEY = "slyde-slyder-application-draft";
 const zoneLocationInfo: Record<string, string> = {
@@ -77,7 +79,6 @@ const defaultDraft: SlyderApplicationDraft = {
     dateOfBirth: "",
     parishTown: "",
     address: "",
-    trn: "",
     emergencyContact: "",
   },
   courier: {
@@ -445,6 +446,7 @@ function ZoneCard({ zone, locationInfo, checked, onChange }: { zone: string; loc
 }
 
 export function MultiStepForm({ leadId }: { leadId?: string | null }) {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<SlyderApplicationDraft>(defaultDraft);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -454,6 +456,7 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
   const [aiAssistInput, setAiAssistInput] = useState("");
   const [aiAssistMessage, setAiAssistMessage] = useState<string | null>(null);
   const [zoneSearch, setZoneSearch] = useState("");
+  const [showReferralModal, setShowReferralModal] = useState(false);
 
   // Mark lead as STARTED_APPLICATION when the form mounts
   useEffect(() => {
@@ -698,8 +701,15 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
 
       window.localStorage.removeItem(STORAGE_KEY);
       window.localStorage.removeItem("slyde-slyder-lead-id");
-      window.location.assign("/success/slyder-application");
+      // Show referral modal instead of redirecting immediately
+      setPending(false);
+      setShowReferralModal(true);
     });
+  }
+
+  function handleReferralModalClose() {
+    setShowReferralModal(false);
+    window.location.assign("/success/slyder-application");
   }
 
   const vehicleRequired = requiresVehicle(draft.courier.courierType);
@@ -756,23 +766,6 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
             <Field label="Phone number" name="phone" value={draft.personal.phone} error={errors.phone} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, phone: value } }))} />
             <Field label="Date of birth" name="dateOfBirth" type="date" value={draft.personal.dateOfBirth} error={errors.dateOfBirth} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, dateOfBirth: value } }))} />
             <SearchableSelectField label="Parish / town" name="parishTown" value={draft.personal.parishTown} error={errors.parishTown} onChange={(value) => setDraft((c) => ({ ...c, personal: { ...c.personal, parishTown: value } }))} options={parishTownOptions} placeholder="Start typing parish or town" />
-            <label className="field-shell">
-              <span className="field-label">Last 4 digits of your TRN</span>
-              <input
-                name="trn"
-                type="text"
-                inputMode="numeric"
-                maxLength={4}
-                value={draft.personal.trn}
-                onChange={(e) => setDraft((c) => ({ ...c, personal: { ...c.personal, trn: e.target.value.replace(/\D/g, "").slice(0, 4) } }))}
-                className="field-input"
-                placeholder="e.g. 7842"
-              />
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                We only collect the last 4 digits at this stage. Your full TRN is verified securely inside the SLYDE app after your application is approved.
-              </p>
-              {errors.trn ? <p className="text-sm text-rose-600">{errors.trn}</p> : null}
-            </label>
             <label className="field-shell md:col-span-2">
               <span className="field-label">Address</span>
               <textarea value={draft.personal.address} onChange={(event) => setDraft((c) => ({ ...c, personal: { ...c.personal, address: event.target.value } }))} className="field-input min-h-28" />
@@ -1117,7 +1110,7 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
                 To keep this form as lean as possible, the following are collected securely inside the app only once you are approved. Nothing sensitive leaves here.
               </p>
               <ul className="mt-3 grid gap-2 text-sm leading-6 text-amber-800">
-                <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Full TRN (we only collected the last 4 digits on this form)</li>
+                <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Full TRN</li>
                 <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Vehicle plate number</li>
                 <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Full document uploads — National ID, driver's licence, insurance, registration, fitness certificate</li>
                 <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />Banking and payout account details</li>
@@ -1145,6 +1138,11 @@ export function MultiStepForm({ leadId }: { leadId?: string | null }) {
           )}
         </div>
       </div>
+
+      <ReferralPersuasionModal
+        isOpen={showReferralModal}
+        onClose={handleReferralModalClose}
+      />
     </div>
   );
 }

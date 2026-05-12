@@ -629,7 +629,7 @@ export async function approveApplication(
   payload: ApproveApplicationInput,
   actor: AdminActor,
 ) {
-  const result = await withPersistenceTransaction(async (store) => {
+  const result = await withCriticalOnboardingTransaction(async (store) => {
     const application = findApplication(store, applicationId);
     if (!application) throw new Error("Application not found");
 

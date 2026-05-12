@@ -4,6 +4,8 @@ import { CircleHelp, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { MerchantAgreementModal } from "@/components/merchant/merchant-agreement-modal";
+import { MerchantTierDisplay } from "@/components/merchant/merchant-tier-display";
 
 type MerchantTrack = "grabquik" | "slyde_delivery";
 
@@ -415,6 +417,36 @@ function fieldErrorClass(active?: boolean) {
   return active ? "border-rose-400 bg-rose-50 focus:border-rose-500 focus:ring-rose-200" : "";
 }
 
+function extractApiErrorMessage(payload: unknown, fallback: string) {
+  if (!payload || typeof payload !== "object") return fallback;
+
+  const maybePayload = payload as {
+    error?:
+      | string
+      | {
+          formErrors?: string[];
+          fieldErrors?: Record<string, string[] | undefined>;
+        };
+  };
+
+  if (typeof maybePayload.error === "string" && maybePayload.error.trim()) {
+    return maybePayload.error;
+  }
+
+  if (maybePayload.error && typeof maybePayload.error === "object") {
+    const formError = maybePayload.error.formErrors?.find((item) => typeof item === "string" && item.trim());
+    if (formError) return formError;
+
+    const firstFieldError = Object.values(maybePayload.error.fieldErrors ?? {})
+      .flat()
+      .find((item) => typeof item === "string" && item.trim());
+
+    if (firstFieldError) return firstFieldError;
+  }
+
+  return fallback;
+}
+
 function buildChecklistItems(input: {
   track: MerchantTrack;
   selectedCategory: string;
@@ -510,6 +542,8 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
   const [showDraftRecoveredBanner, setShowDraftRecoveredBanner] = useState(false);
   const [showClearDraftConfirm, setShowClearDraftConfirm] = useState(false);
   const [celebratingSections, setCelebratingSections] = useState<Partial<Record<MerchantSectionCompletionKey, boolean>>>({});
+  const [agreementModalOpen, setAgreementModalOpen] = useState(false);
+  const [merchantAgreementSigned, setMerchantAgreementSigned] = useState(false);
   const previousCompletionRef = useRef<Record<MerchantSectionCompletionKey, boolean>>({
     businessBasics: false,
     operationsSetup: false,
@@ -867,6 +901,12 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
       setFieldIssues(nextIssues);
     }
 
+    if (!merchantAgreementSigned) {
+      setError("You must review and sign the Merchant Partner Agreement before submitting.");
+      scrollToSection("legal-agreement");
+      return;
+    }
+
     if (!businessBasicsComplete) {
       setError("Finish the business basics section before continuing.");
       scrollToSection("business-basics");
@@ -904,19 +944,19 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
     }
 
     const commonPayload = {
-      businessName: String(formData.get("businessName") || ""),
-      contactName: String(formData.get("contactName") || ""),
-      phone: String(formData.get("phone") || ""),
-      email: String(formData.get("email") || ""),
-      parish: String(formData.get("parish") || ""),
-      town: String(formData.get("town") || ""),
-      category: String(formData.get("category") || ""),
-      instagramHandle: String(formData.get("instagramHandle") || "") || undefined,
-      website: String(formData.get("website") || "") || undefined,
+      businessName: businessName.trim(),
+      contactName: contactName.trim(),
+      phone: phone.trim(),
+      email: email.trim(),
+      parish: selectedParish,
+      town: selectedTown,
+      category: selectedCategory,
+      instagramHandle: instagramHandle.trim() || undefined,
+      website: website.trim() || undefined,
       orderChannels: selectedOrderChannels,
-      averageDailyOrders: String(formData.get("averageDailyOrders") || "") || undefined,
-      currentDeliveryMethod: String(formData.get("currentDeliveryMethod") || "") || undefined,
-      preferredStartTimeline: String(formData.get("preferredStartTimeline") || "") || undefined,
+      averageDailyOrders: averageDailyOrders || undefined,
+      currentDeliveryMethod: currentDeliveryMethod || undefined,
+      preferredStartTimeline: preferredStartTimeline || undefined,
       productIntent: track,
     };
 
@@ -928,11 +968,7 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
     const leadPayload = await leadResponse.json().catch(() => null);
 
     if (!leadResponse.ok || !leadPayload?.lead?.id) {
-      setError(
-        typeof leadPayload?.error === "string"
-          ? leadPayload.error
-          : leadPayload?.error?.formErrors?.[0] || "We could not start merchant onboarding.",
-      );
+      setError(extractApiErrorMessage(leadPayload, "We could not start merchant onboarding."));
       return;
     }
 
@@ -941,35 +977,35 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
         ? {
             merchantLeadId: leadPayload.lead.id,
             onboardingTrack: "grabquik",
-            storeName: String(formData.get("storeName") || ""),
-            logoUrl: String(formData.get("logoUrl") || "") || undefined,
-            businessDescription: String(formData.get("businessDescription") || ""),
-            category: String(formData.get("applicationCategory") || commonPayload.category),
+            storeName: storeName.trim(),
+            logoUrl: logoUrl.trim() || undefined,
+            businessDescription: businessDescription.trim(),
+            category: selectedApplicationCategory || commonPayload.category,
             operatingHours: {
               days: operatingDays,
               openTime,
               closeTime,
               summary: operatingHoursSummary || "To be confirmed",
             },
-            pickupAddress: String(formData.get("pickupAddress") || ""),
+            pickupAddress: pickupAddress.trim(),
             serviceAreas,
-            fulfillmentMode: String(formData.get("fulfillmentMode") || ""),
-            catalogReady: formData.get("catalogReady") === "true",
+            fulfillmentMode: selectedGrabquikFulfillmentMode,
+            catalogReady,
             payoutDetails: { status: "placeholder" },
-            legalAccepted: formData.get("legalAccepted") === "on",
+            legalAccepted,
           }
         : {
             merchantLeadId: leadPayload.lead.id,
             onboardingTrack: "slyde_delivery",
-            pickupAddress: String(formData.get("pickupAddress") || ""),
+            pickupAddress: pickupAddress.trim(),
             serviceAreas,
-            fulfillmentMode: String(formData.get("fulfillmentMode") || "") || undefined,
+            fulfillmentMode: selectedSlydeFulfillmentMode || undefined,
             orderSources: selectedOrderSources,
-            dispatchMode: String(formData.get("dispatchMode") || ""),
+            dispatchMode: selectedDispatchMode,
             pickupLocations,
-            deliveryRadius: String(formData.get("deliveryRadius") || ""),
+            deliveryRadius: selectedDeliveryRadius,
             packageTypes: selectedPackageTypes,
-            averageOrderSize: String(formData.get("averageOrderSize") || "") || undefined,
+            averageOrderSize: selectedAverageOrderSize || undefined,
             operatingHours: {
               days: operatingDays,
               openTime,
@@ -992,11 +1028,7 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
     const applicationResult = await applicationResponse.json().catch(() => null);
 
     if (!applicationResponse.ok || !applicationResult?.application?.id) {
-      setError(
-        typeof applicationResult?.error === "string"
-          ? applicationResult.error
-          : applicationResult?.error?.formErrors?.[0] || "We could not continue merchant onboarding.",
-      );
+      setError(extractApiErrorMessage(applicationResult, "We could not continue merchant onboarding."));
       return;
     }
 
@@ -1092,6 +1124,14 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
         <div className="grid gap-8">
           <section className="grid gap-4">
             <StepNavigator steps={formSteps} />
+          </section>
+
+          {/* Pricing Tiers Section */}
+          <section
+            id="terms-and-tiers"
+            className="grid gap-6 scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-white p-6"
+          >
+            <MerchantTierDisplay selectedTier="business" />
           </section>
 
           <section
@@ -1496,6 +1536,64 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
             </section>
           )}
 
+          <section
+            id="legal-agreement"
+            className="grid gap-4 scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-white p-6"
+          >
+            <h3 className="text-lg font-bold text-slate-900">Legal Agreement</h3>
+            <p className="text-sm text-slate-600">
+              Please review and sign our Merchant Partner Agreement. This protects both your business and the SLYDE platform before submission.
+            </p>
+
+            <div
+              className={`rounded-lg border-2 p-4 transition ${
+                merchantAgreementSigned
+                  ? "border-emerald-200 bg-emerald-50"
+                  : "border-slate-200 bg-slate-50"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    merchantAgreementSigned
+                      ? "border-emerald-500 bg-emerald-500"
+                      : "border-slate-300"
+                  }`}>
+                    {merchantAgreementSigned && (
+                      <span className="text-white text-xs font-bold">✓</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">Merchant Partner Agreement</p>
+                    <p className="text-sm text-slate-600">
+                      {merchantAgreementSigned
+                        ? "✓ You have signed the agreement"
+                        : "Review and sign to proceed"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAgreementModalOpen(true)}
+                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    merchantAgreementSigned
+                      ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+                >
+                  {merchantAgreementSigned ? "View" : "Review & Sign"}
+                </button>
+              </div>
+            </div>
+
+            {!merchantAgreementSigned && (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                <p className="font-semibold mb-1">⚠️ Agreement Required</p>
+                <p>You must review and accept the Merchant Partner Agreement before you can submit your application.</p>
+              </div>
+            )}
+          </section>
+
           {error ? <p className="text-sm text-rose-600">{error}</p> : null}
           <div>
             <Button type="submit" disabled={pending}>{pending ? "Submitting..." : "Continue Merchant Onboarding"}</Button>
@@ -1622,6 +1720,17 @@ export function MerchantForm({ track, title, description }: { track: MerchantTra
           </div>
         </div>
       </form>
+
+      {/* Agreement Modal */}
+      <MerchantAgreementModal
+        isOpen={agreementModalOpen}
+        onClose={() => setAgreementModalOpen(false)}
+        onAgree={() => {
+          setMerchantAgreementSigned(true);
+          setAgreementModalOpen(false);
+        }}
+        hasAgreed={merchantAgreementSigned}
+      />
     </div>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, startTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ReferralPersuasionModal } from "@/components/slyder/referral-persuasion-modal";
 
 export function EmployeeOnboardingForm({
   defaultEmergencyName,
@@ -18,10 +20,12 @@ export function EmployeeOnboardingForm({
   const [emergencyContactPhone, setEmergencyContactPhone] = useState(defaultEmergencyPhone ?? "");
   const [payoutMethod, setPayoutMethod] = useState(defaultPayoutMethod);
   const [payoutAccountMasked, setPayoutAccountMasked] = useState(defaultPayoutMasked ?? "");
+  const router = useRouter();
   const [acknowledgeHandbook, setAcknowledgeHandbook] = useState(false);
   const [acknowledgePayrollVisibility, setAcknowledgePayrollVisibility] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showReferralModal, setShowReferralModal] = useState(false);
 
   function submit() {
     setPending(true);
@@ -48,8 +52,15 @@ export function EmployeeOnboardingForm({
         return;
       }
 
-      window.location.assign("/employee/portal");
+      // Show referral modal instead of redirecting immediately
+      setPending(false);
+      setShowReferralModal(true);
     });
+  }
+
+  function handleReferralModalClose() {
+    setShowReferralModal(false);
+    window.location.assign("/employee/portal");
   }
 
   return (
@@ -108,6 +119,11 @@ export function EmployeeOnboardingForm({
           {pending ? "Saving..." : "Complete employee onboarding"}
         </Button>
       </div>
+
+      <ReferralPersuasionModal
+        isOpen={showReferralModal}
+        onClose={handleReferralModalClose}
+      />
     </div>
   );
 }

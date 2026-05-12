@@ -91,6 +91,37 @@ body {
   }
 }
 
+@keyframes slyde-ring-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes business-hero-zoom {
+  0% {
+    transform: scale(1.06) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes business-hero-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
 /* ─── Jamaica-flag caret: black → gold → green cycling blink ─── */
 @keyframes caret-jamaica {
   0%,  28% { caret-color: #1a1a1a; }   /* black  */
@@ -356,6 +387,37 @@ button {
 
   .floating-orb {
     animation: drift-float 5.5s ease-in-out infinite;
+  }
+
+  .slyde-gradient-ring {
+    background-image: linear-gradient(120deg, rgba(14, 165, 233, 0.72), rgba(45, 212, 191, 0.68), rgba(56, 189, 248, 0.74), rgba(14, 165, 233, 0.72));
+    background-size: 240% 240%;
+    animation: slyde-ring-shift 8s ease infinite;
+  }
+
+  .business-hero-image {
+    transform: scale(1.02);
+    will-change: transform;
+    animation: business-hero-zoom 1200ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .business-hero-overlay {
+    will-change: transform;
+    animation: business-hero-drift 13s ease-in-out infinite;
+  }
+
+  .business-hero-glow {
+    will-change: transform;
+    animation: business-hero-drift 18s ease-in-out infinite reverse;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .business-hero-image,
+    .business-hero-overlay,
+    .business-hero-glow {
+      animation: none;
+      transform: none;
+    }
   }
 
   .sticky-path-selector {

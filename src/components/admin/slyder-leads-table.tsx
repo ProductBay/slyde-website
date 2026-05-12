@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { SlyderLeadActionCenterActions } from "@/components/admin/slyder-lead-action-center-actions";
 import { SlyderLeadMessageActions } from "@/components/admin/slyder-lead-message-actions";
 import { SlyderLeadStatusBadge } from "@/components/admin/slyder-lead-status-badge";
+import { LeadStatusLED } from "@/components/admin/lead-status-led";
 
 type Lead = {
   id: string;
@@ -49,12 +50,13 @@ export function SlyderLeadsTable({ leads, devAdminKey }: { leads: Lead[]; devAdm
         <table className="min-w-[58rem] divide-y divide-slate-200">
           <thead className="bg-slate-50/90">
             <tr>
+              <TableHeaderCell>Status</TableHeaderCell>
               <TableHeaderCell>Name</TableHeaderCell>
               <TableHeaderCell>WhatsApp</TableHeaderCell>
               <TableHeaderCell>Email</TableHeaderCell>
               <TableHeaderCell>Parish</TableHeaderCell>
               <TableHeaderCell>Vehicle</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell>Badge</TableHeaderCell>
               <TableHeaderCell>Score</TableHeaderCell>
               <TableHeaderCell>Activity</TableHeaderCell>
             </tr>
@@ -77,6 +79,9 @@ export function SlyderLeadsTable({ leads, devAdminKey }: { leads: Lead[]; devAdm
                   }}
                   className="group cursor-pointer transition hover:bg-sky-50/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                 >
+                  <TableCell className="flex items-center justify-center">
+                    <LeadStatusLED status={lead.status} applicationInviteUnlocked={lead.applicationInviteUnlocked} />
+                  </TableCell>
                   <TableCell className="min-w-44 font-medium text-slate-950">
                     <div className="flex items-center justify-between gap-3">
                       <span>{fullName}</span>

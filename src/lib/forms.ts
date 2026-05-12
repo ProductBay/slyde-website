@@ -45,7 +45,6 @@ export const slyderApplicationSchema = z.object({
     dateOfBirth: nonEmpty("Date of birth is required"),
     parishTown: nonEmpty("Parish or town is required"),
     address: nonEmpty("Address is required"),
-    trn: z.string().trim().regex(/^\d{4}$/, "Enter the last 4 digits of your TRN (numbers only)"),
     emergencyContact: nonEmpty("Emergency contact is required"),
   }),
   courier: z.object({

@@ -237,6 +237,11 @@ export async function getSlyderOnboardingStatus(userId: string) {
   return {
     ...status,
     applicationCode: application?.applicationCode,
+    applicationStatus: application?.applicationStatus,
+    applicationSubmittedAt: application?.submittedAt,
+    applicationReviewedAt: application?.reviewedAt,
+    applicationReviewNotes: application?.reviewNotes,
+    applicationRequestedDocumentNotes: application?.requestedDocumentNotes,
     displayName: profile.displayName,
     email: profile.email,
     phone: profile.phone,
@@ -815,3 +820,4 @@ export async function resendSlyderStatusUpdate(userId: string) {
     return { resent: true };
   });
 }
+

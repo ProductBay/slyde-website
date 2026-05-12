@@ -9,7 +9,6 @@ import type {
   PublicSlyderReferral,
   SetupStatusResponse,
 } from "@/types/backend/onboarding";
-import type { SlyderLead, SlyderReferral } from "@prisma/client";
 import { readPersistenceStore, withPersistenceTransaction } from "@/server/persistence";
 import { dispatchViaProvider } from "@/server/notifications/providers";
 import { isSmsConfigured } from "@/server/notifications/providers";
@@ -1409,7 +1408,6 @@ export async function onSlyderApplicationSubmitted(store: OnboardingStore, appli
     fullName: application.fullName,
     applicationCode: application.applicationCode,
     zoneName: getApplicationZoneName(store, application.id),
-    onboardingUrl: `${getWebsiteBaseUrl()}/slyder/onboarding`,
     supportContact: "876-594-7320",
     supportEmail: "info@slyde.app",
     supportPhone: "876-594-7320",
@@ -2171,112 +2169,82 @@ export async function sendPublicReferralInviteNotification(referral: PublicSlyde
   });
 }
 
-function buildSlyderReferralNotificationContext(referral: SlyderReferral) {
-  const baseUrl = getWebsiteBaseUrl();
-  const referralLink = referral.referralLink || `${baseUrl}/r/${encodeURIComponent(referral.referralCode)}`;
-  const dashboardUrl = `${baseUrl}/refer`;
-  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
-  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
+export async function sendSlyderReferralCreatedNotification(referral: {
+  id: string;
+  referralCode: string;
+  referrerName: string;
+  referrerWhatsapp: string;
+  referrerEmail?: string | null;
+  referredFirstName?: string | null;
+  referredLastName?: string | null;
+  referredEmail?: string | null;
+  referredWhatsapp?: string | null;
+}) {
+  if (!referral.referredEmail) return null;
 
-  return {
-    variables: {
-      referrerName: referral.referrerName,
-      referrerFirstName: referral.referrerName.split(" ")[0] || referral.referrerName,
-      referralCode: referral.referralCode,
-      referralLink,
-      dashboardUrl,
-      supportEmail,
-      supportPhone,
-    },
-    payload: {
-      referralId: referral.id,
-      referralCode: referral.referralCode,
-      referralLink,
-      dashboardUrl,
-    },
+  const mapped: PublicSlyderReferral = {
+    id: referral.id,
+    referralCode: referral.referralCode,
+    referrerName: referral.referrerName,
+    referrerPhone: referral.referrerWhatsapp,
+    referrerEmail: referral.referrerEmail ?? undefined,
+    referredName: [referral.referredFirstName, referral.referredLastName].filter(Boolean).join(" ").trim() || "there",
+    referredEmail: referral.referredEmail,
+    referredPhone: referral.referredWhatsapp || "",
+    status: "submitted",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
+
+  return sendPublicReferralInviteNotification(mapped);
 }
 
-export async function sendSlyderReferralCreatedNotification(referral: SlyderReferral) {
+export async function sendSlyderReferralUsedNotifications(
+  referral: {
+    id: string;
+    referralCode: string;
+    referrerName: string;
+    referrerEmail?: string | null;
+    referrerWhatsapp: string;
+    referredEmail?: string | null;
+  },
+  lead: {
+    id: string;
+    firstName: string;
+    lastName?: string | null;
+    email: string;
+    whatsapp: string;
+  },
+) {
   if (!referral.referrerEmail) return null;
 
-  const { variables, payload } = buildSlyderReferralNotificationContext(referral);
-
   return sendTemplateNotification({
-    templateKey: "slyder_referral_created_email",
-    actorType: "public_user",
+    templateKey: "public_referral_invite_email",
+    actorType: "slyder_applicant",
     actorId: referral.id,
     recipient: referral.referrerEmail,
     recipientName: referral.referrerName,
-    variables,
-    payload,
-    dedupeKey: `slyder_referral_created_email:${referral.id}:${referral.referrerEmail.toLowerCase()}`,
+    variables: {
+      referredName: referral.referrerName,
+      referrerName: "SLYDE",
+      referrerPhone: process.env.SLYDE_SUPPORT_PHONE || "876-594-7320",
+      referrerEmailLine: process.env.RESEND_FROM_EMAIL ? `- Email: ${process.env.RESEND_FROM_EMAIL}` : "",
+      referralCode: referral.referralCode,
+      applicationUrl: `${getWebsiteBaseUrl()}/join/slyder/status?leadId=${encodeURIComponent(lead.id)}`,
+      supportEmail: process.env.RESEND_FROM_EMAIL || "info@slyde.app",
+      supportPhone: process.env.SLYDE_SUPPORT_PHONE || "876-594-7320",
+    },
+    payload: {
+      referralId: referral.id,
+      leadId: lead.id,
+      leadEmail: lead.email,
+      leadWhatsapp: lead.whatsapp,
+      referralCode: referral.referralCode,
+      event: "referral_used",
+    },
+    dedupeKey: `slyder_referral_used:${referral.id}:${lead.id}`,
+    force: true,
   });
-}
-
-export async function sendSlyderReferralUsedNotifications(referral: SlyderReferral, lead: SlyderLead) {
-  const { variables: referralVariables, payload: referralPayload } = buildSlyderReferralNotificationContext(referral);
-  const referredName = [lead.firstName, lead.lastName].filter(Boolean).join(" ") || lead.firstName;
-  const statusUrl = `${getWebsiteBaseUrl()}/join/slyder/status?leadId=${encodeURIComponent(lead.id)}`;
-
-  const tasks: Promise<unknown>[] = [];
-
-  if (referral.referrerEmail) {
-    tasks.push(
-      sendTemplateNotification({
-        templateKey: "slyder_referral_used_referrer_email",
-        actorType: "public_user",
-        actorId: referral.id,
-        recipient: referral.referrerEmail,
-        recipientName: referral.referrerName,
-        variables: {
-          ...referralVariables,
-          referredName,
-          referredEmail: lead.email,
-          referredWhatsapp: lead.whatsapp,
-          statusUrl,
-        },
-        payload: {
-          ...referralPayload,
-          leadId: lead.id,
-          referredEmail: lead.email,
-          referredWhatsapp: lead.whatsapp,
-          statusUrl,
-        },
-        dedupeKey: `slyder_referral_used_referrer_email:${referral.id}:${lead.id}`,
-        force: true,
-      }),
-    );
-  }
-
-  tasks.push(
-    sendTemplateNotification({
-      templateKey: "slyder_referral_used_referee_email",
-      actorType: "slyder_applicant",
-      actorId: lead.id,
-      recipient: lead.email,
-      recipientName: referredName,
-      variables: {
-        firstName: lead.firstName,
-        fullName: referredName,
-        referrerName: referral.referrerName,
-        referralCode: referral.referralCode,
-        statusUrl,
-        supportEmail: referralVariables.supportEmail,
-        supportPhone: referralVariables.supportPhone,
-      },
-      payload: {
-        leadId: lead.id,
-        referralId: referral.id,
-        referralCode: referral.referralCode,
-        statusUrl,
-      },
-      dedupeKey: `slyder_referral_used_referee_email:${referral.id}:${lead.id}`,
-      force: true,
-    }),
-  );
-
-  return Promise.allSettled(tasks);
 }
 
 export async function sendReferrerLoginCodeNotification(input: {
@@ -2382,80 +2350,6 @@ export async function sendUserRegistrationWelcomeNotification(
 
   updateTriggerStatus(store, event.id, result.status === "failed" ? "failed" : "processed", result.failureReason);
   return result;
-}
-
-function buildUserRegistrationWelcomeContext(user: OnboardingStore["users"][number]) {
-  const baseUrl = getWebsiteBaseUrl();
-  const actorType = resolveActorTypeForUser(user);
-  const profileUrl = resolveProfileUrl(baseUrl, user);
-  const supportUrl = `${baseUrl}/support`;
-  const becomeSlyderUrl = `${baseUrl}/become-a-slyder`;
-  const businessPartnerUrl = `${baseUrl}/for-businesses`;
-  const dispatchFromHomeUrl = `${baseUrl}/dispatch-from-home`;
-  const referUrl = `${baseUrl}/refer`;
-  const supportEmail = process.env.RESEND_FROM_EMAIL || "info@slyde.app";
-  const supportPhone = process.env.SLYDE_SUPPORT_PHONE || "876-594-7320";
-
-  return {
-    actorType,
-    variables: {
-      fullName: user.fullName,
-      accountTypeLabel: resolveAccountTypeLabel(user),
-      profileUrl,
-      supportUrl,
-      becomeSlyderUrl,
-      businessPartnerUrl,
-      dispatchFromHomeUrl,
-      referUrl,
-      supportEmail,
-      supportPhone,
-    },
-    payload: {
-      profileUrl,
-      supportUrl,
-      becomeSlyderUrl,
-      businessPartnerUrl,
-      dispatchFromHomeUrl,
-      referUrl,
-      userType: user.userType,
-      roles: user.roles,
-    },
-  };
-}
-
-export async function resendUserRegistrationWelcomeEmail(
-  store: OnboardingStore,
-  userId: string,
-  triggeredByUserId?: string,
-) {
-  const user = store.users.find((item) => item.id === userId);
-  if (!user) throw new Error("User not found for welcome notification");
-
-  const { actorType, variables, payload } = buildUserRegistrationWelcomeContext(user);
-
-  return sendTemplateNotificationInStore(store, {
-    templateKey: "user_registration_welcome_email",
-    actorType,
-    actorId: user.id,
-    recipient: user.email,
-    recipientName: user.fullName,
-    userId: user.id,
-    variables,
-    payload,
-    dedupeKey: `user_registration_welcome:email:${user.id}:${user.userType}:resend:${Date.now()}`,
-    triggeredByUserId,
-    createdBySystem: false,
-    force: true,
-  });
-}
-
-export function getUserRegistrationWelcomeWhatsappMessage(store: OnboardingStore, userId: string) {
-  const user = store.users.find((item) => item.id === userId);
-  if (!user) throw new Error("User not found for WhatsApp message");
-
-  const { variables } = buildUserRegistrationWelcomeContext(user);
-  const { body } = renderTemplate(store, "user_registration_welcome_whatsapp", variables);
-  return { recipient: user.phone, body };
 }
 
 export async function sendSlyderDocumentsRequestedNotification(store: OnboardingStore, applicationId: string, _userId: string | undefined, requestedDocumentTypes: string[], notes: string) {

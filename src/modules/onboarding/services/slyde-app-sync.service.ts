@@ -19,6 +19,16 @@ export type SyncedSlydeAppReviewDecision = {
   syncedAt: string;
 };
 
+export type SlydeAppActivationInviteResult = {
+  email: string;
+  userId: string;
+  slyderId: string;
+  expiresAt: string;
+  delivery: "sent";
+  responseStatus: number;
+  sentAt: string;
+};
+
 export type SlydeAppLifecycleEventType =
   | "slyder_activation_completed"
   | "slyder_legal_accepted"
@@ -288,6 +298,74 @@ export async function syncPublicSlyderReviewDecisionToSlydeApp(input: {
     responseStatus: response.status,
     syncedAt,
   } satisfies SyncedSlydeAppReviewDecision;
+}
+
+export async function sendSlydeAppActivationInvite(input: { email: string }) {
+  const config = getAppSyncConfig();
+  if (!shouldSyncToExternalSlydeApp()) {
+    throw new Error("SLYDE app sync is not enabled or configured.");
+  }
+  const payload = {
+    email: input.email,
+  };
+
+  console.info("[slyde-app-sync] activation invite starting", {
+    email: payload.email,
+  });
+
+  const response = await fetch(`${config.baseUrl}/api/internal/public-slyder-applications/activation-invite`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-slyde-integration-key": config.secret,
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  const json = (await response.json().catch(() => null)) as
+    | {
+        email?: string;
+        userId?: string;
+        slyderId?: string;
+        expiresAt?: string;
+        delivery?: "sent";
+        error?: string;
+      }
+    | null;
+
+  if (
+    !response.ok ||
+    !json?.email ||
+    !json?.userId ||
+    !json?.slyderId ||
+    !json?.expiresAt ||
+    json.delivery !== "sent"
+  ) {
+    console.error("[slyde-app-sync] activation invite failed", {
+      email: payload.email,
+      responseStatus: response.status,
+      error: json?.error || "Unknown activation invite failure",
+    });
+    throw new Error(json?.error || "Unable to send the SLYDE app activation email.");
+  }
+
+  const sentAt = new Date().toISOString();
+  console.info("[slyde-app-sync] activation invite succeeded", {
+    email: payload.email,
+    responseStatus: response.status,
+    sentAt,
+  });
+
+  return {
+    email: json.email,
+    userId: json.userId,
+    slyderId: json.slyderId,
+    expiresAt: json.expiresAt,
+    delivery: json.delivery,
+    responseStatus: response.status,
+    sentAt,
+  } satisfies SlydeAppActivationInviteResult;
 }
 
 export async function syncSlydeAppLifecycleEvent(input: SlydeAppLifecycleEventPayload) {
